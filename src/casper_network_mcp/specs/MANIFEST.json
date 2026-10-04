@@ -1,0 +1,315 @@
+{
+  "schema_version": 2,
+  "documents": [
+    {
+      "path": "reporting-11dzpz39mq.json",
+      "title": "Reporting",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/11dzpz39mqquwjy2",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/createuserreportv1",
+      "sha256": "b816090b8373303a3c685b3f88d11a8a832dc1a59be8c3fe64b0ab5b4d7070e4",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 6
+    },
+    {
+      "path": "services-11dzpz39mq.json",
+      "title": "Services",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/11dzpz39mqquwpe3",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getdevicelocationsv1",
+      "sha256": "f5c1b43b1e779c0d15bc79941f4c98683ef5c944e940f13c0c8961b4b47fc12b",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 47
+    },
+    {
+      "path": "central-nac-service-18et1xmq0s.json",
+      "title": "Central NAC Service",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/18et1xmq0s2hjv",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/certificates",
+      "sha256": "8aa974398d1bc9dd99765aed3700b4ca61644dcdc97edfa05a2299c2f028add2",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 25
+    },
+    {
+      "path": "telemetry-18etfmq0s6.json",
+      "title": "Telemetry",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/18etfmq0s6cbv",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/client-insight",
+      "sha256": "aad02ce695cea6cbfc4fb5548c5c2ffe75584925826dc4baef9413ed874135fc",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 18
+    },
+    {
+      "path": "interfaces-1bgu1hmq0s.json",
+      "title": "Interfaces",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1bgu1hmq0s48gc",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/ap-uplink",
+      "sha256": "6c56205e8bb8a033ed0357b273456aa921b2e3f1b7b9a1da5e425a78d8094935",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 43
+    },
+    {
+      "path": "extensions-1bgu2cmq0s.json",
+      "title": "Extensions",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1bgu2cmq0s3ogx",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createsplunkinstancesinstancebyid",
+      "sha256": "1421a226345b07c47bd565b528dc266e6a64bb07f95b0a7942d07e4c908c3969",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 6
+    },
+    {
+      "path": "gateway-clustering-orchestration-1bgu2cmq0s.json",
+      "title": "Gateway Clustering Orchestration",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1bgu2cmq0s3u3m",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/creategwclusterintentconfigprofilebyid",
+      "sha256": "02988eb50769baec266f3953a15b294249a1e53f15287449de91d1797a206223",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 2
+    },
+    {
+      "path": "named-object-1bgu2jmq0s.json",
+      "title": "Named Object",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1bgu2jmq0s4p8q",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/alias",
+      "sha256": "7a0449363e5db752e3a0d9d5329bff2b0008d91b2ba1f7aed20fbaf293526737",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 6
+    },
+    {
+      "path": "scope-management-1fkx1wmq0s.json",
+      "title": "Scope Management",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1fkx1wmq0s1vs6",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/adddevicestodevicecollectionsm",
+      "sha256": "05d0ea07b478a87e9d104cbb972796a831113b8b1a988f1335d1361f0997ea8b",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 32
+    },
+    {
+      "path": "iot-2vuu5nz1bm.json",
+      "title": "IoT",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/2vuu5nz1bmq0s4fxb",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createusbprofilebyid",
+      "sha256": "55bcb29578d4d796a8aa607df8a91c6b2aa88f9f51602412e94b9efc9a9f811f",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 2
+    },
+    {
+      "path": "high-availability-3zc101qmq0.json",
+      "title": "High Availability",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/3zc101qmq0s3xxq",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/creategatewayclustersprofilebyid",
+      "sha256": "bc01e43049d0f7ef4f27c38cbc3e6a03b3ef9fadb753506b216dbbbcacacab59",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 8
+    },
+    {
+      "path": "roles-policy-3zc101qmq0.json",
+      "title": "Roles & Policy",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/3zc101qmq0s543a",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createobjectgroupsgroupbyid",
+      "sha256": "017d3c33fe1824128316ac5b31bc147ac850caca09c117216fa11fb5c378d2a7",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 12
+    },
+    {
+      "path": "config-management-3zc1034mq0.json",
+      "title": "Config Management",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/3zc1034mq0s3k6g",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/config-checkpoint",
+      "sha256": "4f0487f4fcf149152294352329e8905726bbdd070fd76590e8ad8682479d47d6",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 5
+    },
+    {
+      "path": "network-services-3zc1034mq0.json",
+      "title": "Network Services",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/3zc1034mq0s4wxa",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createdhcprelayprofilebyid",
+      "sha256": "6d61cd8dc4b49806f02b8457397ea2b0039a46960f4d5e515b926a2f40d2c222",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 44
+    },
+    {
+      "path": "firmware-policy-40jz1kmq0s.json",
+      "title": "Firmware Policy",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/40jz1kmq0s3re7",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createfirmwarecompliance",
+      "sha256": "e68e87692fa6a561cf3cc0822a612933aed4a0aac7ce0ba00fcb7d4c39afaf3e",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 1
+    },
+    {
+      "path": "vlans-networks-40jz3amq0s.json",
+      "title": "VLANs & Networks",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/40jz3amq0s6kac",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createlayer2vlanrange",
+      "sha256": "191c96df9c2edd639530ca0ba290be1aa7a0d9dda6e59ba9ee469fa9776d9ce0",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 23
+    },
+    {
+      "path": "routing-overlays-40jzhmq0s5.json",
+      "title": "Routing & Overlays",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/40jzhmq0s5cj5",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/bfd",
+      "sha256": "31eb979e86e4e95f01d4b6776f51f3481ae05db3c074fd70d7796949b41032a8",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 44
+    },
+    {
+      "path": "troubleshooting-5v41h1vmqq.json",
+      "title": "Troubleshooting",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/5v41h1vmqquwwi3",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/initiatecxpingv1",
+      "sha256": "63c5764425ffb63b33105ded4fcc7607617f55be74ad4aaedcdf3c8708a3ea10",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 95
+    },
+    {
+      "path": "monitoring-7wjo8aumqq.json",
+      "title": "Monitoring",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/7wjo8aumqquw9y2",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getaccesspointsv1",
+      "sha256": "f1c8663b9566b4186862865b790cbbf047f087801e4dd18e47c4bf0b0a540f3b",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 137
+    },
+    {
+      "path": "central-nac-9a25qv24mq.json",
+      "title": "Central NAC",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/9a25qv24mq0s3h9j",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/cda-identity-store",
+      "sha256": "905cf0de9313e5c475b98656b5d3cafb78eed8b572f0a61cd6757456fd2c5f46",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 22
+    },
+    {
+      "path": "configuration-health-b374ik1cmq.json",
+      "title": "Configuration Health",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/b374ik1cmq0s27qi",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/configuration-health",
+      "sha256": "663a55d1c09dd7953e1f7afb442df09326e44d4e59ff5be7c459c70f730d9230",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 3
+    },
+    {
+      "path": "notifications-dpi09gmqqu.json",
+      "title": "Notifications",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/dpi09gmqquwgm4",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getalertlistv1",
+      "sha256": "59a2ccb611c2a9041fc7f61f7fdbba063830dc21794c8c50ac8bc5ccdf06039a",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 12
+    },
+    {
+      "path": "application-experience-e2t121zmq0.json",
+      "title": "Application Experience",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/e2t121zmq0s2pj6",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/app-recog-control",
+      "sha256": "0c8f7c70399b7e66694debc5d69669fab00268eba9482ab371a4e86f1a47eddf",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 10
+    },
+    {
+      "path": "miscellaneous-e2t122vmq0.json",
+      "title": "Miscellaneous",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/e2t122vmq0s4k50",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createoverlaywlanssidclusterbyid",
+      "sha256": "cab5cf3ecc4ab5d9986aebcd18d1202d48982dce2af3809c324ee7c36d35fd6c",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 12
+    },
+    {
+      "path": "assignments-efby11mq0s.json",
+      "title": "Assignments",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/efby11mq0s33h9",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/config-assignment",
+      "sha256": "f621670b73a23c736c1d125c73f0a0b7e4e3f4ad074358694d517dcd6804c8dd",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 2
+    },
+    {
+      "path": "security-efby2pmq0s.json",
+      "title": "Security",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/efby2pmq0s5oms",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/aaa-captive-portal",
+      "sha256": "11e631c9d8c0afd2d99e8ec6dbddc7c59f073bd7e59bbb1b74c55316465075d0",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 64
+    },
+    {
+      "path": "wireless-efbynmq0s6.json",
+      "title": "Wireless",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/efbynmq0s6q3c",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/alg",
+      "sha256": "9160f5b036522d6c207a0e4a1024eb6efa45f603ee0688190859d2f5b17ece80",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 14
+    },
+    {
+      "path": "services-tdgmkgmq0s.json",
+      "title": "Services",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/tdgmkgmq0s5sbl",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/airgroup-servers",
+      "sha256": "f8ffba6d508ed356094eef7ee2430fa7990bf16d7589b8786aba04b365dbeed9",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 9
+    },
+    {
+      "path": "system-tdgmkhmq0s.json",
+      "title": "System",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/tdgmkhmq0s67li",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/ap-system",
+      "sha256": "2dd31e3dab1fad5e3133b453aef45d39018faa12ef8a0bd46320391f952a5830",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 71
+    },
+    {
+      "path": "tunnels-tdgmkhmq0s.json",
+      "title": "Tunnels",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/tdgmkhmq0s6frc",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createtunnelgroupsgroupbyid",
+      "sha256": "6274fdb825e18055967f235bd4de94654f926179194e7e1555d57c486dd1bb58",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md",
+      "path_count": 4
+    },
+    {
+      "path": "mist.openapi.json",
+      "title": "Mist API",
+      "source_url": "https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/mist.openapi.json",
+      "sha256": "2c3d769ef188bbce1b9db7a0774b5a10812d0a5bc11960b768de47b66bb88bbf",
+      "fetched": "2026-10-04",
+      "license": "MIT",
+      "path_count": 756,
+      "upstream_commit": "315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e"
+    }
+  ]
+}

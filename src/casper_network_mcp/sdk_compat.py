@@ -158,7 +158,7 @@ def set_dispatcher(
     Pass the same ``marker`` used for :func:`claim_dispatcher` so a later
     re-claim can tell whether this wrapper is still the outermost one.
     """
-    server._tool_manager.call_tool = dispatcher  # type: ignore[method-assign]
+    server._tool_manager.call_tool = dispatcher  # type: ignore[method-assign,assignment]
     if marker is not None:
         setattr(server._tool_manager, _installed_attr(marker), dispatcher)
 

@@ -1,0 +1,194 @@
+{
+  "_about": "Inputs for scripts/refresh_specs.py. Central: HPE developer-portal API registry ids (the portal runs on ReadMe). Mist: a mistsys/mist_openapi commit.",
+  "central": [
+    {
+      "path": "reporting-11dzpz39mq.json",
+      "title": "Reporting",
+      "registry_id": "11dzpz39mqquwjy2",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/createuserreportv1"
+    },
+    {
+      "path": "services-11dzpz39mq.json",
+      "title": "Services",
+      "registry_id": "11dzpz39mqquwpe3",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getdevicelocationsv1"
+    },
+    {
+      "path": "central-nac-service-18et1xmq0s.json",
+      "title": "Central NAC Service",
+      "registry_id": "18et1xmq0s2hjv",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/certificates"
+    },
+    {
+      "path": "telemetry-18etfmq0s6.json",
+      "title": "Telemetry",
+      "registry_id": "18etfmq0s6cbv",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/client-insight"
+    },
+    {
+      "path": "interfaces-1bgu1hmq0s.json",
+      "title": "Interfaces",
+      "registry_id": "1bgu1hmq0s48gc",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/ap-uplink"
+    },
+    {
+      "path": "extensions-1bgu2cmq0s.json",
+      "title": "Extensions",
+      "registry_id": "1bgu2cmq0s3ogx",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createsplunkinstancesinstancebyid"
+    },
+    {
+      "path": "gateway-clustering-orchestration-1bgu2cmq0s.json",
+      "title": "Gateway Clustering Orchestration",
+      "registry_id": "1bgu2cmq0s3u3m",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/creategwclusterintentconfigprofilebyid"
+    },
+    {
+      "path": "named-object-1bgu2jmq0s.json",
+      "title": "Named Object",
+      "registry_id": "1bgu2jmq0s4p8q",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/alias"
+    },
+    {
+      "path": "scope-management-1fkx1wmq0s.json",
+      "title": "Scope Management",
+      "registry_id": "1fkx1wmq0s1vs6",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/adddevicestodevicecollectionsm"
+    },
+    {
+      "path": "iot-2vuu5nz1bm.json",
+      "title": "IoT",
+      "registry_id": "2vuu5nz1bmq0s4fxb",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createusbprofilebyid"
+    },
+    {
+      "path": "high-availability-3zc101qmq0.json",
+      "title": "High Availability",
+      "registry_id": "3zc101qmq0s3xxq",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/creategatewayclustersprofilebyid"
+    },
+    {
+      "path": "roles-policy-3zc101qmq0.json",
+      "title": "Roles & Policy",
+      "registry_id": "3zc101qmq0s543a",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createobjectgroupsgroupbyid"
+    },
+    {
+      "path": "config-management-3zc1034mq0.json",
+      "title": "Config Management",
+      "registry_id": "3zc1034mq0s3k6g",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/config-checkpoint"
+    },
+    {
+      "path": "network-services-3zc1034mq0.json",
+      "title": "Network Services",
+      "registry_id": "3zc1034mq0s4wxa",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createdhcprelayprofilebyid"
+    },
+    {
+      "path": "firmware-policy-40jz1kmq0s.json",
+      "title": "Firmware Policy",
+      "registry_id": "40jz1kmq0s3re7",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createfirmwarecompliance"
+    },
+    {
+      "path": "vlans-networks-40jz3amq0s.json",
+      "title": "VLANs & Networks",
+      "registry_id": "40jz3amq0s6kac",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createlayer2vlanrange"
+    },
+    {
+      "path": "routing-overlays-40jzhmq0s5.json",
+      "title": "Routing & Overlays",
+      "registry_id": "40jzhmq0s5cj5",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/bfd"
+    },
+    {
+      "path": "troubleshooting-5v41h1vmqq.json",
+      "title": "Troubleshooting",
+      "registry_id": "5v41h1vmqquwwi3",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/initiatecxpingv1"
+    },
+    {
+      "path": "monitoring-7wjo8aumqq.json",
+      "title": "Monitoring",
+      "registry_id": "7wjo8aumqquw9y2",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getaccesspointsv1"
+    },
+    {
+      "path": "central-nac-9a25qv24mq.json",
+      "title": "Central NAC",
+      "registry_id": "9a25qv24mq0s3h9j",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/cda-identity-store"
+    },
+    {
+      "path": "configuration-health-b374ik1cmq.json",
+      "title": "Configuration Health",
+      "registry_id": "b374ik1cmq0s27qi",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/configuration-health"
+    },
+    {
+      "path": "notifications-dpi09gmqqu.json",
+      "title": "Notifications",
+      "registry_id": "dpi09gmqquwgm4",
+      "reference_page": "https://developer.arubanetworks.com/new-central/reference/getalertlistv1"
+    },
+    {
+      "path": "application-experience-e2t121zmq0.json",
+      "title": "Application Experience",
+      "registry_id": "e2t121zmq0s2pj6",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/app-recog-control"
+    },
+    {
+      "path": "miscellaneous-e2t122vmq0.json",
+      "title": "Miscellaneous",
+      "registry_id": "e2t122vmq0s4k50",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createoverlaywlanssidclusterbyid"
+    },
+    {
+      "path": "assignments-efby11mq0s.json",
+      "title": "Assignments",
+      "registry_id": "efby11mq0s33h9",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/config-assignment"
+    },
+    {
+      "path": "security-efby2pmq0s.json",
+      "title": "Security",
+      "registry_id": "efby2pmq0s5oms",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/aaa-captive-portal"
+    },
+    {
+      "path": "wireless-efbynmq0s6.json",
+      "title": "Wireless",
+      "registry_id": "efbynmq0s6q3c",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/alg"
+    },
+    {
+      "path": "services-tdgmkgmq0s.json",
+      "title": "Services",
+      "registry_id": "tdgmkgmq0s5sbl",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/airgroup-servers"
+    },
+    {
+      "path": "system-tdgmkhmq0s.json",
+      "title": "System",
+      "registry_id": "tdgmkhmq0s67li",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/ap-system"
+    },
+    {
+      "path": "tunnels-tdgmkhmq0s.json",
+      "title": "Tunnels",
+      "registry_id": "tdgmkhmq0s6frc",
+      "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createtunnelgroupsgroupbyid"
+    }
+  ],
+  "mist": [
+    {
+      "path": "mist.openapi.json",
+      "title": "Mist API",
+      "repo": "mistsys/mist_openapi",
+      "commit": "315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e",
+      "version": "2607.1.0"
+    }
+  ]
+}
