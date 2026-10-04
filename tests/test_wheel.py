@@ -1,9 +1,9 @@
 """The built wheel: runs with no logins, carries its data and notices, and installs from the hash-locked file.
 
 These tests build the wheel with ``uv build`` and install it into a fresh
-virtual environment with Casper's exact install command. They use uv's local
-cache (``--offline``), so they never download anything; CI runs them after
-``uv sync`` has filled the cache.
+virtual environment with Casper's exact install command. uv reads its cache
+first and downloads only what is missing (a fresh CI machine has an empty
+cache); every package is still checked against the lock's hashes.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def _run(args: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
 @pytest.fixture(scope="module")
 def built(tmp_path_factory) -> pathlib.Path:
     dist = tmp_path_factory.mktemp("dist")
-    out = _run([_uv(), "build", "--offline", "--wheel", "-o", str(dist)], cwd=ROOT)
+    out = _run([_uv(), "build", "--wheel", "-o", str(dist)], cwd=ROOT)
     assert out.returncode == 0, out.stderr
     return dist
 
@@ -61,7 +61,7 @@ def _help_runs(venv: pathlib.Path, home: pathlib.Path) -> None:
 
 
 def _venv(path: pathlib.Path) -> pathlib.Path:
-    out = _run([_uv(), "venv", "--offline", "-q", "--python", sys.executable, str(path)])
+    out = _run([_uv(), "venv", "-q", "--python", sys.executable, str(path)])
     assert out.returncode == 0, out.stderr
     return path
 
@@ -101,7 +101,7 @@ def test_wheel_runs_with_no_logins(built, tmp_path):
     out = _run([*export, "--hashes", "--no-emit-project", "-o", str(pins)], cwd=ROOT)
     assert out.returncode == 0, out.stderr
     venv = _venv(tmp_path / "venv")
-    install = [_uv(), "pip", "install", "--offline", "--python", str(venv / "bin" / "python"), "--no-deps"]
+    install = [_uv(), "pip", "install", "--python", str(venv / "bin" / "python"), "--no-deps"]
     out = _run([*install, "--only-binary", ":all:", "-r", str(pins)])
     assert out.returncode == 0, out.stderr
     out = _run([*install, str(_wheel(built))])
@@ -112,7 +112,7 @@ def test_wheel_runs_with_no_logins(built, tmp_path):
 def test_release_lock_installs_with_caspers_command(built, tmp_path):
     lock = tmp_path / "casper-network-mcp.lock.txt"
     out = _run(
-        [sys.executable, "scripts/make_lock.py", __version__, "--dist", str(built), "--out", str(lock), "--offline"],
+        [sys.executable, "scripts/make_lock.py", __version__, "--dist", str(built), "--out", str(lock)],
         cwd=ROOT,
     )
     assert out.returncode == 0, out.stderr
@@ -124,7 +124,7 @@ def test_release_lock_installs_with_caspers_command(built, tmp_path):
     assert re.fullmatch(r"[0-9a-f]{64}", digest)
 
     venv = _venv(tmp_path / "venv")
-    install = [_uv(), "pip", "install", "--offline", "--python", str(venv / "bin" / "python")]
+    install = [_uv(), "pip", "install", "--python", str(venv / "bin" / "python")]
     out = _run([*install, *CASPER_INSTALL, "--find-links", str(built), "-r", str(lock)])
     assert out.returncode == 0, out.stderr
     _help_runs(venv, tmp_path)
