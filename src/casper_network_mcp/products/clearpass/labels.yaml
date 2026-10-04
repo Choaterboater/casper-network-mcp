@@ -1,3 +1,33 @@
-# Change kinds for ClearPass's hand-written tools, one row per tool, filled as the tools are ported (Task 9).
-# Row shape: tool_name: {kind: config, vendor_category: "...", checked: "why, one line"}
-{}
+# Change kinds for ClearPass's hand-written tools (Task 9).
+# kind: Casper's change kind. vendor_category: the ClearPass API reference section, a reference only.
+# checked: why this kind, one line, from reading the tool's requests by hand.
+
+clearpass_get: {kind: read, vendor_category: "Any (GET only)", checked: "GET under /api/ only"}
+clearpass_who_am_i: {kind: read, vendor_category: "API Operator", checked: "GET /api/oauth/me"}
+clearpass_get_endpoint_by_mac: {kind: read, vendor_category: "Identities > Endpoint", checked: "GET /api/endpoint/mac-address/{mac_address}"}
+clearpass_list_auth_failures: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session with an auth_status filter"}
+clearpass_get_network_device: {kind: read, vendor_category: "Policy Elements > Network Device", checked: "GET /api/network-device/name/{name} or /{network_device_id}"}
+clearpass_find_guest: {kind: read, vendor_category: "Guest Manager > Guest", checked: "GET /api/guest/username/{username} or /api/guest with a filter"}
+clearpass_get_insight_endpoint: {kind: read, vendor_category: "Insight > Endpoint", checked: "GET /api/insight/endpoint/mac/{mac}"}
+clearpass_list_onguard_activity: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity"}
+clearpass_get_onguard_activity_by_mac: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity/host_mac/{host_mac}"}
+clearpass_list_access_tracker_sessions: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session"}
+clearpass_get_access_tracker_session: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session/{id}"}
+clearpass_list_endpoints: {kind: read, vendor_category: "Identities > Endpoint", checked: "GET /api/endpoint"}
+clearpass_list_guests: {kind: read, vendor_category: "Guest Manager > Guest", checked: "GET /api/guest"}
+clearpass_list_roles: {kind: read, vendor_category: "Policy Elements > Role", checked: "GET /api/role"}
+clearpass_list_enforcement_policies: {kind: read, vendor_category: "Policy Elements > Enforcement Policy", checked: "GET /api/enforcement-policy"}
+clearpass_get_enforcement_policy: {kind: read, vendor_category: "Policy Elements > Enforcement Policy", checked: "GET /api/enforcement-policy/name/{name}"}
+clearpass_list_services: {kind: read, vendor_category: "Policy Elements > Services", checked: "GET /api/config/service"}
+clearpass_get_service: {kind: read, vendor_category: "Policy Elements > Services", checked: "GET /api/config/service/name/{services_name}"}
+clearpass_list_syslog_targets: {kind: read, vendor_category: "Integrations > Syslog Target", checked: "GET /api/syslog-target"}
+clearpass_list_syslog_export_filters: {kind: read, vendor_category: "Integrations > Syslog Export Filter", checked: "GET /api/syslog-export-filter"}
+clearpass_get_server_version: {kind: read, vendor_category: "Platform Certificates and Server", checked: "GET /api/server/version"}
+clearpass_list_cluster_servers: {kind: read, vendor_category: "Local Server Configuration > Cluster", checked: "GET /api/cluster/server"}
+clearpass_update_endpoint_attributes: {kind: config, vendor_category: "Identities > Endpoint", checked: "PATCH /api/endpoint/mac-address/{mac_address} with attributes; no CoA on this operation"}
+clearpass_delete_endpoint: {kind: delete, vendor_category: "Identities > Endpoint", checked: "DELETE /api/endpoint/mac-address/{mac_address}"}
+clearpass_set_guest_enabled: {kind: disruptive, vendor_category: "Guest Manager > Guest", checked: "PATCH /api/guest/...; turning a guest off with change_of_authorization drops their sessions"}
+clearpass_delete_guest: {kind: delete, vendor_category: "Guest Manager > Guest", checked: "DELETE /api/guest/username/{username} or /{guest_id}"}
+clearpass_create_guest: {kind: config, vendor_category: "Guest Manager > Guest", checked: "POST /api/guest adds one guest account"}
+clearpass_disconnect_session: {kind: disruptive, vendor_category: "Session Control > Active Session", checked: "POST /api/session/{id}/disconnect ends a live session (CoA)"}
+clearpass_set_service_enabled: {kind: disruptive, vendor_category: "Policy Elements > Services", checked: "PATCH .../enable or /disable; a disabled service stops matching, so its authentications fail over or fail"}
