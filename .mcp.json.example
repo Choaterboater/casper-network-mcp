@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "casper-network-mcp-read-only": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--directory", "${workspaceFolder}", "casper-network-mcp", "--read-only"]
+    }
+  }
+}

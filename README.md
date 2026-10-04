@@ -37,6 +37,8 @@ uvx --from casper-network-mcp==0.1.0 casper-network-mcp --read-only
 | `--transport stdio` | The default: talk over standard input and output. |
 | `--transport http --port 8010` | Listen on this machine only (`127.0.0.1`). |
 
+From a checkout, `.mcp.json.example` starts it read-only with `uv run`; logins come from your shell.
+
 ## Logins
 
 The server reads only these variables from the environment Casper starts it with. It reads no settings files.

@@ -81,3 +81,16 @@ def test_release_builds_locks_checks_then_publishes_the_same_files():
     assert "publish" in attach["needs"]
     assert "casper-network-mcp.lock.txt" in _steps_text(attach)
     assert rel.get("permissions") == {"contents": "read"}
+
+
+def test_example_config_starts_read_only_with_no_logins_in_it():
+    import json
+
+    servers = json.loads((ROOT / ".mcp.json.example").read_text(encoding="utf-8"))["mcpServers"]
+    assert len(servers) == 1
+    (entry,) = servers.values()
+    assert entry["type"] == "stdio"
+    assert entry["args"][-1] == "--read-only"
+    assert "casper-network-mcp" in entry["args"]
+    # Logins come from the shell, never from a file that gets copied around.
+    assert "env" not in entry
