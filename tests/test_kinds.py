@@ -150,3 +150,25 @@ def test_unknown_kind_is_refused():
 )
 def test_a_body_op_that_deletes_or_disrupts_is_labelled_so(method, path, expected):
     assert kind_for_operation(method, path) == expected
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/network-config/v1alpha1/cnac-named-mpsk-reg/export",
+        "/network-config/v1alpha1/cnac-visitor/export",
+        "/api/guest/{guest_id}/receipt/{id}",
+        "/api/guest/g1/receipt/r1",
+    ],
+)
+def test_a_text_export_that_can_hold_passwords_is_not_a_read(path):
+    # CSV or receipt text is never redacted, so these must not run as plain reads.
+    assert kind_for_operation("GET", path) == "config"
+
+
+async def test_invoke_read_tool_refuses_a_password_export():
+    from casper_network_mcp.router import dispatch
+
+    for name in ("central_export_named_mpsk_csv_file", "central_export_visitor_csv_file"):
+        out = await dispatch.invoke_read_tool(name, {})
+        assert out["error"] == "not_a_read_tool", name
