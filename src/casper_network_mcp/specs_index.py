@@ -338,7 +338,19 @@ def _ensure_bundle_index() -> Path:
     marker.unlink(missing_ok=True)
     build(path)
     marker.write_text("ok\n", encoding="utf-8")
+    _remove_old_indexes(path)
     return path
+
+
+def _remove_old_indexes(current: Path) -> None:
+    """Delete indexes left by earlier bundles (tens of MB each); errors are ignored."""
+    keep = {current.name, current.name + ".ok"}
+    for old in [*current.parent.glob("specs-*.sqlite"), *current.parent.glob("specs-*.sqlite.ok")]:
+        if old.name not in keep:
+            try:
+                old.unlink()
+            except OSError:
+                pass
 
 
 def _open_ro(path: Path) -> sqlite3.Connection:

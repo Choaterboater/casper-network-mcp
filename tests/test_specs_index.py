@@ -171,6 +171,18 @@ def test_missing_marker_rebuilds(cache_dir):
     assert specs_index.marker_path().exists()
 
 
+def test_a_new_build_removes_old_bundle_indexes(cache_dir):
+    cache_dir.mkdir(parents=True)
+    stale = cache_dir / "specs-0000000000000000.sqlite"
+    stale.write_bytes(b"old index")
+    stale.with_name(stale.name + ".ok").write_text("ok\n")
+    keep = cache_dir / "notes.txt"
+    keep.write_text("not ours")
+    specs_index.connect().close()
+    assert not stale.exists() and not stale.with_name(stale.name + ".ok").exists()
+    assert keep.exists() and specs_index.index_path().exists() and specs_index.marker_path().exists()
+
+
 def test_corrupt_cache_with_marker_rebuilds(cache_dir):
     specs_index.connect().close()
     specs_index.index_path().write_bytes(b"not a sqlite database at all, not even close")
