@@ -19,6 +19,7 @@ from __future__ import annotations
 import random
 import threading
 import time
+from collections.abc import Mapping
 from typing import Any
 
 import httpx
@@ -78,8 +79,9 @@ class CentralClient(BaseClient):
         self._sync_client: httpx.Client | None = None
 
     @classmethod
-    def from_env(cls, gate: Gate, **kw: Any) -> CentralClient:
-        logins = read_logins()
+    def from_env(cls, gate: Gate, logins: Mapping[str, str] | None = None, **kw: Any) -> CentralClient:
+        """A client from the login variables (``logins``, or read from the environment)."""
+        logins = read_logins() if logins is None else logins
         return cls(
             gate=gate,
             base_url=logins.get("CENTRAL_BASE_URL"),

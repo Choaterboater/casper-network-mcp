@@ -6,6 +6,7 @@ login is the limit). Its API lives under ``/api``.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import httpx
@@ -35,8 +36,9 @@ class ClearPassClient(BaseClient):
         super().__init__(gate=gate, base_url=base_url, transport=transport, timeout=timeout, has_login=bool(token))
 
     @classmethod
-    def from_env(cls, gate: Gate, **kw: Any) -> ClearPassClient:
-        logins = read_logins()
+    def from_env(cls, gate: Gate, logins: Mapping[str, str] | None = None, **kw: Any) -> ClearPassClient:
+        """A client from the login variables (``logins``, or read from the environment)."""
+        logins = read_logins() if logins is None else logins
         return cls(gate=gate, base_url=logins.get("CLEARPASS_BASE_URL"), token=logins.get("CLEARPASS_API_TOKEN"), **kw)
 
     def _login_headers(self) -> dict[str, str]:

@@ -70,6 +70,15 @@ def body_of(request: httpx.Request) -> Any:
     return jsonlib.loads(request.content) if request.content else None
 
 
+@pytest.fixture(autouse=True)
+def _no_real_logins(monkeypatch):
+    """No test sees a real login from the shell, so nothing can reach a real product."""
+    from casper_network_mcp.core.logins import LOGIN_VARS
+
+    for name in LOGIN_VARS:
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def recording_transport() -> RecordingTransport:
     return RecordingTransport()

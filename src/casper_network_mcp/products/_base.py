@@ -193,6 +193,11 @@ class BaseClient:
     def _login_headers(self) -> dict[str, str]:
         raise NotImplementedError
 
+    @property
+    def has_login(self) -> bool:
+        """True when a login (and an address) is set for this product."""
+        return self._has_login
+
     # ── replies ─────────────────────────────────────────────────────────────
 
     def _decode(self, resp: httpx.Response, method: str, url: str) -> Any:

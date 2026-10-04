@@ -9,6 +9,7 @@ process environment Casper sets.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import httpx
@@ -52,8 +53,9 @@ class MistClient(BaseClient):
         )
 
     @classmethod
-    def from_env(cls, gate: Gate, **kw: Any) -> MistClient:
-        logins = read_logins()
+    def from_env(cls, gate: Gate, logins: Mapping[str, str] | None = None, **kw: Any) -> MistClient:
+        """A client from the login variables (``logins``, or read from the environment)."""
+        logins = read_logins() if logins is None else logins
         return cls(
             gate=gate,
             token=logins.get("MIST_API_TOKEN"),
