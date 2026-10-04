@@ -11,13 +11,22 @@ flag read once at start) the gate lets through only:
 
 Everything else is refused before anything is sent. A kind a caller declares
 can only make the gate stricter, never looser: a PUT called ``read`` is still
-a PUT. Without the pin, writes pass to the product, whose own role decides;
-the login's ``can_change`` scopes are enforced here in Task 12.
+a PUT.
+
+Without the pin, a write passes to the product, whose own role decides, with
+one plain check first (:meth:`Gate.check_scope`): when the login's scopes are
+known and the write's target is resolved to somewhere nothing in the login's
+``can_change`` list covers, it is refused before sending. The gate loads a
+product's scopes itself, once, before that product's first write (and
+``access_check`` fills the same cache). A failed load, an unknown target or
+an empty ``can_change`` list never refuses: the product decides.
 """
 
 from __future__ import annotations
 
-from typing import Any
+import asyncio
+from collections.abc import Awaitable, Callable
+from typing import Any, Protocol
 
 from casper_network_mcp.core.errors import ToolError
 from casper_network_mcp.core.kinds import (
@@ -28,12 +37,38 @@ from casper_network_mcp.core.kinds import (
     listed_template,
 )
 
-__all__ = ["PRODUCT_NAMES", "Gate", "LoginMissing", "Refused", "ScopeMap"]
+__all__ = ["PRODUCT_NAMES", "Gate", "LoginMissing", "Refused", "ScopeLoader", "ScopeMap", "Scopes", "is_write"]
 
 PRODUCT_NAMES = {"central": "Central", "mist": "Mist", "clearpass": "ClearPass"}
 
-#: Per-product login scopes (``can_change`` / ``read_only`` lists); filled in Task 12.
-ScopeMap = dict[str, Any]
+
+class Scopes(Protocol):
+    """What one product's login may change, as the gate needs it."""
+
+    async def refusal(self, client: Any, method: str, path: str, args: dict[str, Any]) -> str | None:
+        """A plain refusal when the target is resolved and not covered; else None."""
+        ...
+
+
+#: Loads a product's scopes through its client (None when they can't be known).
+ScopeLoader = Callable[[Any], Awaitable["Scopes | None"]]
+
+#: Per-product scopes the gate has loaded.
+ScopeMap = dict[str, Scopes]
+
+
+def is_write(method: str, path: str, kind: str | None = None) -> bool:
+    """True unless the request only reads or runs a listed check."""
+    method = method.upper()
+    if method == "GET":
+        return kind not in (None, "read") or kind_for_operation(method, path) != "read"
+    template = listed_template(method, path)
+    if method == "POST" and template is not None:
+        if (method, template) in READ_POSTS and kind in (None, "read"):
+            return False
+        if (method, template) in TROUBLESHOOT_OPS and kind in (None, "troubleshoot"):
+            return False
+    return True
 
 
 class Refused(ToolError):
@@ -53,11 +88,54 @@ class LoginMissing(ToolError):
 
 
 class Gate:
-    """The read-only pin (and, from Task 12, the login's scopes)."""
+    """The read-only pin and the login's scopes."""
 
-    def __init__(self, read_only: bool, scopes: ScopeMap | None = None) -> None:
+    def __init__(
+        self,
+        read_only: bool,
+        scopes: ScopeMap | None = None,
+        loaders: dict[str, ScopeLoader] | None = None,
+    ) -> None:
         self.read_only = bool(read_only)
         self.scopes: ScopeMap = dict(scopes or {})
+        self.loaders: dict[str, ScopeLoader] = dict(loaders or {})
+        self._locks: dict[str, asyncio.Lock] = {}
+
+    async def scopes_for(self, product: str, client: Any, *, refresh: bool = False) -> Scopes | None:
+        """The product's scopes: cached, or loaded once through ``client``.
+
+        A failed load is not cached (the next write tries again) and means
+        "no scopes": nothing is refused for it.
+        """
+        if not refresh and product in self.scopes:
+            return self.scopes[product]
+        loader = self.loaders.get(product)
+        if loader is None:
+            return None
+        lock = self._locks.setdefault(product, asyncio.Lock())
+        async with lock:
+            if not refresh and product in self.scopes:
+                return self.scopes[product]
+            try:
+                answer = await loader(client)
+            except Exception:  # noqa: BLE001 - a failed load means "the product decides"
+                return None
+            if answer is not None:
+                self.scopes[product] = answer
+            return answer
+
+    async def check_scope(
+        self, product: str, client: Any, method: str, path: str, args: dict[str, Any], kind: str | None = None
+    ) -> None:
+        """Refuse a write whose resolved target is outside the login's ``can_change`` list."""
+        if not is_write(method, path, kind):
+            return
+        scopes = await self.scopes_for(product, client)
+        if scopes is None:
+            return
+        message = await scopes.refusal(client, method.upper(), path, dict(args or {}))
+        if message:
+            raise Refused(message)
 
     def check(self, product: str, method: str, path: str, args: dict[str, Any], kind: str | None = None) -> None:
         """Raise :class:`Refused` unless ``method path`` may be sent now.

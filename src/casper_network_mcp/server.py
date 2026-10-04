@@ -72,7 +72,9 @@ def build_server(
     environ: Mapping[str, str] | None = None,
 ) -> RouterServer:
     """The router server. ``transport`` and ``environ`` are for tests (a fake API, set logins)."""
-    gate = Gate(read_only=read_only)
+    from casper_network_mcp.access import load_mist_scopes
+
+    gate = Gate(read_only=read_only, loaders={"mist": load_mist_scopes})
     clients = _clients(gate, read_logins(environ), transport)
     for product, product_client in clients.items():
         _tools.use_client(product, _fixed(product_client))

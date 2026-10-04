@@ -2,11 +2,13 @@
 
 ``request()`` is the only way a tool reaches a product. In order it:
 
-1. asks the gate (``core/gate.py``) -- the read-only pin, and from Task 12 the
-   login's scopes -- and is refused before anything else happens;
+1. asks the gate (``core/gate.py``) -- the read-only pin -- and is refused
+   before anything else happens;
 2. checks the path (``core/paths.safe_api_path``): relative, inside the
    product's API, no dot segments, no encoded slashes, no query or fragment;
 3. checks there is a login and a usable product address;
+   then, for a write, asks the gate whether the target is inside the
+   login's ``can_change`` scopes (async front door only);
 4. sends, with the login added last so no argument can replace it;
 5. hides secret values in the reply (``core/redact.py``).
 
@@ -251,6 +253,7 @@ class BaseClient:
         """Send one request through the gate; return the reply with secrets hidden."""
         method = method.upper()
         url = self._prepare(method, path, kind=kind, path_args=path_args)
+        await self.gate.check_scope(self.product, self, method, path, dict(path_args or {}), kind)
         body, body_headers = body_kwargs(json, content_type)
         resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
         return self._decode(resp, method, url)
@@ -270,6 +273,7 @@ class BaseClient:
         """Like :meth:`request` (same gate and checks), but an error status comes back as a ``Reply``."""
         method = method.upper()
         url = self._prepare(method, path, kind=kind, path_args=path_args)
+        await self.gate.check_scope(self.product, self, method, path, dict(path_args or {}), kind)
         body, body_headers = body_kwargs(json, content_type)
         resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
         return self._reply(resp, url)

@@ -206,3 +206,21 @@ def placeholder_args(tool: Any = None) -> dict[str, Any]:
             continue
         args[name] = _placeholder(hints.get(name, param.annotation), name)
     return args
+
+
+@pytest.fixture
+def server_with_replies(recording_transport):
+    """A router server with a Mist login on the recording fake, answering ``replies``.
+
+    ``replies`` maps ``(method, path)`` to a payload, or to a status code.
+    Only Mist has a login unless ``environ`` adds others.
+    """
+    from casper_network_mcp.server import build_server
+
+    def make(replies: dict[tuple[str, str], Any], *, read_only: bool = False, environ: dict[str, str] | None = None):
+        for (method, path), payload in replies.items():
+            recording_transport.reply(payload, method, path)
+        logins = {"MIST_API_TOKEN": "test-token"} if environ is None else environ
+        return build_server(read_only=read_only, transport=recording_transport, environ=logins)
+
+    return make
