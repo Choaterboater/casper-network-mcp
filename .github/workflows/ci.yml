@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check .
+      - name: Types
+        run: uv run mypy src/casper_network_mcp/core src/casper_network_mcp/access.py src/casper_network_mcp/router
+      - name: Generated files are current
+        run: |
+          uv run python scripts/build_manifests.py --check
+          uv run python scripts/build_index.py --check
+      - name: Tests (boundary, spec check, labels, find_tool bench, wheel)
+        run: uv run pytest -q
+      - name: Build
+        run: uv build
+
+  scrub:
+    name: Nothing personal, no RAG, no env files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Generic scrub greps
+        shell: bash
+        run: |
+          # Vendor documents (and the manifests built from them) are upstream bytes pinned by hash,
+          # so they are left out of the address and word checks. The boundary and wheel tests hold deny lists.
+          files() {
+            git ls-files -z -- . \
+              ':!:src/casper_network_mcp/specs/*.json' \
+              ':!:src/casper_network_mcp/openapi_gen/manifests/*.json' \
+              ':!:.github/**' ':!:uv.lock' ':!:tests/test_boundary.py' ':!:tests/test_specs_bundle.py' \
+              ':!:tests/test_wheel.py'
+          }
+          fail=0
+          check() {
+            if files | xargs -0 grep -nE $3 "$2"; then echo "::error::$1"; fail=1; fi
+          }
+          check "private (RFC 1918) address; use 192.0.2.x, 198.51.100.x or 203.0.113.x" \
+            '\b(10\.[0-9]+\.[0-9]+\.[0-9]+|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]+\.[0-9]+|192\.168\.[0-9]+\.[0-9]+)\b'
+          check "home path" '/Users/|~/\.mist-lab'
+          check "env file loading" 'dotenv|load_dotenv'
+          check "RAG or scraper word" 'ingestion|scrape|playwright|lancedb|fastembed|ollama|milvus|\bredis\b' -i
+          check "browser identity" 'User-Agent.*(Safari|Mozilla)' -i
+          check "personal address" '@gmail|\.local\b'
+          exit $fail

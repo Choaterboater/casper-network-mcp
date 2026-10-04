@@ -1,0 +1,104 @@
+name: Release
+
+# A v* tag builds the wheel, writes the hash-locked install file, checks that file installs with
+# Casper's exact command on every supported system, then publishes those same files.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+      - name: Tag matches the package version
+        shell: bash
+        run: |
+          version="$(uv run --frozen python -c 'import casper_network_mcp as m; print(m.__version__)')"
+          test "v${version}" = "${GITHUB_REF_NAME}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+      - name: Build
+        run: uv build
+      - name: Lock file from the built wheel
+        run: uv run --frozen python scripts/make_lock.py "$VERSION" --dist dist --out casper-network-mcp.lock.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lock
+          path: casper-network-mcp.lock.txt
+
+  check-lock:
+    needs: build
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: lock
+      - name: Install with Casper's command into an empty environment
+        shell: bash
+        run: |
+          uv venv --python "${{ matrix.python }}" "$RUNNER_TEMP/venv"
+          uv pip install --require-hashes --no-deps --only-binary :all: --find-links dist \
+            --python "$RUNNER_TEMP/venv/bin/python" -r casper-network-mcp.lock.txt
+      - name: Runs with no logins
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: env -i PATH=/usr/bin:/bin HOME="$RUNNER_TEMP" "$RUNNER_TEMP/venv/bin/casper-network-mcp" --help
+
+  publish:
+    needs: [build, check-lock]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  attach-lock:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lock
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Attach the lock file and wheel to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
+            --notes "Install with Casper, or: uv pip install --require-hashes --no-deps --only-binary :all: -r casper-network-mcp.lock.txt" \
+            casper-network-mcp.lock.txt dist/*
