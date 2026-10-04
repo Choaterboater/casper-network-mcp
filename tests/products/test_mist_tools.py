@@ -355,7 +355,7 @@ def test_inventory_kinds_are_honest():
 async def test_api_error_comes_back_plainly(recording_transport, mist_backend):
     recording_transport.reply((401, {"detail": "Invalid token."}), "GET", "/api/v1/orgs/o1/sites")
     out = await mist_backend.call("mist_list_sites", {"org_id": "o1"})
-    assert out["status"] == 401 and "Invalid token" in out["error"]
+    assert out["status"] == 401 and out["detail"] == "Invalid token." and out["login"] == "expired"
 
 
 @pytest.mark.parametrize("name", ["mist_list_sites", "sle_org_summary", "alarms_list"])
