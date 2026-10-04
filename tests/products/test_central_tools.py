@@ -295,3 +295,56 @@ async def test_an_id_with_a_slash_or_query_is_refused_before_sending(name, args,
     sent = [c.url.raw_path.decode() for c in recording_transport.calls]
     assert not any(bad.split("/")[0] + "/" in p or "?y=" in p or "#" in p for p in sent), sent
     assert all(c.method == "GET" for c in recording_transport.calls)
+
+
+# ── review fixes: reboot and disconnect, AOS-S reboot, ids with a slash, sync lookups ──
+
+INVENTORY = "/network-monitoring/v1/device-inventory"
+
+
+@pytest.mark.parametrize("headers", [{}, {"Location": "/x/async-operations/task-1"}])
+async def test_reboot_is_one_post_and_a_2xx_is_success(headers, recording_transport, central_backends):
+    import httpx
+
+    recording_transport.reply(httpx.Response(202, headers=headers, json={}), "POST", f"{TS}/aps/SN1/reboot")
+    out = await central_backends.call("reboot_device", {"serial_number": "SN1", "device_type": "AP"})
+    assert [(c.method, c.url.path) for c in recording_transport.calls] == [("POST", f"{TS}/aps/SN1/reboot")]
+    assert out["errors"] == [] and out["status_code"] == 202
+
+
+@pytest.mark.parametrize("headers", [{}, {"Location": "/x/async-operations/task-1"}])
+async def test_disconnect_is_one_post_and_a_2xx_is_success(headers, recording_transport, central_backends):
+    import httpx
+
+    path = f"{TS}/aps/SN1/disconnectUserByMacAddress"
+    recording_transport.reply(httpx.Response(202, headers=headers, json={}), "POST", path)
+    out = await central_backends.call("disconnect_client", {"mac_address": "00:00:5e:00:53:01", "ap_serial": "SN1"})
+    assert [(c.method, c.url.path) for c in recording_transport.calls] == [("POST", path)]
+    assert out["errors"] == [] and out["status_code"] == 202
+
+
+async def test_reboot_reports_an_error_reply(recording_transport, central_backends):
+    recording_transport.reply((403, {"detail": "no"}), "POST", f"{TS}/aps/SN1/reboot")
+    out = await central_backends.call("reboot_device", {"serial_number": "SN1", "device_type": "AP"})
+    assert out["errors"] and "403" in out["errors"][0]
+
+
+@pytest.mark.parametrize("device_type", [None, "SWITCH"])
+async def test_reboot_sends_an_aos_s_switch_to_aos_s(device_type, recording_transport, central_backends):
+    recording_transport.reply(
+        {"items": [{"serialNumber": "SN9", "deviceType": "SWITCH", "firmwareVersion": "16.11.0012", "model": "2930F"}]},
+        "GET",
+        INVENTORY,
+    )
+    args = {"serial_number": "SN9"} | ({"device_type": device_type} if device_type else {})
+    await central_backends.call("reboot_device", args)
+    posts = [c.url.path for c in recording_transport.calls if c.method == "POST"]
+    assert posts == [f"{TS}/aos-s/SN9/reboot"]
+
+
+async def test_delete_config_assignment_refuses_a_slash_in_any_piece(recording_transport, central_backends):
+    base = {"scope_id": "1001", "device_function": "x1", "profile_type": "x1", "profile_instance": "x1"}
+    for name in base:
+        out = await central_backends.call("delete_config_assignment", base | {name: "zz9/qq8"})
+        assert "error" in str(out).lower(), name
+    assert recording_transport.calls == []

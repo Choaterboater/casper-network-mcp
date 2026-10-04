@@ -1,7 +1,6 @@
 """Exact API lookup over the bundled OpenAPI documents (SQLite + FTS5).
 
-Adapted from hpe-networking-mcp ``pipeline/clients/specs_index.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Kept: build, connect, search, lookup,
+Adapted from hpe-networking-mcp ``pipeline/clients/specs_index.py``. Kept: build, connect, search, lookup,
 get_endpoint, get_exact_endpoint, get_endpoint_by_operation_id, get_schema,
 get_enum, get_response_description and the natural-language ranking. Changed:
 the index is built from this package's own ``specs/`` on first use into the

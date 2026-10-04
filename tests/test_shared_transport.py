@@ -1,7 +1,6 @@
 """Serving over stdio and local HTTP.
 
-Ported from hpe-networking-mcp ``tests/unit/test_shared_transport.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Transport, host and port are arguments now
+Ported from hpe-networking-mcp ``tests/unit/test_shared_transport.py``. Transport, host and port are arguments now
 (command-line flags), never environment variables; HTTP serves this machine
 only, so the allow-list and bearer cases are gone.
 """

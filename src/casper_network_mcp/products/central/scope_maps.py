@@ -3,7 +3,7 @@
 Lifted from hpe-networking-mcp pipeline/stages/s6_configure.py
 (_fetch_global_scope_id, _post_scope_map, _push_vlan_interface,
 _ensure_device_profiles, ARUBA_DEVICE_PROFILES) and the device-group
-lookup they use from s2_validate.py (MIT, nowireless4u/hpe-networking-mcp).
+lookup they use from s2_validate.py.
 What changed: no Stage, state store, models or account context; the
 switch group name is an argument (it was an env read, default "Switches");
 central_client is the gated Central shim (compat.get_client()), whose

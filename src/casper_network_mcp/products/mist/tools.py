@@ -1,7 +1,6 @@
 """Mist curated tools, and the ``mist`` backend that holds every hand-written Mist tool.
 
-Adapted from hpe-networking-mcp ``mcp_servers/mist.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Endpoints and field names were checked
+Adapted from hpe-networking-mcp ``mcp_servers/mist.py``. Endpoints and field names were checked
 against the bundled Mist OpenAPI document. What changed:
 
 * every request goes through the gated Mist client (``MistClient.request``):

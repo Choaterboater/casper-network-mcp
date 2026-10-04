@@ -1,7 +1,6 @@
 """Signed continuation cursors for cut-short reads.
 
-Ported from hpe-networking-mcp ``tests/unit/test_tool_router_cursor.py`` (MIT,
-nowireless4u/hpe-networking-mcp). The cursor helpers now live in
+Ported from hpe-networking-mcp ``tests/unit/test_tool_router_cursor.py``. The cursor helpers now live in
 ``core/budget.py``; ``_read`` below stands in for the router's resume step
 (re-run the same read, re-slice from the cursor's offset). Capability checks
 (only read tools get cursors) move to the router tests.

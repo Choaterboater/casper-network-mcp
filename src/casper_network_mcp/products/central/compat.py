@@ -1,7 +1,7 @@
 """What the copied Central tools call: ``get_client()``, ``get_mcp_client()`` and their helpers.
 
 The ~250 Central tools copied from hpe-networking-mcp (``monitoring``,
-``config``, ``ops``, ``nac``; MIT, nowireless4u/hpe-networking-mcp) were
+``config``, ``ops``, ``nac``) were
 written against that project's ``CentralClient`` (``get``/``post``/``_request``
 ...) and ``shared.py`` helpers. This module keeps that shape so the tools
 port with few edits, but every method sends through the gated

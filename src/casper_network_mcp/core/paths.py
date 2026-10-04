@@ -2,7 +2,7 @@
 
 ``safe_api_path`` and ``validate_product_base_url`` are adapted from
 hpe-networking-mcp's ``shared.py`` and ``path_segment`` from its Mist
-``_path_segment`` (MIT, nowireless4u/hpe-networking-mcp). ``path_segment`` is
+``_path_segment``. ``path_segment`` is
 stricter than the source: it refuses rather than quotes anything that could
 move the request (``/``, ``?``, ``#``, ``.``/``..``, control characters, any
 ``%``), so the request sent is always the one Casper's box showed.

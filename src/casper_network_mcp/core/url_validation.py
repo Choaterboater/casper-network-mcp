@@ -1,7 +1,6 @@
 """Check a product base URL before any login is attached to it.
 
-Adapted from hpe-networking-mcp's ``pipeline/url_validation.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Changes: no environment switches. Private
+Adapted from hpe-networking-mcp's ``pipeline/url_validation.py``. Changes: no environment switches. Private
 and on-site hosts are allowed (ClearPass usually lives on one; the person's
 own login is the limit), plain ``http`` is allowed only for this machine, and
 unedited documentation placeholder hosts are always refused.

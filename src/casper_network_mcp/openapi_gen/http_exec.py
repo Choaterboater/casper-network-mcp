@@ -1,7 +1,6 @@
 """Send one generated call through the product client.
 
-Rewritten from hpe-networking-mcp ``openapi_gen/http_exec.py`` (MIT,
-nowireless4u/hpe-networking-mcp). The source built its own pooled HTTP client
+Rewritten from hpe-networking-mcp ``openapi_gen/http_exec.py``. The source built its own pooled HTTP client
 and its own write gate; here there is neither. Every generated call goes
 through the product client's ``request()``, which runs the gate first, then
 the path check, then sends, so a generated tool can never reach the network

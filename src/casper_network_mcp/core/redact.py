@@ -1,6 +1,6 @@
 """Hide secrets before a tool result or error reaches the AI.
 
-Adapted from hpe-networking-mcp (MIT, nowireless4u/hpe-networking-mcp). Changes:
+Adapted from hpe-networking-mcp. Changes:
 no environment reads, the marker is the plain word ``[hidden]``, and an
 ``auth`` object keeps its non-secret fields (its type) while its secrets are
 hidden.
@@ -29,6 +29,7 @@ _SENSITIVE_KEY_EXACT = {
     "key",
     "keys",
     "community_string",
+    "v3_community_name",
     "snmp_read",
     "snmp_write",
 }
@@ -47,7 +48,13 @@ _SENSITIVE_KEY_SUFFIXES = (
 #: Keys whose *object* value is a settings block that mixes secrets with plain
 #: settings (Mist ``wlan.auth`` holds ``type`` next to ``psk``). For these an
 #: object is walked, so its type stays readable; a plain value is hidden.
-_WALK_WHEN_OBJECT = {"auth"}
+_WALK_WHEN_OBJECT = {
+    "auth",
+    "auth_key_info",
+    "cppm_password_config",
+    "shared_secret_config",
+    "tracking_password_config",
+}
 
 
 def _normalize_key(key: Any) -> str:
@@ -56,9 +63,33 @@ def _normalize_key(key: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "_", key_text.lower()).strip("_")
 
 
+#: Credential fields in the bundled specs that the rules above miss: password
+#: and passphrase values in any spelling (``password-plaintext``,
+#: ``password_ntlm_hash``, ``export_password2``, ``priv-pass-cypher``), keys
+#: stored as cipher text or hex, SNMP communities, RADIUS key-wrap keys and Duo
+#: keys. Settings about a password (``password_minimum_length``,
+#: ``password-type``) stay readable. ``tests/test_redact.py`` walks every
+#: property name in the bundled specs against these rules.
+_SENSITIVE_KEY_PATTERN = re.compile(
+    r"(^|_)(password|passphrase)\d*(_(value|plaintext|ciphertext|cipher|cypher|text|hash|ntlm_hash|sha256))?$"
+    r"|(^|_)pass_(cypher|cipher|ciphertext|text)$"
+    r"|(ciphertext|cipher_text|hexstring|hashkey)(_value)?$"
+    r"|(^|_)key_(value|file)$"
+    r"|^auth_keys$"
+    r"|(^|_)(snmp_community|community_name|v3_community)$"
+    r"|^keywrap_(kek|mack)$"
+    r"|^(auth_key_info|cppm_password_config|shared_secret_config|tracking_password_config)$"
+    r"|(^|_)(skey|ikey)$"
+)
+
+
 def _is_sensitive_key(key: Any) -> bool:
     normalized = _normalize_key(key)
-    return normalized in _SENSITIVE_KEY_EXACT or any(normalized.endswith(suffix) for suffix in _SENSITIVE_KEY_SUFFIXES)
+    return (
+        normalized in _SENSITIVE_KEY_EXACT
+        or any(normalized.endswith(suffix) for suffix in _SENSITIVE_KEY_SUFFIXES)
+        or _SENSITIVE_KEY_PATTERN.search(normalized) is not None
+    )
 
 
 # Some APIs return a field whose value is itself a JSON- or Python-repr-encoded

@@ -131,3 +131,22 @@ def test_label_for_kind(kind, label):
 def test_unknown_kind_is_refused():
     with pytest.raises(ValueError):
         label_for_kind("write")
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "expected"),
+    [
+        # op in the body can delete devices from the org or downgrade them
+        ("PUT", "/api/v1/orgs/{org_id}/inventory", "delete"),
+        ("PUT", "/api/v1/orgs/o1/inventory", "delete"),
+        # op remove/renumber takes a member out of the virtual chassis
+        ("PUT", "/api/v1/sites/{site_id}/devices/{device_id}/vc", "disruptive"),
+        ("PUT", "/api/v1/installer/orgs/{org_id}/devices/{fpc0_mac}/vc", "disruptive"),
+        # op delete removes a VC port, which can split the virtual chassis
+        ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/vc/vc_port", "disruptive"),
+        # action Bounce makes OnGuard agents bounce the endpoint's connection now
+        ("POST", "/api/onguard-activity/notification", "disruptive"),
+    ],
+)
+def test_a_body_op_that_deletes_or_disrupts_is_labelled_so(method, path, expected):
+    assert kind_for_operation(method, path) == expected

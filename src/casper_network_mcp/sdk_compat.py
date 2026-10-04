@@ -1,7 +1,6 @@
 """The single place allowed to touch ``MCPServer``'s private tool manager.
 
-Copied from hpe-networking-mcp ``mcp_servers/_sdk_compat.py`` (MIT,
-nowireless4u/hpe-networking-mcp). No other module may reach into
+Copied from hpe-networking-mcp ``mcp_servers/_sdk_compat.py``. No other module may reach into
 ``._tool_manager``; ``tests/test_no_private_sdk_access.py`` enforces that.
 
 Before bumping ``mcp``, read

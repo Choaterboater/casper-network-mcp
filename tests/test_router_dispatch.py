@@ -2,7 +2,7 @@
 
 Ported from hpe-networking-mcp ``tests/unit/test_tool_router_dispatch.py``,
 ``test_router_error_redaction.py``, ``test_tool_router_cursor.py`` and
-``test_tool_router_response_budget.py`` (MIT, nowireless4u/hpe-networking-mcp),
+``test_tool_router_response_budget.py``,
 over a small fake catalog. Cut: the per-platform write switches and the
 ``HPE_MCP_PRODUCT_ACCESS`` env cases (no env switches here), and the ctx
 injection case (no inner tool takes a request context any more).

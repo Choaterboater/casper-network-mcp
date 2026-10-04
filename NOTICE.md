@@ -9,9 +9,13 @@ covered by that licence:
 - **Juniper Mist's OpenAPI document** (`mist.openapi.json`), under the MIT licence reproduced in section B below.
 - **Files built from those documents**: the generated tool lists in
   `src/casper_network_mcp/openapi_gen/manifests/` and find_tool's word index in
-  `src/casper_network_mcp/router/index.json` hold operation ids, paths, parameter names and one-line summaries
-  taken from them. What came from HPE's documents stays under the terms in sections A and C; what came from
-  Mist's document stays under section B's MIT licence.
+  `src/casper_network_mcp/router/index.json` hold operation ids, paths, parameter names, and the operation and
+  parameter summaries and full descriptions, taken word for word from the documents. What came from HPE's
+  documents stays under the terms in sections A and C; what came from Mist's document stays under section B's MIT
+  licence. Removing a document (sections A and C) therefore also means removing its entries from those files: after
+  deleting the document and its `specs/MANIFEST.json` entry from `specs/`, and its pins from `scripts/spec_pins.json`, run
+  `scripts/build_manifests.py` and `scripts/build_index.py` and commit what they write. The tests that compare
+  the generated tools with the bundled documents, and `lookup_api`, then cover only the documents that are left.
 - **Code adapted from other MIT projects**: see `THIRD_PARTY_NOTICES.md`.
 
 The rest of this file is `src/casper_network_mcp/specs/NOTICE.md`, word for word (a test keeps the two the same).

@@ -1,7 +1,6 @@
 """Central NAC and authentication tools (38 tools).
 
-Copied from hpe-networking-mcp ``mcp_servers/nac.py`` (MIT,
-nowireless4u/hpe-networking-mcp). What changed: every request goes through the
+Copied from hpe-networking-mcp ``mcp_servers/nac.py``. What changed: every request goes through the
 gated Central client (``compat``); the auth-profile tools take the Central org
 name as an argument (it was one lab's name hard-coded), and the MAC Address
 Store is looked up by name (its id was one tenant's constant).

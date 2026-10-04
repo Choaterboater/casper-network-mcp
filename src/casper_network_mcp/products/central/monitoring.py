@@ -1,7 +1,6 @@
 """Central monitoring and operational health tools (90 tools).
 
-Copied from hpe-networking-mcp ``mcp_servers/monitoring.py`` (MIT,
-nowireless4u/hpe-networking-mcp). What changed: every request goes through the
+Copied from hpe-networking-mcp ``mcp_servers/monitoring.py``. What changed: every request goes through the
 gated Central client (``compat``); the questions the source asked the person
 before alert, report and notification-rule changes are gone (Casper's box
 asks), and the alert actions take ``dry_run: bool = False`` instead;
@@ -35,6 +34,7 @@ tools accept both `next_cursor` (preferred) and a legacy `offset` that is
 translated to an approximate starting cursor.
 """
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import quote
@@ -615,7 +615,10 @@ async def clear_alerts(
         body["notes"] = notes
     if dry_run:
         return would_send("POST", f"{_ALERT_ACTIONS_BASE}/clear", body)
-    return _alert_action("clear", body, f"Clear request submitted for {len(alert_keys)} alert(s).")
+    # _alert_action uses the sync door; run it off the event loop.
+    return await asyncio.to_thread(
+        _alert_action, "clear", body, f"Clear request submitted for {len(alert_keys)} alert(s)."
+    )
 
 
 @mcp.tool()
@@ -628,7 +631,10 @@ async def defer_alerts(keys: list[str], defer_until: str, dry_run: bool = False)
     body = {"keys": alert_keys, "deferUntil": defer_value}
     if dry_run:
         return would_send("POST", f"{_ALERT_ACTIONS_BASE}/defer", body)
-    return _alert_action("defer", body, f"Defer request submitted for {len(alert_keys)} alert(s).")
+    # _alert_action uses the sync door; run it off the event loop.
+    return await asyncio.to_thread(
+        _alert_action, "defer", body, f"Defer request submitted for {len(alert_keys)} alert(s)."
+    )
 
 
 @mcp.tool()
@@ -638,7 +644,9 @@ async def reactivate_alerts(keys: list[str], dry_run: bool = False) -> dict[str,
     body = {"keys": alert_keys}
     if dry_run:
         return would_send("POST", f"{_ALERT_ACTIONS_BASE}/active", body)
-    return _alert_action(
+    # _alert_action uses the sync door; run it off the event loop.
+    return await asyncio.to_thread(
+        _alert_action,
         "active",
         body,
         f"Reactivate request submitted for {len(alert_keys)} alert(s).",
@@ -655,7 +663,9 @@ async def set_alert_priority(keys: list[str], priority: str, dry_run: bool = Fal
     body = {"keys": alert_keys, "priority": priority}
     if dry_run:
         return would_send("POST", f"{_ALERT_ACTIONS_BASE}/priority", body)
-    return _alert_action(
+    # _alert_action uses the sync door; run it off the event loop.
+    return await asyncio.to_thread(
+        _alert_action,
         "priority",
         body,
         f"Priority update submitted for {len(alert_keys)} alert(s).",

@@ -1,7 +1,6 @@
 """Generated tools: one MCP tool per operation in the bundled vendor specs.
 
-Adapted from hpe-networking-mcp's ``openapi_gen`` package (MIT,
-nowireless4u/hpe-networking-mcp):
+Adapted from hpe-networking-mcp's ``openapi_gen`` package:
 
 * :mod:`.ir` -- Swagger 2.0 / OpenAPI 3.0 / 3.1 parsing into a flat list of operations.
 * :mod:`.naming` -- deterministic, unique tool names.

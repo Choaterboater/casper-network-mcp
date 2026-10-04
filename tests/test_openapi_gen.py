@@ -1,7 +1,6 @@
 """The generator: parsing, naming, manifests and tool registration.
 
-Ported from hpe-networking-mcp ``tests/unit/test_openapi_gen.py`` (MIT,
-nowireless4u/hpe-networking-mcp), rewritten for tools that send through the
+Ported from hpe-networking-mcp ``tests/unit/test_openapi_gen.py``, rewritten for tools that send through the
 product client's ``request()`` and have no ``confirm`` step.
 """
 

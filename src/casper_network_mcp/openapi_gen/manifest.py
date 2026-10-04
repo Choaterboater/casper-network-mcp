@@ -1,7 +1,6 @@
 """Build and load the generated-operation manifest for each product.
 
-Adapted from hpe-networking-mcp ``openapi_gen/manifest.py`` (MIT,
-nowireless4u/hpe-networking-mcp). A manifest is one JSON file per product
+Adapted from hpe-networking-mcp ``openapi_gen/manifest.py``. A manifest is one JSON file per product
 under ``openapi_gen/manifests/``, built by ``scripts/build_manifests.py``
 from the bundled ``specs/`` documents only: each operation's name, method,
 path, summary, parameters and request body. Nothing else feeds it.

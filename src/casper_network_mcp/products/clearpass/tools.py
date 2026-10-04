@@ -1,7 +1,6 @@
 """ClearPass curated tools, and the ``clearpass`` backend that holds them.
 
-Adapted from hpe-networking-mcp ``mcp_servers/clearpass.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Paths were checked against the bundled
+Adapted from hpe-networking-mcp ``mcp_servers/clearpass.py``. Paths were checked against the bundled
 ClearPass documents (served under ``/api``). What changed:
 
 * every request goes through the gated ClearPass client (the read-only pin

@@ -275,6 +275,26 @@ KIND_OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {
         "firmware",
         "rolls devices back to their backup software images",
     ),
+    ("PUT", "/api/v1/orgs/{org_id}/inventory"): (
+        "delete",
+        "op in the body can delete or unclaim devices (op=delete releases them from the org; downgrade_to_jsi)",
+    ),
+    ("PUT", "/api/v1/sites/{site_id}/devices/{device_id}/vc"): (
+        "disruptive",
+        "op in the body can remove or renumber a virtual chassis member",
+    ),
+    ("PUT", "/api/v1/installer/orgs/{org_id}/devices/{fpc0_mac}/vc"): (
+        "disruptive",
+        "op in the body can remove or renumber a virtual chassis member",
+    ),
+    ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/vc/vc_port"): (
+        "disruptive",
+        "op=delete removes a virtual chassis port, which can split the virtual chassis",
+    ),
+    ("POST", "/api/onguard-activity/notification"): (
+        "disruptive",
+        "action Bounce makes the OnGuard agents bounce the endpoints' network connection now",
+    ),
     ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/shell"): (
         "admin",
         "opens a remote shell on the device: full command-line access",

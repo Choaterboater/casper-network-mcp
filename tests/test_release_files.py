@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pathlib
+import re
 
 import yaml
 
@@ -94,3 +95,25 @@ def test_example_config_starts_read_only_with_no_logins_in_it():
     assert "casper-network-mcp" in entry["args"]
     # Logins come from the shell, never from a file that gets copied around.
     assert "env" not in entry
+
+
+def test_third_party_notice_credits_the_reference_project_honestly():
+    text = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+    # No placeholder in place of a copyright line, and no claim that copied code is nowireless4u's.
+    assert "exact copyright line" not in text
+    assert "names this project as its MIT source" not in text
+    assert "nowireless4u/hpe-networking-mcp" in text and "reference" in text
+    headers = [
+        p.relative_to(ROOT)
+        for p in [*(ROOT / "src").rglob("*.py"), *(ROOT / "tests").rglob("*.py")]
+        if re.search(r"MIT,\s+" + "nowireless4u", p.read_text(encoding="utf-8"))
+    ]
+    assert not headers, headers
+
+
+def test_top_notice_says_what_the_built_files_hold_and_how_to_remove_it():
+    top = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
+    summary = top.split("The rest of this file is")[0]
+    assert "one-line" not in summary
+    assert "descriptions" in summary
+    assert "scripts/build_manifests.py" in summary and "scripts/build_index.py" in summary

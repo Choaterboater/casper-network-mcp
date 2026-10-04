@@ -2,7 +2,7 @@
 
 Lookup cases ported from hpe-networking-mcp ``tests/unit/test_specs_index_lookup.py``,
 ``test_build_spec_index.py``, ``test_specs_index_responses.py`` and
-``test_spec_index_degradation.py`` (MIT, nowireless4u/hpe-networking-mcp).
+``test_spec_index_degradation.py``.
 The index is built from the package's own specs into a cache file on first
 use, so a missing index means "rebuild it", not "run a build command".
 """

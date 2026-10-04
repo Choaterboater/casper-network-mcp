@@ -1,7 +1,6 @@
 """Central ops: troubleshooting and device actions (41 tools).
 
-Copied from hpe-networking-mcp ``mcp_servers/ops.py`` (MIT,
-nowireless4u/hpe-networking-mcp). What changed: every request goes through the
+Copied from hpe-networking-mcp ``mcp_servers/ops.py``. What changed: every request goes through the
 gated Central client (``compat``); the questions the source asked the person
 before a PoE or port bounce, reboot, disconnect, gateway halt or swarm reboot
 are gone (Casper's box asks), and those tools take ``dry_run: bool = False``
@@ -20,6 +19,7 @@ LLDP/ARP/ping/show composed from the existing per-op tools, partial-failure
 safe).
 """
 
+import asyncio
 from typing import Any
 from urllib.parse import quote
 
@@ -274,7 +274,7 @@ async def poe_bounce(
     ports format: CX "1/1/1", AOS-S "1", Gateway "GE 0/0/0". device_type auto-detected.
     """
     errors: list[str] = []
-    dtype = device_type_for_troubleshoot(serial_number, device_type)
+    dtype = await asyncio.to_thread(device_type_for_troubleshoot, serial_number, device_type)
     if dtype is None:
         errors.append(
             f"Could not determine device type for {serial_number}. Provide device_type explicitly (SWITCH/GATEWAY)."
@@ -306,7 +306,7 @@ async def port_bounce(
     ports format: CX "1/1/1", AOS-S "1", Gateway "GE 0/0/0". device_type auto-detected.
     """
     errors: list[str] = []
-    dtype = device_type_for_troubleshoot(serial_number, device_type)
+    dtype = await asyncio.to_thread(device_type_for_troubleshoot, serial_number, device_type)
     if dtype is None:
         errors.append(
             f"Could not determine device type for {serial_number}. Provide device_type explicitly (SWITCH/GATEWAY)."
@@ -334,7 +334,7 @@ async def cable_test(
 ) -> dict[str, Any]:
     """Run a cable/TDR test on CX or AOS-S switch ports (async, polls ~60s)."""
     errors: list[str] = []
-    dtype = device_type_for_troubleshoot(serial_number, device_type)
+    dtype = await asyncio.to_thread(device_type_for_troubleshoot, serial_number, device_type)
     if dtype is None:
         errors.append(
             f"Could not determine device type for {serial_number}. Provide device_type explicitly (SWITCH/GATEWAY)."
@@ -357,56 +357,47 @@ async def cable_test(
 # ── Device Actions ────────────────────────────────────────────────────────────
 
 
+async def _send_action_once(segment: str, serial_number: str, action: str, body: dict[str, Any]) -> dict[str, Any]:
+    """One POST for an action that has no task to poll (reboot, disconnect).
+
+    The bundled troubleshooting spec has no ``async-operations`` endpoint for
+    these, so a 2xx reply is the result: polling would report a failure after
+    the device already rebooted (or the client was already disconnected).
+    """
+    response, endpoint = await _arequest_troubleshooting("POST", segment, serial_number, action, json=body)
+    if response.status_code not in (200, 201, 202, 204):
+        return {
+            "status_code": response.status_code,
+            "endpoint_used": endpoint,
+            "errors": [compact_http_error(response, endpoint)],
+        }
+    return {"status_code": response.status_code, "endpoint_used": endpoint, "reply": resp_json(response), "errors": []}
+
+
 @mcp.tool()
 async def reboot_device(
     serial_number: str,
     device_type: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Reboot an AP, CX switch, AOS-S switch, or gateway. device_type auto-detected if omitted."""
-    errors: list[str] = []
+    """Reboot an AP, CX switch, AOS-S switch, or gateway. device_type auto-detected if omitted.
 
-    if not device_type:
-        device = get_mcp_client().get_device_by_serial(serial_number)
-        if device:
-            raw = device.get("deviceType", "")
-            if "ACCESS_POINT" in raw or raw == "AP":
-                device_type = "AP"
-            elif "SWITCH" in raw:
-                device_type = "SWITCH"
-            elif "GATEWAY" in raw:
-                device_type = "GATEWAY"
-        if not device_type:
-            errors.append(f"Could not determine device type for {serial_number}. Provide device_type explicitly.")
-            return {"serial_number": serial_number, "device_type": None, "response": None, "errors": errors}
-
-    dt = device_type.upper()
-    if dt in ("AP", "ACCESS_POINT"):
-        segment = "aps"
-    elif dt in ("CX", "SWITCH"):
-        segment = "cx"
-    elif dt in ("AOS-S", "AOSS", "AOS_S"):
-        segment = "aos-s"
-    elif dt in ("GATEWAY", "GW"):
-        segment = "gateways"
+    One request: a 2xx reply means Central accepted the reboot (there is no task to poll).
+    """
+    try:
+        segment = await asyncio.to_thread(device_type_for_troubleshoot, serial_number, device_type)
+    except ValueError:
+        segment = None
+        error = f"Unknown device_type '{device_type}'. Use 'AP', 'CX', 'AOS-S', 'GATEWAY' or 'SWITCH'."
     else:
-        errors.append(f"Unknown device_type '{device_type}'. Use 'AP', 'CX', 'AOS-S', or 'GATEWAY'.")
-        return {"serial_number": serial_number, "device_type": device_type, "response": None, "errors": errors}
+        error = f"Could not determine device type for {serial_number}. Provide device_type explicitly."
+    if segment is None:
+        return {"serial_number": serial_number, "device_type": device_type, "response": None, "errors": [error]}
     endpoints = troubleshooting_endpoint_candidates(segment, serial_number, "reboot")
     if dry_run:
         return would_send("POST", endpoints[0], {})
-    response = await atroubleshoot_async(
-        get_client(),
-        endpoints,
-        {},
-        errors,
-    )
-    return {
-        "serial_number": serial_number,
-        "device_type": device_type,
-        "response": response,
-        "errors": response.get("errors", errors),
-    }
+    result = await _send_action_once(segment, serial_number, "reboot", {})
+    return {"serial_number": serial_number, "device_type": device_type or segment, **result}
 
 
 @mcp.tool()
@@ -415,13 +406,12 @@ async def disconnect_client(
     ap_serial: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Force-disconnect a wireless client by MAC address. ap_serial auto-looked up if omitted."""
-    client = get_client()
-    errors: list[str] = []
+    """Force-disconnect a wireless client by MAC address. ap_serial auto-looked up if omitted.
 
-    # Resolve AP serial if not provided
+    One request: a 2xx reply means Central accepted the disconnect (there is no task to poll).
+    """
     if not ap_serial:
-        cl = get_mcp_client().find_client(mac_address)
+        cl = await asyncio.to_thread(get_mcp_client().find_client, mac_address)
         if not cl:
             return {"mac_address": mac_address, "response": None, "errors": ["Client not found in monitoring"]}
         ap_serial = cl.get("connectedDeviceSerial")
@@ -430,19 +420,8 @@ async def disconnect_client(
     endpoints = troubleshooting_endpoint_candidates("aps", ap_serial, "disconnectUserByMacAddress")
     if dry_run:
         return would_send("POST", endpoints[0], {"userMacAddress": mac_address})
-    response = await atroubleshoot_async(
-        client,
-        endpoints,
-        {"userMacAddress": mac_address},
-        errors,
-    )
-    return {
-        "mac_address": mac_address,
-        "ap_serial": ap_serial,
-        "endpoint_used": response.get("endpoint_used"),
-        "response": response,
-        "errors": response.get("errors", errors),
-    }
+    result = await _send_action_once("aps", ap_serial, "disconnectUserByMacAddress", {"userMacAddress": mac_address})
+    return {"mac_address": mac_address, "ap_serial": ap_serial, **result}
 
 
 # ── CX Switch Intelligence ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 """The HTTP client every product client sends through.
 
-Adapted from hpe-networking-mcp (MIT, nowireless4u/hpe-networking-mcp):
+Adapted from hpe-networking-mcp:
 ``pipeline/clients/pooled_clients.py`` (one pooled ``httpx.AsyncClient`` per
 name and event loop), ``pipeline/clients/http_retry.py`` (bounded retries for
 plain reads only) and ``shared.py`` (``compact_http_error``,

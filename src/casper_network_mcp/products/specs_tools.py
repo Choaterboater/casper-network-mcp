@@ -2,8 +2,7 @@
 
 These are inner tools on a ``specs`` backend, reached through ``find_tool``.
 They read only the files inside this package; they never call a product.
-The ``lookup_api`` body is adapted from hpe-networking-mcp ``rag.py`` (MIT,
-nowireless4u/hpe-networking-mcp).
+The ``lookup_api`` body is adapted from hpe-networking-mcp ``rag.py``.
 """
 
 from __future__ import annotations

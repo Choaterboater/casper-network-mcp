@@ -1,7 +1,6 @@
 """Exact API lookups: ``METHOD /path`` or an operationId straight to its generated tool.
 
-The idea comes from hpe-networking-mcp ``pipeline/clients/capability_coverage.py``
-(MIT, nowireless4u/hpe-networking-mcp), rewritten over the router catalog:
+The idea comes from hpe-networking-mcp ``pipeline/clients/capability_coverage.py``, rewritten over the router catalog:
 a path may be the spec template (``/api/v1/sites/{site_id}``) or a concrete
 path (``/api/v1/sites/s1``); a fixed segment wins over a ``{param}``.
 """

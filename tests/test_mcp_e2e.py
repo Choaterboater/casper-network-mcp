@@ -1,7 +1,6 @@
 """The router over the real MCP protocol (in-memory client, real JSON-RPC framing).
 
-The harness idea comes from hpe-networking-mcp ``tests/unit/test_mcp_protocol_e2e.py``
-(MIT, nowireless4u/hpe-networking-mcp); the server under test is this one.
+The harness idea comes from hpe-networking-mcp ``tests/unit/test_mcp_protocol_e2e.py``; the server under test is this one.
 """
 
 from __future__ import annotations
@@ -79,3 +78,31 @@ def test_building_the_server_loads_no_backend():
     proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60, env={}, check=False)
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "0"
+
+
+def test_the_read_only_flag_reaches_the_gate(monkeypatch):
+    from casper_network_mcp import server as server_module
+
+    started = []
+    monkeypatch.setattr(server_module, "run_server", lambda server, **kw: started.append((server, kw)))
+    server_module.main(["--read-only"])
+    server_module.main([])
+    assert [s.gate.read_only for s, _ in started] == [True, False]
+    assert started[0][1]["transport"] == "stdio"
+
+
+async def test_the_read_only_flag_refuses_a_change_over_stdio():
+    from mcp.client.stdio import StdioServerParameters
+
+    # A Mist login that points at a documentation address: the pin refuses before any request.
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "casper_network_mcp", "--read-only"],
+        env={"MIST_API_TOKEN": "t", "MIST_HOST": "api.example.invalid"},
+    )
+    async with Client(params) as client:
+        out = await client.call_tool(
+            "invoke_tool",
+            {"name": "mist_update_wlan", "arguments": {"site_id": "s1", "wlan_id": "w1", "changes": {"vlan_id": 30}}},
+        )
+    assert "read-only" in _payload(out)["error"]

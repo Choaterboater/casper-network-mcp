@@ -1,8 +1,7 @@
 """``invoke_read_tool`` and ``invoke_tool``: run one inner tool by name.
 
 Ported from hpe-networking-mcp ``mcp_servers/tool_router.py`` (``_dispatch_tool``,
-``_dispatch_read_tool``, ``invoke_read_tool``, ``invoke_tool``; MIT,
-nowireless4u/hpe-networking-mcp). Cut: the per-platform write switches, the
+``_dispatch_read_tool``, ``invoke_read_tool``, ``invoke_tool``). Cut: the per-platform write switches, the
 global read-only env switch, execution contracts and the rate gate. What
 stays: the call goes through the owning backend's tool manager (so arguments
 are checked and coerced), a raised error comes back as ``{"error": ...}`` with

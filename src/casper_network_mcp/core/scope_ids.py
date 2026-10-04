@@ -1,7 +1,6 @@
 """Central scope ids: checked once, before any write.
 
-Copied from hpe-networking-mcp ``pipeline/scope_ids.py`` (MIT,
-nowireless4u/hpe-networking-mcp); no changes beyond this note.
+Copied from hpe-networking-mcp ``pipeline/scope_ids.py``; no changes beyond this note.
 """
 
 from __future__ import annotations

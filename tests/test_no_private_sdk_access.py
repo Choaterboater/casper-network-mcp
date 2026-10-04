@@ -1,7 +1,6 @@
 """No module outside ``sdk_compat.py`` may reach into MCP's private tool manager.
 
-Ported from hpe-networking-mcp ``tests/unit/test_no_private_sdk_access.py``
-(MIT, nowireless4u/hpe-networking-mcp). The scan is AST-based: attribute
+Ported from hpe-networking-mcp ``tests/unit/test_no_private_sdk_access.py``. The scan is AST-based: attribute
 access and string literals count; docstrings and comments are prose and do not.
 """
 

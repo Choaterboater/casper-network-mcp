@@ -2,8 +2,7 @@
 
 Adapted from hpe-networking-mcp's ``shared.py`` (``clamp_limit``,
 ``bound_collection_response``, ``bounded_response_payload``) and
-``tool_router.py`` (response budget, HMAC continuation cursors), MIT,
-nowireless4u/hpe-networking-mcp. Changes: no environment overrides; the
+``tool_router.py`` (response budget, HMAC continuation cursors). Changes: no environment overrides; the
 budget and cursor lifetime are fixed constants a caller may pass explicitly.
 """
 

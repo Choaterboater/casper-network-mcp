@@ -1,8 +1,7 @@
 """Run an MCP server over stdio or local HTTP.
 
 Adapted from hpe-networking-mcp's ``shared.run_server``,
-``_configure_http_transport`` and ``_serve_with_pool_cleanup`` (MIT,
-nowireless4u/hpe-networking-mcp). Changes: transport, host and port come
+``_configure_http_transport`` and ``_serve_with_pool_cleanup``. Changes: transport, host and port come
 from the caller (the command line), never the environment; HTTP serves this
 machine only (127.0.0.1, ::1, localhost), because this version has no HTTP
 login of its own; no metrics route and no credentials-file readiness check.

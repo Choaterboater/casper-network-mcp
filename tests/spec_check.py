@@ -193,6 +193,24 @@ class Sent:
     params: list[tuple[str, str]]
 
 
+def _reply(spec: dict[str, Any]) -> Any:
+    """A listed reply: a body, or ``{status, headers, reply}`` for one that needs a status or headers."""
+    if "status" in spec or "headers" in spec:
+        return httpx.Response(int(spec.get("status", 200)), headers=spec.get("headers") or {}, json=spec.get("reply"))
+    return spec["reply"]
+
+
+def _default_reply(request: httpx.Request) -> Any:
+    """The default body, except a POST that starts a task answers like Central (202 and a Location).
+
+    So a tool that polls the task afterwards sends that poll too, and the spec check sees it.
+    """
+    for spec in _branches().get("async_replies") or []:
+        if request.method == spec.get("method", "POST") and request.url.path.startswith(spec["path_prefix"]):
+            return _reply(spec)
+    return _branches().get("default_reply", {"items": [], "count": 0})
+
+
 async def record_requests(tool: HandTool, args: dict[str, Any], *, failing: bool = False) -> list[Sent]:
     """Run ``tool`` once on a fake product API and return every request it sent.
 
@@ -203,8 +221,8 @@ async def record_requests(tool: HandTool, args: dict[str, Any], *, failing: bool
 
     transport = RecordingTransport()
     for spec in _branches().get("replies", {}).get(tool.name) or []:
-        transport.reply(spec["reply"], spec.get("method", "GET"), spec["path"])
-    transport.reply(404 if failing else _branches().get("default_reply", {"items": [], "count": 0}))
+        transport.reply(_reply(spec), spec.get("method", "GET"), spec["path"])
+    transport.reply(404 if failing else _default_reply)
     client = _client(tool.product, transport)
     previous = _tools._getters.get(tool.product)
     saved = (compat.POLL_INTERVAL, compat.POLL_MAX)

@@ -1,7 +1,7 @@
 """The Central client: OAuth client credentials, one gated request path, async and sync.
 
 Adapted from hpe-networking-mcp ``pipeline/clients/token_manager.py`` and
-``central_client.py`` (MIT, nowireless4u/hpe-networking-mcp). What changed:
+``central_client.py``. What changed:
 the login is ``CENTRAL_BASE_URL``, ``CENTRAL_CLIENT_ID`` and
 ``CENTRAL_CLIENT_SECRET`` from the process environment (no credentials file,
 no env files); the token lives in memory only (never written to disk); the

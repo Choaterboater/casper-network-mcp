@@ -14,8 +14,7 @@ Notes:
   - Deletion does NOT auto-remove the default role — use delete_underlay_ssid()
     which only deletes the wlan-ssid resource (role cleanup is caller's responsibility).
 
-Copied from hpe-networking-mcp ``pipeline/create_ssid.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Only the imports changed: ``central_client``
+Copied from hpe-networking-mcp ``pipeline/create_ssid.py``. Only the imports changed: ``central_client``
 is now the gated Central shim (``compat.get_client()``), so every call here
 passes the read-only pin and the path check first.
 """

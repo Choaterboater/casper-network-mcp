@@ -1,8 +1,7 @@
 """``find_tool``: exact API lookups first, then words ranked over the prebuilt index.
 
 Ported from hpe-networking-mcp ``mcp_servers/tool_router.py`` (``_query_tokens``,
-``_keyword_hits``, ``_exact_discovery_hit``, ``find_tool``; MIT,
-nowireless4u/hpe-networking-mcp). The semantic (embedding) pass is gone: this
+``_keyword_hits``, ``_exact_discovery_hit``, ``find_tool``). The semantic (embedding) pass is gone: this
 server has no vector store. Measured on a fixed 60-question set
 (``scripts/bench_find_tool.py``), then tuned one change at a time:
 

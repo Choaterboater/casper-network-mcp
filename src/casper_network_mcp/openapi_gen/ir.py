@@ -1,6 +1,6 @@
 """Swagger 2.0 and OpenAPI 3.0/3.1 parser and intermediate representation (IR).
 
-Copied from hpe-networking-mcp (MIT, nowireless4u/hpe-networking-mcp).
+Copied from hpe-networking-mcp.
 
 This module turns a raw OpenAPI document into a deterministic, flattened list
 of :class:`OperationIR` records that the manifest builder and runtime consume.

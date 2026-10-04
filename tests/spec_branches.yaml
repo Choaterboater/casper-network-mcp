@@ -3,9 +3,17 @@
 # defaults:       arguments that replace a tool's placeholders for every call
 # branches:       extra calls (merged over the defaults) that reach another endpoint
 # replies:        fake replies a multi-step tool needs to reach its later requests
-#                 (a list of {method, path, reply})
+#                 (a list of {method, path, reply}, plus status and headers when needed)
+# async_replies:  replies to every request under a path prefix that starts a task
+#                 ({method, path_prefix, status, headers, reply}), so the poll is checked too
 # validate_first: tools that send nothing for placeholder arguments, with why
 default_reply: {items: [], count: 0}
+async_replies:
+  - method: POST
+    path_prefix: /network-troubleshooting/
+    status: 202
+    headers: {Location: /network-troubleshooting/v1/async-operations/task-1}
+    reply: {}
 
 x-profiles: &profiles
   - {profile_type: bgp}
@@ -41,6 +49,21 @@ defaults:
   run_firmware_compliance_campaign: {targets: [{scope_id: "1001", device_function: ACCESS_SWITCH}]}
 
 branches:
+  reboot_device:
+    - {device_type: AP}
+    - {device_type: CX}
+    - {device_type: AOS-S}
+    - {device_type: GATEWAY}
+  poe_bounce: &switch_or_gateway
+    - {device_type: CX}
+    - {device_type: AOS-S}
+    - {device_type: GATEWAY}
+  port_bounce: *switch_or_gateway
+  cable_test:
+    - {device_type: CX}
+    - {device_type: AOS-S}
+  disconnect_client:
+    - {ap_serial: x1}
   get_network_profile:
     - {profile_type: static-route}
     - {profile_type: vrrp-interface}

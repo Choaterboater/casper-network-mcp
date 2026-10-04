@@ -1,7 +1,6 @@
 """Register the operations in a manifest as MCP tools.
 
-Adapted from hpe-networking-mcp ``openapi_gen/runtime.py`` (MIT,
-nowireless4u/hpe-networking-mcp). Each operation becomes one tool with a
+Adapted from hpe-networking-mcp ``openapi_gen/runtime.py``. Each operation becomes one tool with a
 typed signature from its path, query and header parameters, plus ``body``
 when the operation takes one. What changed from the source:
 

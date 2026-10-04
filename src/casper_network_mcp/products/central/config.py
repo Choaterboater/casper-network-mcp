@@ -1,7 +1,6 @@
 """Central configuration and provisioning tools (80 tools).
 
-Copied from hpe-networking-mcp ``mcp_servers/config.py`` (MIT,
-nowireless4u/hpe-networking-mcp). What changed: every request goes through the
+Copied from hpe-networking-mcp ``mcp_servers/config.py``. What changed: every request goes through the
 gated Central client (``compat``); the credentials file is gone (the login is
 the Central login Casper sets); the write switch and every ``confirm``
 argument are gone and every preview is opt-in (``dry_run`` defaults to
@@ -2037,9 +2036,11 @@ def delete_config_assignment(
     or an error-shaped envelope instead of returning a success-shaped result with
     the failure buried in an `errors` list.
     """
-    endpoint = (
-        f"/network-config/v1alpha1/config-assignments/{scope_id}/{device_function}/{profile_type}/{profile_instance}"
-    )
+    try:
+        pieces = [seg(p) for p in (scope_id, device_function, profile_type, profile_instance)]
+    except ValueError as exc:
+        return {"error": f"{exc}. Nothing was sent."}
+    endpoint = "/network-config/v1alpha1/config-assignments/" + "/".join(pieces)
 
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint}

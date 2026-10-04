@@ -1,6 +1,6 @@
 """MCP tool annotations: the four labels every tool carries.
 
-Copied from hpe-networking-mcp (MIT, nowireless4u/hpe-networking-mcp); only the
+Copied from hpe-networking-mcp; only the
 four label constants are kept.
 """
 

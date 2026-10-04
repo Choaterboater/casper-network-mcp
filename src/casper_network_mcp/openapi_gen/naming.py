@@ -1,6 +1,6 @@
 """Deterministic, globally-unique tool naming for generated operations.
 
-Copied from hpe-networking-mcp (MIT, nowireless4u/hpe-networking-mcp).
+Copied from hpe-networking-mcp.
 
 Policy (see task requirement 2):
 

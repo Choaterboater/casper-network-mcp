@@ -1,7 +1,6 @@
 """Response budget for routed tool results.
 
-Ported from hpe-networking-mcp ``tests/unit/test_tool_router_response_budget.py``
-(MIT, nowireless4u/hpe-networking-mcp). The budget now lives in
+Ported from hpe-networking-mcp ``tests/unit/test_tool_router_response_budget.py``. The budget now lives in
 ``core/budget.py`` with fixed limits (no environment overrides); the
 through-the-router cases move to the router tests.
 """

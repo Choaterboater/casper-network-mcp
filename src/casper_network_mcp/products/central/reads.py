@@ -1,7 +1,6 @@
 """Read adapter for Central monitoring and configuration lookups (devices, sites, clients, alerts).
 
-Copied from hpe-networking-mcp ``pipeline/clients/mcp_client.py`` (MIT,
-nowireless4u/hpe-networking-mcp). It takes the gated Central shim
+Copied from hpe-networking-mcp ``pipeline/clients/mcp_client.py``. It takes the gated Central shim
 (``compat.get_client()``), so its reads pass the same gate as every tool.
 """
 
