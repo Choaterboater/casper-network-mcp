@@ -1,13 +1,14 @@
 # Third-party notice — bundled OpenAPI documents
 
-`casper_network_mcp/specs/` holds **31 OpenAPI documents from two upstreams under
+`casper_network_mcp/specs/` holds **47 OpenAPI documents from two upstreams under
 two different licensing regimes.** They are not interchangeable, and the
 difference matters if you redistribute this package.
 
 | Files | Upstream | Licence | Section |
 | --- | --- | --- | --- |
-| 30 New Central documents (everything except `mist.openapi.json`) | HPE Aruba Networking developer portal | **Proprietary HPE material. Not open source.** | [A](#a--the-30-new-central-documents) |
+| 30 New Central documents (everything except `mist.openapi.json` and `clearpass-*.json`) | HPE Aruba Networking developer portal | **Proprietary HPE material. Not open source.** | [A](#a--the-30-new-central-documents) |
 | `mist.openapi.json` | `mistsys/mist_openapi` on GitHub | **MIT** — full text reproduced below | [B](#b--mistopenapijson) |
+| 16 ClearPass documents (`clearpass-*.json`) | HPE Aruba Networking developer portal | **Proprietary HPE material. Not open source.** | [C](#c--the-16-clearpass-documents) |
 
 Every file is stored as the exact bytes the upstream served. `MANIFEST.json`
 beside this file records, for each one, the URL actually fetched, the date,
@@ -124,3 +125,54 @@ SOFTWARE.
 Source: <https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/LICENSE>.
 "Juniper", "Mist" and "Marvis" are marks of Juniper Networks, used here only to
 identify the API being described. No endorsement by Juniper is claimed.
+
+---
+
+## C — the 16 ClearPass documents
+
+### What they are
+
+16 OpenAPI 3.0 documents describing the HPE Aruba Networking **ClearPass
+Policy Manager** REST API (`info.version` 6.12.7) — 335 API paths in total.
+They are the API descriptions the developer portal itself serves to render
+its ClearPass reference pages. Like section A's files, each one is the
+upstream document byte for byte, not documentation we wrote. Their paths are
+relative to the ClearPass server's `/api` base.
+
+### Who publishes them, and where they came from
+
+Hewlett Packard Enterprise / Aruba Networking, at
+<https://developer.arubanetworks.com/cppm/reference>.
+
+They were fetched the same way as section A's files: by
+`scripts/refresh_specs.py`, straight from
+`https://dash.readme.com/api/v1/api-registry/<registry_id>`, which needs no
+login, with a User-Agent naming this project and no browser headers or
+cookies. Each file's URL, date and sha256 are in MANIFEST.json; the registry
+ids are pinned in `scripts/spec_pins.json` under `clearpass`.
+
+### Licence and redistribution basis
+
+**These 16 documents are proprietary HPE Aruba Networking material. They are
+not open source, and this repository's MIT licence does not extend to them.**
+
+HPE publishes them without an accompanying licence grant and without an
+authentication barrier, as the machine-readable form of public API reference
+documentation whose entire purpose is to be consumed by API clients. They are
+redistributed here verbatim, with attribution and provenance, so that
+`lookup_api` answers exact API questions from a clean clone with no network
+access — the same use the publisher intends, moved offline.
+
+This is a good-faith reliance on published-for-integration intent, not a
+licence. Specifically:
+
+- No warranty and no endorsement by HPE is claimed or implied.
+- "HPE", "Aruba", "Aruba Networking" and "ClearPass" are marks of Hewlett
+  Packard Enterprise, used here only to identify the API being described.
+- If HPE asks for these documents to be removed, remove them. Nothing outside
+  this directory depends on the files being *committed* —
+  `scripts/refresh_specs.py` reproduces them from the upstream portal, and
+  `scripts/spec_pins.json` keeps the pointers.
+
+Downstream users redistributing this repository inherit that position and
+should make their own assessment.

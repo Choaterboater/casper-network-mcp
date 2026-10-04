@@ -1,5 +1,5 @@
 {
-  "_about": "Inputs for scripts/refresh_specs.py. Central: HPE developer-portal API registry ids (the portal runs on ReadMe). Mist: a mistsys/mist_openapi commit.",
+  "_about": "Inputs for scripts/refresh_specs.py. Central and ClearPass: HPE developer-portal API registry ids (the portal runs on ReadMe). Mist: a mistsys/mist_openapi commit.",
   "central": [
     {
       "path": "reporting-11dzpz39mq.json",
@@ -180,6 +180,104 @@
       "title": "Tunnels",
       "registry_id": "tdgmkhmq0s6frc",
       "reference_page": "https://developer.arubanetworks.com/new-central-config/reference/createtunnelgroupsgroupbyid"
+    }
+  ],
+  "clearpass": [
+    {
+      "path": "clearpass-guest-actions-15btrd12ml.json",
+      "title": "Guest Actions",
+      "registry_id": "15btrd12ml85csbt",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-global-server-configuration-15btrd1aem.json",
+      "title": "Global Server Configuration",
+      "registry_id": "15btrd1aeml85c5da",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-certificate-authority-1ajpg01cml.json",
+      "title": "Certificate Authority",
+      "registry_id": "1ajpg01cml85anrq",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-local-server-configuration-1ajpg031ml.json",
+      "title": "Local Server Configuration",
+      "registry_id": "1ajpg031ml85ey7m",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-identities-1wxkxoml85.json",
+      "title": "Identities",
+      "registry_id": "1wxkxoml85duds",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-insight-318h42r1cm.json",
+      "title": "Insight",
+      "registry_id": "318h42r1cml85e6m3",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-api-operations-318h42r1xm.json",
+      "title": "API Operations",
+      "registry_id": "318h42r1xml85aa55",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-platform-certificates-a48hf010ml.json",
+      "title": "Platform Certificates",
+      "registry_id": "a48hf010ml85fo52",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-policy-elements-a48hf01qml.json",
+      "title": "Policy Elements",
+      "registry_id": "a48hf01qml85g8pg",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-integrations-a48hf0fml8.json",
+      "title": "Integrations",
+      "registry_id": "a48hf0fml85elb0",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-logs-a48hf0uml8.json",
+      "title": "Logs",
+      "registry_id": "a48hf0uml85faaa",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-enforcement-profile-at4cgf1qml.json",
+      "title": "Enforcement Profile",
+      "registry_id": "at4cgf1qml85bng3",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-endpoint-visibility-at4cgf25ml.json",
+      "title": "Endpoint Visibility",
+      "registry_id": "at4cgf25ml85b3v0",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-session-control-at4cgf25ml.json",
+      "title": "Session Control",
+      "registry_id": "at4cgf25ml85gob5",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-tools-and-utilities-at4cgf38ml.json",
+      "title": "Tools And Utilities",
+      "registry_id": "at4cgf38ml85h0ju",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
+    },
+    {
+      "path": "clearpass-guest-configuration-at4cgfzml8.json",
+      "title": "Guest Configuration",
+      "registry_id": "at4cgfzml85da6p",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference"
     }
   ],
   "mist": [

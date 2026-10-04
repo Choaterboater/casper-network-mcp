@@ -136,3 +136,46 @@ def test_refresh_script_is_honest():
     assert "casper-network-mcp-refresh/" in text
     for word in ("Mozilla", "Safari", "Chrome/", "Cookie", "cookies=", "ingestion"):
         assert word not in text, word
+
+
+def _clearpass_sentences(count: int) -> list[str]:
+    """Section A's licence wording, as section C repeats it for ClearPass."""
+    return [
+        f"These {count} documents are proprietary HPE Aruba Networking material.",
+        HPE_LICENCE_SENTENCES[1],
+        HPE_LICENCE_SENTENCES[2],
+        HPE_LICENCE_SENTENCES[3],
+        HPE_LICENCE_SENTENCES[4],
+        HPE_LICENCE_SENTENCES[5],
+        (
+            '"HPE", "Aruba", "Aruba Networking" and "ClearPass" are marks of Hewlett Packard Enterprise, used here '
+            "only to identify the API being described."
+        ),
+        HPE_LICENCE_SENTENCES[7],
+        HPE_LICENCE_SENTENCES[8],
+    ]
+
+
+def test_clearpass_documents_are_bundled_with_their_own_notice():
+    clearpass = specs_bundle.documents("clearpass")
+    assert clearpass, "ClearPass documents are fetched by scripts/refresh_specs.py"
+    for doc in clearpass:
+        assert doc["path"].startswith("clearpass-")
+        assert doc["source_url"].startswith("https://dash.readme.com/api/v1/api-registry/")
+        assert "ClearPass" in doc["license"]
+    assert len(specs_bundle.operations("clearpass")) > 300
+    text = (ROOT / "NOTICE.md").read_text()
+    folded = _folded(text)
+    for sentence in _clearpass_sentences(len(clearpass)):
+        assert sentence in folded, sentence
+    assert f"{len(clearpass)} ClearPass documents" in text
+    assert f"{sum(d['path_count'] for d in clearpass)} API paths" in text
+
+
+def test_clearpass_pins_match_the_manifest():
+    pins = json.loads((pathlib.Path(__file__).resolve().parents[1] / "scripts" / "spec_pins.json").read_text())
+    by_path = {d["path"]: d for d in _manifest()["documents"]}
+    assert pins["clearpass"]
+    for pin in pins["clearpass"]:
+        assert pin["path"].startswith("clearpass-")
+        assert by_path[pin["path"]]["source_url"].endswith("/" + pin["registry_id"])

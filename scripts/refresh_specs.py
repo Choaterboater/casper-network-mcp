@@ -1,7 +1,8 @@
 """Fetch the vendor OpenAPI documents this package bundles, honestly.
 
-Central documents come straight from HPE's developer-portal API registry
-(the portal runs on ReadMe): ``https://dash.readme.com/api/v1/api-registry/<id>``.
+Central and ClearPass documents come straight from HPE's developer-portal API
+registry (the portal runs on ReadMe):
+``https://dash.readme.com/api/v1/api-registry/<id>``.
 The Mist document comes from an exact commit of ``mistsys/mist_openapi`` on
 GitHub. Every request names this project in its User-Agent; there are no
 browser headers, no cookies and no HTML page fetches.
@@ -45,6 +46,7 @@ REGISTRY_URL = "https://dash.readme.com/api/v1/api-registry/{registry_id}"
 MIST_URL = "https://raw.githubusercontent.com/{repo}/{commit}/{path}"
 USER_AGENT = f"casper-network-mcp-refresh/{__version__} (+https://github.com/Choaterboater/casper-network-mcp)"
 CENTRAL_LICENSE = "Proprietary HPE Aruba Networking API documentation (not MIT); see NOTICE.md"
+CLEARPASS_LICENSE = "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md"
 _SAFE_FILE = re.compile(r"^[a-z0-9][a-z0-9.-]*\.json$")
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _REGISTRY_ID = re.compile(r"^[a-z0-9]{6,40}$")
@@ -61,18 +63,25 @@ def load_pins() -> dict[str, Any]:
 def planned_documents(pins: dict[str, Any]) -> list[dict[str, Any]]:
     """Every document to fetch: path, title, url, and the manifest extras."""
     out: list[dict[str, Any]] = []
-    for pin in pins.get("central", []):
-        if not _SAFE_FILE.match(pin["path"]) or not _REGISTRY_ID.match(pin["registry_id"]):
-            raise SystemExit(f"bad Central pin: {pin}")
-        entry = {
-            "path": pin["path"],
-            "title": pin["title"],
-            "source_url": REGISTRY_URL.format(registry_id=pin["registry_id"]),
-            "license": CENTRAL_LICENSE,
-        }
-        if pin.get("reference_page"):
-            entry["reference_page"] = pin["reference_page"]
-        out.append(entry)
+    for product, licence in (("central", CENTRAL_LICENSE), ("clearpass", CLEARPASS_LICENSE)):
+        for pin in pins.get(product, []):
+            if not _SAFE_FILE.match(pin["path"]) or not _REGISTRY_ID.match(pin["registry_id"]):
+                raise SystemExit(f"bad {product} pin: {pin}")
+            # The package tells ClearPass documents apart by this file-name prefix.
+            if (product == "clearpass") != pin["path"].startswith("clearpass-"):
+                raise SystemExit(
+                    f"{product} pin file names must {'' if product == 'clearpass' else 'not '}"
+                    f"start with clearpass-: {pin['path']}"
+                )
+            entry = {
+                "path": pin["path"],
+                "title": pin["title"],
+                "source_url": REGISTRY_URL.format(registry_id=pin["registry_id"]),
+                "license": licence,
+            }
+            if pin.get("reference_page"):
+                entry["reference_page"] = pin["reference_page"]
+            out.append(entry)
     for pin in pins.get("mist", []):
         if not _SAFE_FILE.match(pin["path"]) or not _SHA.match(pin["commit"]):
             raise SystemExit(f"bad Mist pin (needs a 40-character commit): {pin}")

@@ -302,6 +302,166 @@
       "path_count": 4
     },
     {
+      "path": "clearpass-guest-actions-15btrd12ml.json",
+      "title": "Guest Actions",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/15btrd12ml85csbt",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "3fe4a718b992ff9817f2915bfba09078f6e6f48c976bad6a369477b5e09af883",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 5
+    },
+    {
+      "path": "clearpass-global-server-configuration-15btrd1aem.json",
+      "title": "Global Server Configuration",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/15btrd1aeml85c5da",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "cbec1c3623d0834005f0176cbe586eb86cfd062141bc1a7d9f359b676409bb59",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 36
+    },
+    {
+      "path": "clearpass-certificate-authority-1ajpg01cml.json",
+      "title": "Certificate Authority",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1ajpg01cml85anrq",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "f93d7b5bccd2d8726314cede0b2899b814af9dbfe953ee5a007b359201798acf",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 14
+    },
+    {
+      "path": "clearpass-local-server-configuration-1ajpg031ml.json",
+      "title": "Local Server Configuration",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1ajpg031ml85ey7m",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "426efda55cbfa47eee5a54cc0c9f8696a1f11b7f54f701cf7243140a9cbcef32",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 18
+    },
+    {
+      "path": "clearpass-identities-1wxkxoml85.json",
+      "title": "Identities",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/1wxkxoml85duds",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "15ab93582e586008ab52ed8cd4079a3fc6e28559fdb7e915a7b4f6c34b5acc3e",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 23
+    },
+    {
+      "path": "clearpass-insight-318h42r1cm.json",
+      "title": "Insight",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/318h42r1cml85e6m3",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "ddd62b87b3ef3083bc4ca238465ec25b19a87065c4818940f2cd2e734f96b702",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 20
+    },
+    {
+      "path": "clearpass-api-operations-318h42r1xm.json",
+      "title": "API Operations",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/318h42r1xml85aa55",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "1e13d666ba8c392510e8e8d35ec4bd9d38fea1c0c37c6a517ff1756a38fb38fd",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 3
+    },
+    {
+      "path": "clearpass-platform-certificates-a48hf010ml.json",
+      "title": "Platform Certificates",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/a48hf010ml85fo52",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "9d17c06b45b7a46c54de72877719fadc1c01fbaaf3bb0cd5494f3662071a532b",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 17
+    },
+    {
+      "path": "clearpass-policy-elements-a48hf01qml.json",
+      "title": "Policy Elements",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/a48hf01qml85g8pg",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "b1e34fd54300b389d435d61413da5485b0e6f6fa5263a873bd1bbaf459e7691d",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 51
+    },
+    {
+      "path": "clearpass-integrations-a48hf0fml8.json",
+      "title": "Integrations",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/a48hf0fml85elb0",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "735f51535b77543de5280a81ce0c69feded1e03c10c713715fed04ced02f9d28",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 32
+    },
+    {
+      "path": "clearpass-logs-a48hf0uml8.json",
+      "title": "Logs",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/a48hf0uml85faaa",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "6a21355984d7f0bae2f4e4f1f5d5aba9497e1eb212460fc279b422e09872d665",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 6
+    },
+    {
+      "path": "clearpass-enforcement-profile-at4cgf1qml.json",
+      "title": "Enforcement Profile",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/at4cgf1qml85bng3",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "f72201ccab5417a7f00794b7d28301697dcec39cee1e8600708e95e57711d3b2",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 45
+    },
+    {
+      "path": "clearpass-endpoint-visibility-at4cgf25ml.json",
+      "title": "Endpoint Visibility",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/at4cgf25ml85b3v0",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "efb1f7e6a4ae095419200782f24174283517dadca1d3f033ab348ec069d31733",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 38
+    },
+    {
+      "path": "clearpass-session-control-at4cgf25ml.json",
+      "title": "Session Control",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/at4cgf25ml85gob5",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "698c635799ba0fb81e44f9c93630d11044819dd7cad1658faa5320419b8eb93c",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 14
+    },
+    {
+      "path": "clearpass-tools-and-utilities-at4cgf38ml.json",
+      "title": "Tools And Utilities",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/at4cgf38ml85h0ju",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "7bd81b954d86baca511f27475e56367e3406adb72dc7f27d534b026e1a402da7",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 4
+    },
+    {
+      "path": "clearpass-guest-configuration-at4cgfzml8.json",
+      "title": "Guest Configuration",
+      "source_url": "https://dash.readme.com/api/v1/api-registry/at4cgfzml85da6p",
+      "reference_page": "https://developer.arubanetworks.com/cppm/reference",
+      "sha256": "73200722d4996ea89ca4dd9f8e0ffd3b5bbda1d37514e670f06d11518b05e4d8",
+      "fetched": "2026-10-04",
+      "license": "Proprietary HPE Aruba Networking ClearPass API documentation (not MIT); see NOTICE.md",
+      "path_count": 9
+    },
+    {
       "path": "mist.openapi.json",
       "title": "Mist API",
       "source_url": "https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/mist.openapi.json",
