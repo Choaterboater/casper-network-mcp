@@ -26,9 +26,9 @@ import httpx
 from casper_network_mcp.core.gate import Gate
 from casper_network_mcp.core.http import RETRYABLE_STATUSES, Http, body_kwargs, parse_retry_after
 from casper_network_mcp.core.logins import read_logins
-from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused
+from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused, Reply
 
-__all__ = ["CENTRAL_PREFIXES", "TOKEN_URL", "ApiError", "CentralClient", "LoginMissing", "Refused"]
+__all__ = ["CENTRAL_PREFIXES", "TOKEN_URL", "ApiError", "CentralClient", "LoginMissing", "Refused", "Reply"]
 
 TOKEN_URL = "https://sso.common.cloud.hpe.com/as/token.oauth2"
 #: The six API families in the bundled Central documents (a test keeps this in step with them).
@@ -177,19 +177,18 @@ class CentralClient(BaseClient):
             )
         return resp
 
-    def request_sync(
+    def _roundtrip_sync(
         self,
         method: str,
         path: str,
         *,
-        params: dict[str, Any] | None = None,
-        json: Any = None,
-        kind: str | None = None,
-        headers: dict[str, str] | None = None,
-        content_type: str = "application/json",
-        path_args: dict[str, Any] | None = None,
-    ) -> Any:
-        """The sync twin of :meth:`request`: gate, path check, login, send, hide secrets."""
+        params: dict[str, Any] | None,
+        json: Any,
+        kind: str | None,
+        headers: dict[str, str] | None,
+        content_type: str,
+        path_args: dict[str, Any] | None,
+    ) -> tuple[httpx.Response, str]:
         method = method.upper()
         url = self._prepare(method, path, kind=kind, path_args=path_args)
         body, body_headers = body_kwargs(json, content_type)
@@ -203,7 +202,57 @@ class CentralClient(BaseClient):
             hint = parse_retry_after(resp.headers.get("Retry-After", ""))
             time.sleep(min(hint if hint is not None else delay * random.uniform(0.8, 1.2), 8.0))
             delay *= 2
-        return self._decode(resp, method, url)
+        return resp, url
+
+    def request_sync(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        kind: str | None = None,
+        headers: dict[str, str] | None = None,
+        content_type: str = "application/json",
+        path_args: dict[str, Any] | None = None,
+    ) -> Any:
+        """The sync twin of :meth:`request`: gate, path check, login, send, hide secrets."""
+        resp, url = self._roundtrip_sync(
+            method,
+            path,
+            params=params,
+            json=json,
+            kind=kind,
+            headers=headers,
+            content_type=content_type,
+            path_args=path_args,
+        )
+        return self._decode(resp, method.upper(), url)
+
+    def exchange_sync(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        kind: str | None = None,
+        headers: dict[str, str] | None = None,
+        content_type: str = "application/json",
+        path_args: dict[str, Any] | None = None,
+    ) -> Reply:
+        """The sync twin of :meth:`exchange`: same gate and checks, error statuses come back as a ``Reply``."""
+        resp, url = self._roundtrip_sync(
+            method,
+            path,
+            params=params,
+            json=json,
+            kind=kind,
+            headers=headers,
+            content_type=content_type,
+            path_args=path_args,
+        )
+        return self._reply(resp, url)
 
     async def aclose(self) -> None:
         await super().aclose()

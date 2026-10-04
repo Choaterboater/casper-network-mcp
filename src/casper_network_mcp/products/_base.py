@@ -29,7 +29,7 @@ from casper_network_mcp.core.paths import safe_api_path, validate_product_base_u
 from casper_network_mcp.core.redact import redact_sensitive, redact_tool_error_text
 from casper_network_mcp.openapi_gen.runtime import is_auth_param, is_transport_header
 
-__all__ = ["ApiError", "BaseClient", "LoginMissing", "Refused"]
+__all__ = ["ApiError", "BaseClient", "LoginMissing", "Refused", "Reply"]
 
 _REQUEST_ID_HEADERS = ("x-request-id", "x-mist-request-id", "x-correlation-id")
 
@@ -82,6 +82,51 @@ class ApiError(ToolError):
             "request_id": self.request_id,
             "url": self.url,
         }
+
+
+_REPLY_HEADERS = ("location", "content-type", *_REQUEST_ID_HEADERS)
+
+
+class Reply:
+    """A product reply that keeps its status: what the copied Central code reads off a response.
+
+    The body is already bounded and has secret values hidden; only a few
+    harmless headers (Location, content type, request id) are kept.
+    """
+
+    def __init__(self, status_code: int, data: Any, headers: dict[str, str] | None = None, url: str = "") -> None:
+        self.status_code = status_code
+        self.data = data
+        self.headers = httpx.Headers(headers or {})
+        self.url = url
+
+    @property
+    def is_success(self) -> bool:
+        return 200 <= self.status_code < 300
+
+    @property
+    def text(self) -> str:
+        if self.data is None:
+            return ""
+        if isinstance(self.data, str):
+            return self.data
+        return jsonlib.dumps(self.data, default=str)
+
+    @property
+    def content(self) -> bytes:
+        return self.text.encode("utf-8")
+
+    def json(self) -> Any:
+        if isinstance(self.data, str):
+            return jsonlib.loads(self.data)  # raises ValueError for a non-JSON body
+        if self.data is None:
+            raise ValueError("the reply has no body")
+        return self.data
+
+    def raise_for_status(self) -> None:
+        if not self.is_success:
+            detail = _extract_detail(self.content) if self.data is not None else None
+            raise ApiError("central", self.status_code, detail, url=self.url)
 
 
 class BaseClient:
@@ -165,6 +210,20 @@ class BaseClient:
             return None
         return redact_sensitive(bounded_response_payload(resp))
 
+    def _reply(self, resp: httpx.Response, url: str) -> Reply:
+        """The reply with its status kept, for code that checks the status itself."""
+        headers = {k: resp.headers[k] for k in _REPLY_HEADERS if k in resp.headers}
+        if resp.status_code >= 400:
+            try:
+                data: Any = redact_sensitive(jsonlib.loads(resp.content))
+            except (ValueError, UnicodeDecodeError):
+                data = resp.content.decode("utf-8", "replace")[:2000]
+        elif resp.status_code == 204 or not resp.content:
+            data = None
+        else:
+            data = redact_sensitive(bounded_response_payload(resp))
+        return Reply(resp.status_code, data, headers, url)
+
     # ── the async front door ────────────────────────────────────────────────
 
     async def _send(self, method: str, url: str, headers: dict[str, str], params: Any, body: dict[str, Any]) -> Any:
@@ -190,6 +249,25 @@ class BaseClient:
         body, body_headers = body_kwargs(json, content_type)
         resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
         return self._decode(resp, method, url)
+
+    async def exchange(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        kind: str | None = None,
+        headers: dict[str, str] | None = None,
+        content_type: str = "application/json",
+        path_args: dict[str, Any] | None = None,
+    ) -> Reply:
+        """Like :meth:`request` (same gate and checks), but an error status comes back as a ``Reply``."""
+        method = method.upper()
+        url = self._prepare(method, path, kind=kind, path_args=path_args)
+        body, body_headers = body_kwargs(json, content_type)
+        resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
+        return self._reply(resp, url)
 
     async def aclose(self) -> None:
         await self._http.aclose()
