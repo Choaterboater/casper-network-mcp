@@ -30,7 +30,7 @@ def test_no_forbidden_dependencies():
 
 def test_no_env_switches_or_env_files():
     text = "\n".join(p.read_text(encoding="utf-8") for p in SRC.rglob("*.py"))
-    for word in ("load_dotenv", "_READ_ONLY\"", "_WRITES\"", "ACCESS_PROFILE", "ROUTER_MODE", ".mist-lab.env"):
+    for word in ("load_dotenv", '_READ_ONLY"', '_WRITES"', "ACCESS_PROFILE", "ROUTER_MODE", ".mist-lab.env"):
         assert word not in text, word
 
 
