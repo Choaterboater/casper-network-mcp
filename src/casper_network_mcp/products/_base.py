@@ -51,7 +51,12 @@ def _extract_detail(payload: bytes) -> Any:
 
 
 class ApiError(ToolError):
-    """The product answered with an error status."""
+    """The product answered with an error status.
+
+    A 401 means the login expired or is no longer good: the error says so in
+    plain words and carries ``"login": "expired"`` so Casper can ask for a
+    new one.
+    """
 
     def __init__(
         self,
@@ -71,19 +76,31 @@ class ApiError(ToolError):
         name = PRODUCT_NAMES.get(product, product)
         where = f" to {method} {url}" if url else ""
         text = self.detail if isinstance(self.detail, str) else jsonlib.dumps(self.detail, default=str)
-        message = f"{name} answered {status}{where}"
-        if self.detail not in (None, "", {}):
-            message += f": {text[:500]}"
+        if self.login_expired:
+            message = (
+                f"The {name} login has expired or is not valid ({name} answered 401). Casper will ask for a new one."
+            )
+        else:
+            message = f"{name} answered {status}{where}"
+            if self.detail not in (None, "", {}):
+                message += f": {text[:500]}"
         super().__init__(redact_tool_error_text(message))
 
+    @property
+    def login_expired(self) -> bool:
+        return self.status == 401
+
     def as_error(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "error": str(self),
             "status": self.status,
             "detail": self.detail,
             "request_id": self.request_id,
             "url": self.url,
         }
+        if self.login_expired:
+            out.update(login="expired", product=self.product)
+        return out
 
 
 _REPLY_HEADERS = ("location", "content-type", *_REQUEST_ID_HEADERS)

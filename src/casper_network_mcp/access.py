@@ -21,7 +21,8 @@ A list is left out whole when any name or id is not plain
 (``^[A-Za-z0-9 _.@:/+-]{1,64}$``), when it holds more than 64 scopes, or
 when the login has a write privilege at a scope Casper can't show (msp,
 orggroup), since a shorter list would understate where it can change things.
-Tokens and raw payloads are never returned.
+A product that answers 401 is reported with ``"login": "expired"`` so Casper
+can ask for a new login. Tokens and raw payloads are never returned.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from casper_network_mcp.core.gate import Gate
+from casper_network_mcp.products._base import ApiError
 
 __all__ = ["CONTRACT", "MistScopes", "access_check", "load_mist_scopes", "mist_scopes_from_self"]
 
@@ -274,6 +276,10 @@ async def _product(product: str, client: Any, gate: Gate) -> dict[str, Any]:
     try:
         check = _mist(client, gate) if product == "mist" else _clearpass(client)
         return await asyncio.wait_for(check, timeout=_PER_PRODUCT_TIMEOUT_S)
+    except ApiError as exc:
+        if exc.login_expired:
+            return {"product": product, "access": "unknown", "login": "expired"}
+        return {"product": product, "access": "unknown"}
     except Exception:  # noqa: BLE001 - any failure is "unknown", never an error payload
         return {"product": product, "access": "unknown"}
 
