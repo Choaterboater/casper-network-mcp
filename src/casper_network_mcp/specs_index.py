@@ -17,6 +17,7 @@ import json
 import os
 import re
 import sqlite3
+import time
 from collections import OrderedDict
 from collections.abc import Iterator
 from pathlib import Path
@@ -334,6 +335,7 @@ def _usable(path: Path) -> bool:
 def _ensure_bundle_index() -> Path:
     path, marker = index_path(), marker_path()
     if path.exists() and marker.exists() and _usable(path):
+        _mark_used(marker)
         return path
     marker.unlink(missing_ok=True)
     build(path)
@@ -342,15 +344,41 @@ def _ensure_bundle_index() -> Path:
     return path
 
 
+# Other installed versions share the cache, so only indexes unused this long go.
+_OLD_INDEX_DAYS = 30
+
+
+def _mark_used(marker: Path) -> None:
+    try:
+        os.utime(marker)
+    except OSError:
+        pass
+
+
 def _remove_old_indexes(current: Path) -> None:
-    """Delete indexes left by earlier bundles (tens of MB each); errors are ignored."""
-    keep = {current.name, current.name + ".ok"}
-    for old in [*current.parent.glob("specs-*.sqlite"), *current.parent.glob("specs-*.sqlite.ok")]:
-        if old.name not in keep:
-            try:
-                old.unlink()
-            except OSError:
-                pass
+    """Delete other bundles' indexes (tens of MB each) unused for 30 days; errors are ignored.
+
+    Use is read from the ``.ok`` marker's time, touched on every open; with no
+    marker the index file's own time counts.
+    """
+    cutoff = time.time() - _OLD_INDEX_DAYS * 86400
+    for db in current.parent.glob("specs-*.sqlite"):
+        if db.name == current.name:
+            continue
+        marker = db.with_name(db.name + ".ok")
+        try:
+            last_used = (marker if marker.exists() else db).stat().st_mtime
+            if last_used < cutoff:
+                marker.unlink(missing_ok=True)
+                db.unlink()
+        except OSError:
+            pass
+    for marker in current.parent.glob("specs-*.sqlite.ok"):  # markers whose index is gone
+        try:
+            if not marker.with_name(marker.name[: -len(".ok")]).exists() and marker.stat().st_mtime < cutoff:
+                marker.unlink()
+        except OSError:
+            pass
 
 
 def _open_ro(path: Path) -> sqlite3.Connection:

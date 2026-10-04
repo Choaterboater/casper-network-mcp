@@ -159,6 +159,11 @@ def test_a_body_op_that_deletes_or_disrupts_is_labelled_so(method, path, expecte
         "/network-config/v1alpha1/cnac-visitor/export",
         "/api/guest/{guest_id}/receipt/{id}",
         "/api/guest/g1/receipt/r1",
+        # the export or import job's files come back here, as the same CSV
+        "/network-config/v1alpha1/cnac-job/{job-id}",
+        "/network-config/v1alpha1/cnac-job/{job-id}/input",
+        "/network-config/v1alpha1/cnac-job/{job-id}/error",
+        "/network-config/v1alpha1/cnac-job/j1/input",
     ],
 )
 def test_a_text_export_that_can_hold_passwords_is_not_a_read(path):
@@ -169,6 +174,18 @@ def test_a_text_export_that_can_hold_passwords_is_not_a_read(path):
 async def test_invoke_read_tool_refuses_a_password_export():
     from casper_network_mcp.router import dispatch
 
-    for name in ("central_export_named_mpsk_csv_file", "central_export_visitor_csv_file"):
+    for name in (
+        "central_export_named_mpsk_csv_file",
+        "central_export_visitor_csv_file",
+        "central_stream_download_result_file",
+        "central_stream_download_input_file",
+        "central_stream_download_error_file",
+        "clearpass_generate_guest_receipt_by_guest_id_receip_b11295d1",
+    ):
         out = await dispatch.invoke_read_tool(name, {})
         assert out["error"] == "not_a_read_tool", name
+
+
+def test_a_job_status_stays_a_read():
+    # /status answers JSON, which redaction reads.
+    assert kind_for_operation("GET", "/network-config/v1alpha1/cnac-job/{job-id}/status") == "read"
