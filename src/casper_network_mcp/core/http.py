@@ -205,12 +205,18 @@ class Http:
         headers: dict[str, str] | None = None,
         params: Any = None,
         json: Any = None,
+        data: Any = None,
+        files: Any = None,
+        content: Any = None,
     ) -> httpx.Response:
+        """Send one request; a GET without a body is retried, anything else is sent once."""
         method = method.upper()
         client = self.client()
-        if method == "GET" and json is None:
+        if method == "GET" and json is None and data is None and files is None and content is None:
             return await get_with_retry(client, url, max_retries=self._max_retries, headers=headers, params=params)
-        return await client.request(method, url, headers=headers, params=params, json=json)
+        return await client.request(
+            method, url, headers=headers, params=params, json=json, data=data, files=files, content=content
+        )
 
     async def aclose(self) -> None:
         entry = _POOL.pop(self._pool_key, None)
