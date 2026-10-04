@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import ValidationError
+
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.budget import CursorError, bound_router_response, decode_cursor
 from casper_network_mcp.core.kinds import READ_POSTS, TROUBLESHOOT_OPS, listed_template
@@ -56,6 +58,23 @@ def is_read_tool(entry: Entry) -> bool:
     )
 
 
+def _argument_problem(name: str, error: ValidationError) -> str:
+    """Bad arguments in plain words: the field names only, never the values given."""
+    missing: list[str] = []
+    wrong: list[str] = []
+    for problem in error.errors():
+        field = str(problem["loc"][0]) if problem.get("loc") else "arguments"
+        bucket = missing if problem.get("type") == "missing" else wrong
+        if field not in bucket:
+            bucket.append(field)
+    parts = []
+    if missing:
+        parts.append(f"{name} needs: {', '.join(missing)}")
+    if wrong:
+        parts.append(f"{name} has a wrong value for: {', '.join(wrong)}")
+    return "; ".join(parts) or f"{name} got arguments it cannot use"
+
+
 async def _run(entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok: bool = False) -> Any:
     try:
         result = await sdk_compat.call_tool_raw(entry.server, entry.name, args)
@@ -63,7 +82,10 @@ async def _run(entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok
         # The SDK hides an unexpected error's text behind "Error executing
         # tool"; the cause says what went wrong. Secrets are hidden either way.
         cause = exc.__cause__ if isinstance(exc.__cause__, Exception) else exc
-        result = {"error": f"{type(cause).__name__}: {redact_tool_error_text(str(cause))}"}
+        if isinstance(cause, ValidationError):
+            result = {"error": _argument_problem(entry.name, cause)}
+        else:
+            result = {"error": f"{type(cause).__name__}: {redact_tool_error_text(str(cause))}"}
     return bound_router_response(
         result,
         offset=offset,
