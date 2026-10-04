@@ -19,14 +19,36 @@ from casper_network_mcp.core.scope_ids import normalize_scope_id
 
 __all__ = [
     "ARUBA_DEVICE_PROFILES",
+    "CONFIG_ASSIGNMENTS",
     "DEFAULT_SWITCH_GROUP_NAME",
     "_ensure_device_profiles",
     "_fetch_global_scope_id",
     "_post_scope_map",
     "_push_vlan_interface",
+    "assignment_body",
 ]
 
 logger = logging.getLogger(__name__)
+
+#: Where a profile is attached to a scope and device function. The source
+#: posted to a ``scope-maps`` path that is in none of the bundled Central
+#: documents; ``config-assignments`` is the documented way (Task 10).
+CONFIG_ASSIGNMENTS = "/network-config/v1alpha1/config-assignments"
+
+
+def assignment_body(scope_id: Any, device_function: str, resource: str) -> dict[str, Any]:
+    """The config-assignments body for one ``<profile-type>/<instance>`` at one scope."""
+    profile_type, _, instance = str(resource).partition("/")
+    return {
+        "config-assignment": [
+            {
+                "scope-id": str(scope_id),
+                "device-function": device_function,
+                "profile-type": profile_type,
+                "profile-instance": instance,
+            }
+        ]
+    }
 
 
 def _is_idempotent_conflict(exc: Exception) -> bool:
@@ -251,23 +273,14 @@ def _post_scope_map(
     persona: str,
     resource: str,
 ) -> None:
-    """POST /network-config/v1/scope-maps for a single scope/persona/resource triple.
+    """POST one config assignment (scope, device function, ``<profile-type>/<name>``).
 
     Raises on HTTP error. Caller wraps in try/except.
     """
     scope_id = normalize_scope_id(scope_id)
     central_client.post(
-        "/network-config/v1/scope-maps",
-        data={
-            "scope-map": [
-                {
-                    "scope-name": scope_id,
-                    "scope-id": int(scope_id),
-                    "persona": persona,
-                    "resource": resource,
-                }
-            ]
-        },
+        CONFIG_ASSIGNMENTS,
+        data=assignment_body(scope_id, persona, resource),
     )
 
 
@@ -341,14 +354,14 @@ def _ensure_device_profiles(central_client: Any, switch_group_name: str = DEFAUL
     for name in _PROFILE_NAMES:
         role_body = _ROLE_BODIES.get(name, {"name": name, "description": name})
         try:
-            central_client.post(f"/network-config/v1/roles/{name}", data=role_body)
+            central_client.post(f"/network-config/v1alpha1/roles/{name}", data=role_body)
             logger.debug("Created port profile (role) '%s'", name)
         except Exception as exc:
             resp_text = getattr(getattr(exc, "response", None), "text", "") or ""
             if _skip(resp_text):
                 # Update existing role to ensure vlan-parameters/session-parameters are applied
                 try:
-                    central_client.put(f"/network-config/v1/roles/{name}", data=role_body)
+                    central_client.put(f"/network-config/v1alpha1/roles/{name}", data=role_body)
                     logger.debug("Updated existing port profile (role) '%s'", name)
                 except Exception as exc2:
                     profile_errors.append(f"role_update({name}): {exc2}")
@@ -433,10 +446,10 @@ def _ensure_device_profiles(central_client: Any, switch_group_name: str = DEFAUL
         pp_name = pp["name"]
         try:
             central_client.post(
-                f"/network-config/v1/sw-port-profiles/{pp_name}",
+                f"/network-config/v1alpha1/sw-port-profiles/{pp_name}",
                 data={"description": pp["description"]},
             )
-            central_client.put(f"/network-config/v1/sw-port-profiles/{pp_name}", data=pp["body"])
+            central_client.put(f"/network-config/v1alpha1/sw-port-profiles/{pp_name}", data=pp["body"])
             logger.debug("Created port profile '%s'", pp_name)
         except Exception as exc:
             resp_text = getattr(getattr(exc, "response", None), "text", "") or ""
@@ -508,20 +521,20 @@ def _push_vlan_interface(
     # Step 1: Upsert L2 VLAN
     l2_body = {"vlan": vlan_id, "name": str(vlan_id), "enable": True}
     try:
-        central_client.post(f"/network-config/v1/layer2-vlan/{vlan_id}", data=l2_body)
+        central_client.post(f"/network-config/v1alpha1/layer2-vlan/{vlan_id}", data=l2_body)
     except Exception as exc:
         response_text = getattr(getattr(exc, "response", None), "text", "") or ""
         if "duplicate" not in response_text.lower():
-            central_client.put(f"/network-config/v1/layer2-vlan/{vlan_id}", data=l2_body)
+            central_client.put(f"/network-config/v1alpha1/layer2-vlan/{vlan_id}", data=l2_body)
 
     # Step 2: Create vlan-interface globally (no IP — just the L3 shell)
     global_body: dict = {"id": vlan_id, "is-valid": True, "enable": True}
     try:
-        central_client.post(f"/network-config/v1/vlan-interfaces/{vlan_id}", data=global_body)
+        central_client.post(f"/network-config/v1alpha1/vlan-interfaces/{vlan_id}", data=global_body)
     except Exception as exc:
         response_text = getattr(getattr(exc, "response", None), "text", "") or ""
         if "duplicate" not in response_text.lower():
-            central_client.put(f"/network-config/v1/vlan-interfaces/{vlan_id}", data=global_body)
+            central_client.put(f"/network-config/v1alpha1/vlan-interfaces/{vlan_id}", data=global_body)
 
     # Step 3: Override IP at device local scope
     if vi["ip_address"] and not vi["dhcp"]:
@@ -539,13 +552,13 @@ def _push_vlan_interface(
         local_params = {"scope-id": device_scope_id, "view-type": "LOCAL"}
         try:
             central_client.post(
-                f"/network-config/v1/vlan-interfaces/{vlan_id}",
+                f"/network-config/v1alpha1/vlan-interfaces/{vlan_id}",
                 params=local_params,
                 data=local_body,
             )
         except Exception:
             central_client.put(
-                f"/network-config/v1/vlan-interfaces/{vlan_id}",
+                f"/network-config/v1alpha1/vlan-interfaces/{vlan_id}",
                 params=local_params,
                 data=local_body,
             )

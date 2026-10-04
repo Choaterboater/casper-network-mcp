@@ -61,12 +61,9 @@ get_cluster_tunnels: {kind: read, vendor_category: "Monitoring & Reporting", che
 get_cluster_tunnel_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_switch_stacking_info: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_channel_utilization: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
-list_rogue_aps: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_ap_neighbors: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
-get_client_signal_history: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 list_ssid_clients: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 locate_client: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
-get_air_quality: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_client_roaming_history: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 detect_client_flapping: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 detect_ssh_brute_force: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
@@ -81,7 +78,6 @@ list_applications: {kind: read, vendor_category: "Monitoring & Reporting", check
 list_reports: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 list_report_runs: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_reports_metadata: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
-get_reporting_service_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_report: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 create_report: {kind: config, vendor_category: "Monitoring & Reporting", checked: "POST /network-reporting/v1/reports creates a report definition"}
 update_report: {kind: config, vendor_category: "Monitoring & Reporting", checked: "PUT on one report definition"}
@@ -106,7 +102,6 @@ list_firmware_upgrades: {kind: read, vendor_category: "Configuration", checked: 
 trigger_device_upgrade: {kind: firmware, vendor_category: "Configuration", checked: "PATCH/POST firmware upgrade for devices; reloads them onto new firmware"}
 list_ssids: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 get_ssid: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
-get_scope_maps: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 list_passpoint_profiles: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 get_passpoint_profile: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 list_passpoint_identity_profiles: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
@@ -156,8 +151,6 @@ create_device_group: {kind: config, vendor_category: "Configuration", checked: "
 delete_device_groups: {kind: delete, vendor_category: "Configuration", checked: "DELETE on the named object(s)"}
 add_devices_to_group: {kind: config, vendor_category: "Configuration", checked: "POST changes configuration; no reload, delete or account change"}
 remove_devices_from_group: {kind: delete, vendor_category: "Configuration", checked: "POST device-groups-remove-devices; Casper reads 'remove' as a delete"}
-list_config_templates: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
-get_device_running_config: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 list_named_vlans: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 get_network_profile: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 set_network_profile: {kind: config, vendor_category: "Configuration", checked: "PATCH/POST changes configuration; no reload, delete or account change"}
@@ -190,7 +183,6 @@ port_bounce: {kind: disruptive, vendor_category: "Troubleshooting", checked: "PO
 cable_test: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../cableTest; a TDR test takes the tested port's link down while it runs"}
 reboot_device: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../reboot reloads the device"}
 disconnect_client: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../disconnectUserByMacAddress drops the client"}
-acknowledge_alert: {kind: config, vendor_category: "Troubleshooting", checked: "POST/PATCH acknowledge on one alert; alert state only"}
 get_lldp_neighbors: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 get_cx_arp_table: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 get_cx_mac_table: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}

@@ -31,7 +31,6 @@ from casper_network_mcp.products.central.compat import (
     get_client,
     get_mcp_client,
     resp_json,
-    seg,
     troubleshooting_endpoint_candidates,
 )
 
@@ -444,56 +443,6 @@ async def disconnect_client(
         "response": response,
         "errors": response.get("errors", errors),
     }
-
-
-@mcp.tool()
-def acknowledge_alert(
-    alert_id: str,
-    action: str = "ACK",
-) -> dict[str, Any]:
-    """Acknowledge, clear, or resolve an active alert. action: ACK/CLEAR/RESOLVE.
-
-    KNOWN ISSUE (2026-04): all candidate paths 404 on this tenant — no peer MCP
-    wraps this either. Tool preserved for structured 'not available' response.
-    """
-    client = get_client()
-    errors: list[str] = []
-
-    candidates = [
-        ("POST", "/network-notifications/v1/alerts/acknowledge", {"alert_id": [alert_id], "action": action}),
-        ("POST", f"/network-notifications/v1/alerts/{seg(alert_id)}/acknowledge", {"action": action}),
-        ("PATCH", f"/network-notifications/v1/alerts/{seg(alert_id)}", {"status": action}),
-    ]
-
-    for method, endpoint, payload in candidates:
-        try:
-            response = client._request(method, endpoint, json=payload)
-            if response.status_code == 404:
-                errors.append(f"404 at {endpoint}")
-                continue
-            if response.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(response, endpoint=endpoint))
-                continue
-            try:
-                resp_body = response.json()
-            except Exception:
-                resp_body = {}
-            return {
-                "alert_id": alert_id,
-                "action": action,
-                "endpoint_used": endpoint,
-                "response": resp_body,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(str(exc))
-
-    errors.append(
-        "acknowledge_alert: no candidate path accepted the request. "
-        "This endpoint may not be exposed on New Central; track "
-        "https://developer.arubanetworks.com/new-central/reference for updates."
-    )
-    return {"alert_id": alert_id, "action": action, "response": None, "errors": errors}
 
 
 # ── CX Switch Intelligence ────────────────────────────────────────────────────

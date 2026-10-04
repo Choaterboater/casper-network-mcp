@@ -2,8 +2,8 @@
 
 Workflow (per the Configuration APIs runbook v2026.0331):
   Step 1 — Discover the org-level global scope-id (reuses s6_configure logic).
-  Step 2 — POST /network-config/v1/wlan-ssids/{essid_name}  (create SSID).
-  Step 3 — POST /network-config/v1/scope-maps  (map SSID to CAMPUS_AP persona
+  Step 2 — POST /network-config/v1alpha1/wlan-ssids/{essid_name}  (create SSID).
+  Step 3 — POST /network-config/v1alpha1/config-assignments  (assign SSID to CAMPUS_AP persona
             at the requested scope — global by default, or a specific device group).
 
 Notes:
@@ -28,6 +28,7 @@ from typing import Any
 from urllib.parse import quote
 
 from casper_network_mcp.core.scope_ids import normalize_scope_id
+from casper_network_mcp.products.central.scope_maps import CONFIG_ASSIGNMENTS, assignment_body
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +305,7 @@ def build_underlay_ssid(
     # ------------------------------------------------------------------
     # Step 2: Create wlan-ssid
     # ------------------------------------------------------------------
-    endpoint = f"/network-config/v1/wlan-ssids/{url_name}"
+    endpoint = f"/network-config/v1alpha1/wlan-ssids/{url_name}"
 
     if dry_run:
         logger.info("[dry-run] Would POST %s with vlan_ids=%s opmode=%s", endpoint, vlan_ids, opmode)
@@ -327,20 +328,11 @@ def build_underlay_ssid(
     # ------------------------------------------------------------------
     # Step 3: Scope-map to persona
     # ------------------------------------------------------------------
-    scope_map_body = {
-        "scope-map": [
-            {
-                "scope-name": scope_id,
-                "scope-id": int(scope_id),
-                "persona": persona,
-                "resource": f"wlan-ssids/{ssid_name}",
-            }
-        ]
-    }
+    scope_map_body = assignment_body(scope_id, persona, f"wlan-ssids/{ssid_name}")
 
     if dry_run:
         logger.info(
-            "[dry-run] Would POST /network-config/v1/scope-maps — %s scope=%s resource=wlan-ssids/%s",
+            "[dry-run] Would POST config-assignments — %s scope=%s resource=wlan-ssids/%s",
             persona,
             scope_id,
             ssid_name,
@@ -348,7 +340,7 @@ def build_underlay_ssid(
         result["scope_mapped"] = True
     else:
         try:
-            central_client.post("/network-config/v1/scope-maps", data=scope_map_body)
+            central_client.post(CONFIG_ASSIGNMENTS, data=scope_map_body)
             result["scope_mapped"] = True
             logger.info("Scope-mapped SSID '%s' → %s scope-id=%s", ssid_name, persona, scope_id)
         except Exception as exc:
@@ -476,7 +468,7 @@ def build_overlay_ssid(
         "name": ssid_name,
         "utf8": True,
     }
-    role_endpoint = f"/network-config/v1/roles/{url_name}"
+    role_endpoint = f"/network-config/v1alpha1/roles/{url_name}"
     if dry_run:
         logger.info("[dry-run] Would POST %s (allow-all wireless role)", role_endpoint)
     else:
@@ -505,21 +497,12 @@ def build_overlay_ssid(
         ] + role_scope_targets
     for r_scope_id, persona in role_scope_targets:
         for resource in (f"roles/{ssid_name}", f"role-gpids/{ssid_name}"):
-            role_scope_map = {
-                "scope-map": [
-                    {
-                        "scope-name": r_scope_id,
-                        "scope-id": int(r_scope_id),
-                        "persona": persona,
-                        "resource": resource,
-                    }
-                ]
-            }
+            role_scope_map = assignment_body(r_scope_id, persona, resource)
             if dry_run:
                 logger.info("[dry-run] Would scope-map %s → %s scope=%s", resource, persona, r_scope_id)
             else:
                 try:
-                    central_client.post("/network-config/v1/scope-maps", data=role_scope_map)
+                    central_client.post(CONFIG_ASSIGNMENTS, data=role_scope_map)
                     logger.info("Scope-mapped %s → %s scope-id=%s", resource, persona, r_scope_id)
                 except Exception as exc:
                     resp_text = getattr(getattr(exc, "response", None), "text", "") or str(exc)
@@ -684,18 +667,9 @@ def build_overlay_ssid(
         # than issuing a second, late lookup.
         global_scope_id_pol = global_scope_id
         for persona in ("CAMPUS_AP", "MOBILITY_GW") if global_scope_id_pol else ():
-            pol_scope_map = {
-                "scope-map": [
-                    {
-                        "scope-name": global_scope_id_pol,
-                        "scope-id": int(str(global_scope_id_pol)),
-                        "persona": persona,
-                        "resource": f"policies/{effective_policy}",
-                    }
-                ]
-            }
+            pol_scope_map = assignment_body(global_scope_id_pol, persona, f"policies/{effective_policy}")
             try:
-                central_client.post("/network-config/v1/scope-maps", data=pol_scope_map)
+                central_client.post(CONFIG_ASSIGNMENTS, data=pol_scope_map)
                 logger.info("Scope-mapped policies/%s → %s global", effective_policy, persona)
             except Exception as exc:
                 resp_text = getattr(getattr(exc, "response", None), "text", "") or str(exc)
@@ -708,7 +682,7 @@ def build_overlay_ssid(
     # ------------------------------------------------------------------
     # Step 2: Create wlan-ssid
     # ------------------------------------------------------------------
-    endpoint = f"/network-config/v1/wlan-ssids/{url_name}"
+    endpoint = f"/network-config/v1alpha1/wlan-ssids/{url_name}"
     if dry_run:
         logger.info("[dry-run] Would POST %s (overlay, FORWARD_MODE_L2)", endpoint)
         result["created"] = True
@@ -820,7 +794,7 @@ def build_overlay_ssid(
             }
         ],
     }
-    overlay_endpoint = f"/network-config/v1/overlay-wlan/{url_name}"
+    overlay_endpoint = f"/network-config/v1alpha1/overlay-wlan/{url_name}"
     if dry_run:
         logger.info("[dry-run] Would POST %s with cluster=%s", overlay_endpoint, cluster_name)
         result["overlay_created"] = True
@@ -849,26 +823,17 @@ def build_overlay_ssid(
 
     all_mapped = True
     for persona, resource in scope_maps:
-        scope_map_body = {
-            "scope-map": [
-                {
-                    "scope-name": scope_id,
-                    "scope-id": int(scope_id),
-                    "persona": persona,
-                    "resource": resource,
-                }
-            ]
-        }
+        scope_map_body = assignment_body(scope_id, persona, resource)
         if dry_run:
             logger.info(
-                "[dry-run] Would POST scope-maps — %s scope=%s resource=%s",
+                "[dry-run] Would POST config-assignments — %s scope=%s resource=%s",
                 persona,
                 scope_id,
                 resource,
             )
         else:
             try:
-                central_client.post("/network-config/v1/scope-maps", data=scope_map_body)
+                central_client.post(CONFIG_ASSIGNMENTS, data=scope_map_body)
                 logger.info("Scope-mapped %s → %s scope-id=%s", resource, persona, scope_id)
             except Exception as exc:
                 resp_text = getattr(getattr(exc, "response", None), "text", "") or str(exc)
@@ -919,7 +884,7 @@ def create_allow_all_role(
         "captive-portal-profile": "disabled",
     }
 
-    endpoint = f"/network-config/v1/roles/{url_name}"
+    endpoint = f"/network-config/v1alpha1/roles/{url_name}"
 
     if dry_run:
         logger.info("[dry-run] Would POST %s (allow-all wireless role)", endpoint)
@@ -940,20 +905,11 @@ def create_allow_all_role(
                 return result
 
     # Scope-map role to CAMPUS_AP
-    scope_map_body = {
-        "scope-map": [
-            {
-                "scope-name": scope_id,
-                "scope-id": int(scope_id),
-                "persona": persona,
-                "resource": f"roles/{role_name}",
-            }
-        ]
-    }
+    scope_map_body = assignment_body(scope_id, persona, f"roles/{role_name}")
 
     if dry_run:
         logger.info(
-            "[dry-run] Would POST /network-config/v1/scope-maps — %s scope=%s resource=roles/%s",
+            "[dry-run] Would POST config-assignments — %s scope=%s resource=roles/%s",
             persona,
             scope_id,
             role_name,
@@ -961,7 +917,7 @@ def create_allow_all_role(
         result["scope_mapped"] = True
     else:
         try:
-            central_client.post("/network-config/v1/scope-maps", data=scope_map_body)
+            central_client.post(CONFIG_ASSIGNMENTS, data=scope_map_body)
             result["scope_mapped"] = True
             logger.info("Scope-mapped role '%s' → %s scope-id=%s", role_name, persona, scope_id)
         except Exception as exc:
@@ -996,7 +952,7 @@ def delete_underlay_ssid(
         "errors": [],
     }
 
-    endpoint = f"/network-config/v1/wlan-ssids/{url_name}"
+    endpoint = f"/network-config/v1alpha1/wlan-ssids/{url_name}"
 
     if dry_run:
         logger.info("[dry-run] Would DELETE %s", endpoint)
@@ -1021,7 +977,7 @@ def get_underlay_ssid(
     """Fetch an existing underlay SSID configuration, or None if not found."""
     url_name = quote(ssid_name, safe="")
     try:
-        return central_client.get(f"/network-config/v1/wlan-ssids/{url_name}")
+        return central_client.get(f"/network-config/v1alpha1/wlan-ssids/{url_name}")
     except Exception as exc:
         resp_status = getattr(getattr(exc, "response", None), "status_code", None)
         if resp_status == 404:
@@ -1033,7 +989,7 @@ def get_underlay_ssid(
 def list_underlay_ssids(central_client: Any) -> list[dict[str, Any]]:
     """Return all wlan-ssid objects from Central."""
     try:
-        result = central_client.get("/network-config/v1/wlan-ssids")
+        result = central_client.get("/network-config/v1alpha1/wlan-ssids")
         # API returns singular "wlan-ssid" key (not plural)
         items = result.get("wlan-ssid", result.get("wlan-ssids", result.get("items", [])))
         return items if isinstance(items, list) else []

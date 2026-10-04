@@ -51,8 +51,8 @@ def test_get_raises_with_the_reply_on_an_error(central, recording_transport):
 
 
 def test_list_replies_become_items(central, recording_transport):
-    recording_transport.reply([{"id": 1}], "GET", "/network-config/v1/wlan-ssids")
-    assert central.get("/network-config/v1/wlan-ssids") == {"items": [{"id": 1}]}
+    recording_transport.reply([{"id": 1}], "GET", "/network-config/v1alpha1/wlan-ssids")
+    assert central.get("/network-config/v1alpha1/wlan-ssids") == {"items": [{"id": 1}]}
 
 
 def test_post_async_returns_the_location(central, recording_transport):
@@ -114,9 +114,17 @@ def test_scope_ids_are_digits_only():
 def test_scope_map_body(central, recording_transport):
     scope_maps._post_scope_map(central, "42", "ACCESS_SWITCH", "layer2-vlan/30")
     call = recording_transport.calls[0]
-    assert call.url.path == "/network-config/v1/scope-maps"
+    # Task 10: scope-maps is in no bundled document; config-assignments is.
+    assert call.url.path == "/network-config/v1alpha1/config-assignments"
     assert body_of(call) == {
-        "scope-map": [{"scope-name": "42", "scope-id": 42, "persona": "ACCESS_SWITCH", "resource": "layer2-vlan/30"}]
+        "config-assignment": [
+            {
+                "scope-id": "42",
+                "device-function": "ACCESS_SWITCH",
+                "profile-type": "layer2-vlan",
+                "profile-instance": "30",
+            }
+        ]
     }
 
 
@@ -126,12 +134,12 @@ def test_global_scope_id(central, recording_transport):
 
 
 def test_vlan_interface_updates_when_create_fails(central, recording_transport):
-    recording_transport.reply((400, {"detail": "conflict"}), "POST", "/network-config/v1/layer2-vlan/30")
+    recording_transport.reply((400, {"detail": "conflict"}), "POST", "/network-config/v1alpha1/layer2-vlan/30")
     vi = {"vlan": 30, "ip_address": None, "helper_address": None, "dhcp": True}
     scope_maps._push_vlan_interface(central, vi, "11", "7", "ACCESS_SWITCH")
     sent = [(c.method, c.url.path) for c in recording_transport.calls]
-    assert ("PUT", "/network-config/v1/layer2-vlan/30") in sent
-    assert sent[-1] == ("POST", "/network-config/v1/scope-maps")
+    assert ("PUT", "/network-config/v1alpha1/layer2-vlan/30") in sent
+    assert sent[-1] == ("POST", "/network-config/v1alpha1/config-assignments")
 
 
 def test_device_profiles_use_the_named_switch_group(central, recording_transport):
@@ -142,15 +150,15 @@ def test_device_profiles_use_the_named_switch_group(central, recording_transport
     errors = scope_maps._ensure_device_profiles(central, switch_group_name="Core Switches")
     assert errors == []
     scopes = {
-        body_of(c)["scope-map"][0]["scope-id"]
+        body_of(c)["config-assignment"][0]["scope-id"]
         for c in recording_transport.calls
-        if c.url.path == "/network-config/v1/scope-maps"
+        if c.url.path == "/network-config/v1alpha1/config-assignments"
     }
-    assert scopes == {7, 9}
+    assert scopes == {"7", "9"}
 
 
 def test_ssid_list_and_get(central, recording_transport):
-    recording_transport.reply({"items": [{"essid": {"name": "Guest"}}]}, "GET", "/network-config/v1/wlan-ssids")
+    recording_transport.reply({"items": [{"essid": {"name": "Guest"}}]}, "GET", "/network-config/v1alpha1/wlan-ssids")
     assert ssid.list_underlay_ssids(central)
     ssid.get_underlay_ssid(central, "Guest Net")
     assert recording_transport.calls[-1].url.raw_path.endswith(b"/wlan-ssids/Guest%20Net")

@@ -285,7 +285,7 @@ async def test_role_write_fails_closed_on_an_error_reply(recording_transport, ce
         ("get_auth_server", {"name": "x?y=1"}),
         ("delete_static_tag", {"tag_id": "t#1"}),
         ("get_device_health", {"serial_number": "SN1/../../x"}),
-        ("acknowledge_alert", {"alert_id": "a/b"}),
+        ("get_audit_log", {"audit_id": "a/b"}),
     ],
 )
 async def test_an_id_with_a_slash_or_query_is_refused_before_sending(name, args, recording_transport, central_backends):

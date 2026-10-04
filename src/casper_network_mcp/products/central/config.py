@@ -27,7 +27,7 @@ import uuid
 from typing import Any
 from urllib.parse import quote
 
-from casper_network_mcp.products._tools import ToolSet
+from casper_network_mcp.products._tools import ToolSet, would_send
 from casper_network_mcp.products.central.compat import (
     MAC_ADDRESS_STORE_NAME,
     bound_collection_response,
@@ -42,11 +42,13 @@ from casper_network_mcp.products.central.compat import (
 )
 from casper_network_mcp.products.central.scope_maps import (
     ARUBA_DEVICE_PROFILES,
+    CONFIG_ASSIGNMENTS,
     DEFAULT_SWITCH_GROUP_NAME,
     _ensure_device_profiles,
     _fetch_global_scope_id,
     _post_scope_map,
     _push_vlan_interface,
+    assignment_body,
 )
 from casper_network_mcp.products.central.ssid import (
     build_overlay_ssid as _build_overlay,
@@ -120,12 +122,12 @@ def create_vlan(
     errors: list[str] = []
 
     try:
-        client.post(f"/network-config/v1/layer2-vlan/{vlan_id}", data=body)
+        client.post(f"/network-config/v1alpha1/layer2-vlan/{vlan_id}", data=body)
     except Exception as exc:
         resp_text = _exc_resp_text(exc)
         if "duplicate" in resp_text.lower():
             try:
-                client.put(f"/network-config/v1/layer2-vlan/{vlan_id}", data=body)
+                client.put(f"/network-config/v1alpha1/layer2-vlan/{vlan_id}", data=body)
             except Exception as exc2:
                 errors.append(f"upsert: {exc2}")
         else:
@@ -177,49 +179,30 @@ def set_hostname(
     device_scope_id: str,
     hostname: str,
     device_function: str = "CAMPUS_AP",
+    profile_name: str = "system-info",
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Set the hostname alias on a device."""
-    if dry_run:
-        return {
-            "device_scope_id": device_scope_id,
-            "hostname": hostname,
-            "device_function": device_function,
-            "dry_run": True,
-        }
+    """Set a device's hostname in its local System Information profile.
 
-    client = get_client()
+    PATCH /network-config/v1alpha1/system-info/{profile_name} at the device's
+    scope (object-type LOCAL); if that profile does not exist yet it is
+    created with POST. ``profile_name`` names that local profile.
+    """
+    endpoint = f"/network-config/v1alpha1/system-info/{seg(profile_name)}"
     params = {"object-type": "LOCAL", "scope-id": device_scope_id, "device-function": device_function}
-    alias_payload = {"default-value": {"hostname-value": {"hostname": hostname}}}
-    sysinfo_payload = {"hostname-alias": "sys_host_name"}
-    errors: list[str] = []
+    if dry_run:
+        return would_send("PATCH", endpoint, {"hostname": hostname}, params)
+    client = get_client()
     try:
-        # Step 1: set the alias value (create or update)
-        try:
-            client.post("/network-config/v1alpha1/aliases/sys_host_name", params=params, data=alias_payload)
-        except Exception:
-            client.patch("/network-config/v1alpha1/aliases/sys_host_name", params=params, data=alias_payload)
-        # Step 2: link the alias in system-info (try PATCH first, then POST)
-        try:
-            client.patch("/network-config/v1alpha1/system-info", params=params, data=sysinfo_payload)
-        except Exception:
-            client.post("/network-config/v1alpha1/system-info", params=params, data=sysinfo_payload)
-        return {
-            "device_scope_id": device_scope_id,
-            "hostname": hostname,
-            "device_function": device_function,
-            "set": True,
-            "errors": errors,
-        }
-    except Exception as exc:
-        errors.append(str(exc))
-        return {
-            "device_scope_id": device_scope_id,
-            "hostname": hostname,
-            "device_function": device_function,
-            "set": False,
-            "errors": errors,
-        }
+        client.patch(endpoint, params=params, data={"hostname": hostname})
+    except Exception:
+        client.post(endpoint, params=params, data={"name": profile_name, "hostname": hostname})
+    return {
+        "device_scope_id": device_scope_id,
+        "hostname": hostname,
+        "device_function": device_function,
+        "set": True,
+    }
 
 
 @mcp.tool()
@@ -270,8 +253,8 @@ def get_firmware(serial_number: str) -> dict[str, Any]:
     errors: list[str] = []
     try:
         result = client.get(
-            "/network-services/v1alpha1/firmware-details",
-            params={"serialNumber": serial_number},
+            "/network-services/v1/firmware-details",
+            params={"filter": "serialNumber eq '" + str(serial_number).replace("'", "''") + "'"},
         )
         return {"serial_number": serial_number, "items": result.get("items", []), "errors": errors}
     except Exception as exc:
@@ -390,7 +373,7 @@ def list_firmware_upgrades(
 ) -> dict[str, Any]:
     """List devices with firmware upgrade activity (in-progress or recent, bounded by default).
 
-    Sourced from GET /network-services/v1alpha1/firmware-details (the same endpoint
+    Sourced from GET /network-services/v1/firmware-details (the same endpoint
     get_firmware uses) — the legacy /firmware/v1/upgrade endpoint 404s on New Central.
     That endpoint ignores serialNumber server-side, so serial_number is filtered
     client-side. By default only devices whose upgradeStatus is set are returned,
@@ -400,7 +383,7 @@ def list_firmware_upgrades(
     client = get_client()
     errors: list[str] = []
     try:
-        result = client.get("/network-services/v1alpha1/firmware-details")
+        result = client.get("/network-services/v1/firmware-details")
         items = result.get("items", []) if isinstance(result, dict) else []
         if serial_number:
             items = [it for it in items if str(it.get("serialNumber", "")).lower() == serial_number.lower()]
@@ -560,35 +543,6 @@ def list_ssids(
 def get_ssid(ssid_name: str) -> dict[str, Any] | None:
     """Fetch an existing SSID config by name. Returns None if not found."""
     return _get(get_client(), ssid_name)
-
-
-@mcp.tool()
-def get_scope_maps(
-    resource_filter: str | None = None,
-    limit: int = 100,
-    offset: int = 0,
-    full_list: bool = False,
-) -> dict[str, Any]:
-    """Return scope-map entries, optionally filtered by resource name (bounded by default)."""
-    client = get_client()
-    maps_resp = client.get("/network-config/v1/scope-maps")
-    if isinstance(maps_resp, list):
-        maps = maps_resp
-    elif isinstance(maps_resp, dict):
-        # New Central currently returns {"scope-map": [...]} for this endpoint.
-        maps = maps_resp.get("scope-map", maps_resp.get("items", []))
-    else:
-        maps = []
-
-    if not isinstance(maps, list):
-        maps = []
-    if resource_filter:
-        needle = resource_filter.lower()
-        maps = [m for m in maps if needle in str(m.get("resource", "")).lower()]
-    data: dict[str, Any] = {"scope_maps": maps}
-    if full_list:
-        return data
-    return bound_collection_response(data, limit=limit, offset=offset, list_key="scope_maps")
 
 
 def _passpoint_read_params(
@@ -997,7 +951,7 @@ def build_underlay_ssid(
     if default_role is not None:
         updates["default-role"] = default_role
     try:
-        response = client._request("PATCH", f"/network-config/v1/wlan-ssids/{url_name}", json=updates)
+        response = client._request("PATCH", f"/network-config/v1alpha1/wlan-ssids/{url_name}", json=updates)
         if response.status_code not in (200, 201, 202, 204):
             result.setdefault("errors", []).append(f"post_configure_macauth: {compact_http_error(response)}")
             return result
@@ -1013,7 +967,7 @@ def build_underlay_ssid(
     try:
         resp = client._request(
             "PUT",
-            f"/network-config/v1/roles/{seg(effective_default_role)}",
+            f"/network-config/v1alpha1/roles/{seg(effective_default_role)}",
             json={"policies": [{"name": "sys_allow_all", "position": 1}]},
         )
         result["role_allowall"] = {"role": effective_default_role, "status": resp.status_code}
@@ -1026,17 +980,8 @@ def build_underlay_ssid(
         for resource in ["roles/macauth-allow", "role-gpids/macauth-allow"]:
             client._request(
                 "POST",
-                "/network-config/v1/scope-maps",
-                json={
-                    "scope-map": [
-                        {
-                            "scope-name": scope_id,
-                            "scope-id": int(scope_id),
-                            "persona": persona,
-                            "resource": resource,
-                        }
-                    ]
-                },
+                CONFIG_ASSIGNMENTS,
+                json=assignment_body(scope_id, persona, resource),
             )
         result["macauth_allow_scope_map"] = {"scope_id": scope_id, "status": "ok"}
     except Exception as exc:
@@ -1190,17 +1135,24 @@ def update_ssid(
     ssid_name: str,
     updates: dict[str, Any],
     scope_id: str | None = None,
+    device_function: str = "CAMPUS_AP",
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """PATCH an existing SSID — only provided fields change. scope_id for LOCAL override."""
+    """PATCH an existing SSID — only provided fields change.
+
+    scope_id makes it a LOCAL override at that scope (object-type LOCAL, for
+    ``device_function``, CAMPUS_AP by default); without it the shared SSID
+    changes.
+    """
     client = get_client()
     errors: list[str] = []
     url_name = quote(ssid_name, safe="")
-    endpoint = f"/network-config/v1/wlan-ssids/{url_name}"
+    endpoint = f"/network-config/v1alpha1/wlan-ssids/{url_name}"
     params: dict[str, Any] = {}
     if scope_id:
+        params["object-type"] = "LOCAL"
         params["scope-id"] = scope_id
-        params["view-type"] = "LOCAL"
+        params["device-function"] = device_function
 
     if dry_run:
         return {
@@ -1271,7 +1223,7 @@ def create_port_profile(
 
     try:
         client.post(
-            f"/network-config/v1/sw-port-profiles/{encoded_name}",
+            f"/network-config/v1alpha1/sw-port-profiles/{encoded_name}",
             data={"description": description},
         )
     except Exception as exc:
@@ -1280,7 +1232,7 @@ def create_port_profile(
             errors.append(f"POST (shell): {exc}")
 
     try:
-        client.put(f"/network-config/v1/sw-port-profiles/{encoded_name}", data=body)
+        client.put(f"/network-config/v1alpha1/sw-port-profiles/{encoded_name}", data=body)
     except Exception as exc:
         errors.append(f"PUT (body): {exc}")
 
@@ -1361,7 +1313,7 @@ def set_port_auth(
     authenticator (dot1x ref), mac-auth (macauth ref), aaa-server-group,
     initial-role, auth-vlan-id. Profile must already exist.
     """
-    endpoint = f"/network-config/v1/sw-port-profiles/{quote(profile_name, safe='')}"
+    endpoint = f"/network-config/v1alpha1/sw-port-profiles/{quote(profile_name, safe='')}"
     payload = {"port-access": port_access_body}
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint, "payload": payload}
@@ -1395,7 +1347,7 @@ def update_port_config(
     client = get_client()
     errors: list[str] = []
     encoded_iface = quote(interface_name, safe="")
-    endpoint = f"/network-config/v1/ethernet-interfaces/{encoded_iface}"
+    endpoint = f"/network-config/v1alpha1/ethernet-interfaces/{encoded_iface}"
     params = {"object-type": "LOCAL", "scope-id": device_scope_id}
 
     try:
@@ -1460,7 +1412,7 @@ def gateway_config_interface(
     client = get_client()
     errors: list[str] = []
     encoded_iface = quote(interface_name, safe="")
-    endpoint = f"/network-config/v1/ethernet-interfaces/{encoded_iface}"
+    endpoint = f"/network-config/v1alpha1/ethernet-interfaces/{encoded_iface}"
     params = {"object-type": "LOCAL", "scope-id": device_scope_id}
 
     try:
@@ -1530,7 +1482,7 @@ def gateway_config_static_route(
 
     client = get_client()
     errors: list[str] = []
-    endpoint = f"/network-config/v1/static-route/{seg(route_name)}"
+    endpoint = f"/network-config/v1alpha1/static-route/{seg(route_name)}"
     params = {"object-type": "LOCAL", "scope-id": device_scope_id}
 
     try:
@@ -1621,6 +1573,10 @@ def gateway_join_cluster(
     # Central's gateway-clusters schema has no `name` child — the cluster name is
     # addressed in the URL path. Including it in the body fails the data-tree parse:
     #   400 "Node 'name' not found as a child of 'gateway-clusters' node."
+    for gw in gateways:
+        missing = [key for key in ("ip", "mac", "priority") if not isinstance(gw, dict) or gw.get(key) in (None, "")]
+        if missing:
+            raise ValueError(f"each gateway needs ip, mac and priority; one is missing {', '.join(missing)}")
     payload: dict[str, Any] = {
         "auto-cluster": auto_cluster,
         "ipv4-gateways": [
@@ -1734,7 +1690,7 @@ def create_site(
         if val is not None:
             payload[key] = val
 
-    endpoint = "/network-monitoring/v1/sites"
+    endpoint = "/network-config/v1/sites"
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint, "payload": payload}
 
@@ -1747,62 +1703,26 @@ def create_site(
 def assign_device_to_site(
     serial_number: str,
     site_id: str,
-    device_type: str | None = None,
+    dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Assign or move a device to a site. device_type hint: SWITCH/AP/GATEWAY."""
-    client = get_client()
-    errors: list[str] = []
+    """Add a device (or a stack id) to a site.
 
-    # The legacy fallbacks require a *numeric* site_id; building their payloads
-    # with int(site_id) eagerly used to raise ValueError before the primary
-    # string-id candidate was ever tried, crashing the tool for scope-name /
-    # non-numeric site ids. Resolve the legacy payload lazily and skip those
-    # candidates (rather than crash) when the id isn't numeric.
-    def _legacy_payload() -> dict[str, Any] | None:
-        try:
-            numeric_site_id = int(site_id)
-        except (TypeError, ValueError):
-            return None
-        return {
-            "site_id": numeric_site_id,
-            "device_id": [serial_number],
-            **({"device_type": device_type} if device_type else {}),
-        }
-
-    legacy_payload = _legacy_payload()
-    candidates: list[tuple[str, str, dict[str, Any] | None]] = [
-        ("POST", f"/network-monitoring/v1/sites/{seg(site_id)}/devices", {"serials": [serial_number]}),
-        ("POST", "/central/v2/sites/associate", legacy_payload),
-        ("POST", "/monitoring/v1/site/assign", legacy_payload),
-    ]
-
-    for method, endpoint, payload in candidates:
-        if payload is None:
-            errors.append(f"skipped {endpoint}: site_id {site_id!r} is not numeric")
-            continue
-        try:
-            response = client._request(method, endpoint, json=payload)
-            if response.status_code == 404:
-                errors.append(f"404 at {endpoint}")
-                continue
-            if response.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(response, endpoint=endpoint))
-                continue
-            try:
-                resp_body = response.json()
-            except Exception:
-                resp_body = {}
-            return {
-                "serial_number": serial_number,
-                "site_id": site_id,
-                "endpoint_used": endpoint,
-                "response": resp_body,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(str(exc))
-
-    return {"serial_number": serial_number, "site_id": site_id, "response": None, "errors": errors}
+    POST /network-config/v1/site-add-devices with the site's scope id. Central
+    supports this only on standalone Central accounts (not ones that still
+    show the Classic Central toggle).
+    """
+    endpoint = "/network-config/v1/site-add-devices"
+    body = {"desScopeId": str(site_id), "devices": [serial_number]}
+    if dry_run:
+        return would_send("POST", endpoint, body)
+    response = get_client()._request("POST", endpoint, json=body)
+    if response.status_code not in (200, 201, 202, 204):
+        return {"serial_number": serial_number, "site_id": site_id, "error": compact_http_error(response, endpoint)}
+    try:
+        resp_body = response.json()
+    except Exception:
+        resp_body = {}
+    return {"serial_number": serial_number, "site_id": site_id, "endpoint_used": endpoint, "response": resp_body}
 
 
 @mcp.tool()
@@ -1833,7 +1753,7 @@ def update_device_settings(
         candidates.append(
             (
                 "PATCH",
-                f"/network-config/v1/switch-system/{seg(serial_number)}",
+                f"/network-config/v1alpha1/switch-system/{seg(serial_number)}",
                 settings,
                 {"object-type": "LOCAL", "scope-id": device_scope_id},
             )
@@ -1924,12 +1844,12 @@ def create_role(
     client = get_client()
     resp = client._request(
         "POST",
-        f"/network-config/v1/roles/{seg(name)}",
+        f"/network-config/v1alpha1/roles/{seg(name)}",
         json=payload,
     )
-    validate_write_result(resp, context=f"POST /network-config/v1/roles/{name}")
+    validate_write_result(resp, context=f"POST /network-config/v1alpha1/roles/{name}")
     result = resp_json(resp)
-    validate_write_result(result, context=f"POST /network-config/v1/roles/{name}")
+    validate_write_result(result, context=f"POST /network-config/v1alpha1/roles/{name}")
     return result
 
 
@@ -1963,12 +1883,12 @@ def update_role(
     client = get_client()
     resp = client._request(
         "PUT",
-        f"/network-config/v1/roles/{seg(name)}",
+        f"/network-config/v1alpha1/roles/{seg(name)}",
         json=payload,
     )
-    validate_write_result(resp, context=f"PUT /network-config/v1/roles/{name}")
+    validate_write_result(resp, context=f"PUT /network-config/v1alpha1/roles/{name}")
     result = resp_json(resp)
-    validate_write_result(result, context=f"PUT /network-config/v1/roles/{name}")
+    validate_write_result(result, context=f"PUT /network-config/v1alpha1/roles/{name}")
     return result
 
 
@@ -2380,7 +2300,7 @@ def list_device_groups(limit: int = 100, offset: int = 0) -> dict[str, Any]:
     """List all device groups (scopeId, scopeName, description)."""
     lim = clamp_limit(limit)
     off = max(0, offset)
-    return get_client().get(f"{_DEVICE_GROUPS_BASE}?limit={lim}&offset={off}")
+    return get_client().get(_DEVICE_GROUPS_BASE, params={"limit": min(lim, 100), "offset": off})
 
 
 @mcp.tool()
@@ -2446,140 +2366,18 @@ def remove_devices_from_group(serial_numbers: list[str]) -> dict[str, Any]:
 
 
 @mcp.tool()
-def list_config_templates(limit: int = 100, offset: int = 0) -> dict[str, Any]:
-    """List configuration templates defined in Central.
-
-    Returns template names, types, and scope assignments. Tries multiple
-    known New Central endpoints and surfaces whichever responds.
-
-    v0.7 note: none of the endpoints probed below are confirmed in the
-    committed New Central network-config manifest — they are speculative
-    Classic-Central-shaped guesses kept only for back-compat on tenants
-    where they happen to respond. The one schema-confirmed, generic
-    "template" resource in New Central today is the VSF stacking template
-    (see build_vsf_template / delete_vsf_template / get_network_profile
-    with profile_type="vsf-template"). There is no New Central endpoint for
-    Classic-style templates with %variable% substitution or a separate
-    template-group assignment step; do not expect one from this tool.
-    """
-    client = get_client()
-    lim = clamp_limit(limit)
-    off = max(0, offset)
-    errors: list[str] = []
-    for endpoint in (
-        "/network-config/v1/templates",
-        "/network-config/v1alpha1/templates",
-        "/configuration/v1/templates",
-        "/configuration/v2/templates",
-    ):
-        try:
-            resp = client._request("GET", endpoint, params={"limit": lim, "offset": off})
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            data = resp.json()
-            items = data if isinstance(data, list) else data.get("items", data.get("templates", []))
-            # The endpoint already paged via limit/offset params; slice from 0
-            # so the page isn't offset twice, but report the true offset.
-            bounded = bound_collection_response(items, limit=lim, offset=0)
-            if isinstance(bounded, dict) and "_pagination" in bounded:
-                bounded["_pagination"]["offset"] = off
-            return bounded
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "items": [],
-        "errors": errors,
-        "_note": "No template endpoint responded — may not be exposed in New Central yet",
-    }
-
-
-@mcp.tool()
-def get_device_running_config(serial_number: str) -> dict[str, Any]:
-    """Download the running configuration for a device.
-
-    Tries multiple Central endpoints for device config backup/export.
-    Returns the raw config text when available.
-    """
-    client = get_client()
-    errors: list[str] = []
-    for endpoint in (
-        f"/network-config/v1/devices/{seg(serial_number)}/configuration",
-        f"/network-config/v1alpha1/devices/{seg(serial_number)}/configuration",
-        f"/configuration/v1/devices/{seg(serial_number)}/configuration",
-        f"/configuration/v1/devices/template/{seg(serial_number)}/config",
-    ):
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            try:
-                data = resp.json()
-            except Exception:
-                data = {"config": resp.text}
-            return {"serial_number": serial_number, "endpoint_used": endpoint, "config": data, "errors": errors}
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "serial_number": serial_number,
-        "config": None,
-        "errors": errors,
-        "_note": "Config export may not be available in New Central",
-    }
-
-
-@mcp.tool()
 def list_named_vlans(scope_id: str | None = None) -> dict[str, Any]:
-    """List named VLANs configured at the group/scope level in Central.
+    """List named VLANs (config-layer VLAN name + ID definitions).
 
-    These are the config-layer VLAN definitions (name + ID mappings) as
-    distinct from the live VLANs reported by monitoring on a specific switch.
-    scope_id defaults to global scope when omitted.
+    GET /network-config/v1alpha1/named-vlan, at ``scope_id`` when given
+    (library profiles otherwise). For the VLANs live on a switch use
+    get_switch_vlans.
     """
-    client = get_client()
-    errors: list[str] = []
-
-    if not scope_id:
-        try:
-            global_resp = client.get("/network-monitoring/v1/globalScopeId")
-            scope_id = global_resp.get("scopeId") or global_resp.get("id")
-        except Exception as exc:
-            errors.append(f"Could not resolve global scope: {exc}")
-
-    for endpoint in (
-        "/network-config/v1/named-vlan",
-        f"/network-config/v1/node_list/{seg(scope_id)}/config/aruba_wired_cx/vlans/config",
-        "/network-config/v1alpha1/named-vlan",
-        f"/network-config/v1/scopes/{seg(scope_id)}/named-vlans",
-    ):
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            data = resp.json()
-            items = (
-                data if isinstance(data, list) else data.get("items", data.get("vlans", data.get("named_vlans", [])))
-            )
-            return {"scope_id": scope_id, "endpoint_used": endpoint, "vlans": items, "errors": errors}
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "scope_id": scope_id,
-        "vlans": [],
-        "errors": errors,
-        "_note": "Named VLAN endpoint not found — use get_switch_vlans for live switch VLANs",
-    }
+    endpoint = "/network-config/v1alpha1/named-vlan"
+    params = {"scope-id": scope_id} if scope_id else None
+    data = get_client().get(endpoint, params=params)
+    items = data if isinstance(data, list) else data.get("items", data.get("vlans", data.get("named_vlans", data)))
+    return {"scope_id": scope_id, "endpoint_used": endpoint, "vlans": items}
 
 
 # ── Network Profiles: Routing Overlays, HA, Telemetry, App Experience, ──────

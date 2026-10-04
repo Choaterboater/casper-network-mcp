@@ -62,26 +62,14 @@ class MCPClient:
     # Devices
     # ------------------------------------------------------------------
 
-    # Device-inventory API versions. Both v1 and v1alpha1 use `next`/`limit`
-    # cursor pagination (NOT offset) per the official reference docs
-    # (getdeviceinventoryv1 / getdeviceinventory) — offset is not a
-    # documented query param on either version.
+    # Device inventory: v1 (getdeviceinventoryv1, the bundled version) pages
+    # with a `next` cursor and `limit`, not offset.
     _INVENTORY_V1 = "/network-monitoring/v1/device-inventory"
-    _INVENTORY_V1ALPHA1 = "/network-monitoring/v1alpha1/device-inventory"
 
     def _device_inventory_page(self, params: dict[str, Any]) -> tuple[dict[str, Any], str]:
-        """GET one device-inventory page, preferring v1 and falling back to
-        v1alpha1 when v1 is unavailable on this tenant (404/error).
-
-        Returns ``(raw_response, endpoint_used)``.
-        """
-        try:
-            result = self._client.get(self._INVENTORY_V1, params=params)
-            return result, self._INVENTORY_V1
-        except Exception as exc:
-            logger.debug("device-inventory v1 failed (%s); falling back to v1alpha1", exc)
-        result = self._client.get(self._INVENTORY_V1ALPHA1, params=params)
-        return result, self._INVENTORY_V1ALPHA1
+        """GET one device-inventory page. Returns ``(raw_response, endpoint_used)``."""
+        result = self._client.get(self._INVENTORY_V1, params=params)
+        return result, self._INVENTORY_V1
 
     def get_device_by_serial(self, serial_number: str) -> dict[str, Any] | None:
         """Return the device inventory record for a given serial, or None.
@@ -89,7 +77,7 @@ class MCPClient:
         Tries a server-side ``serialNumber eq '...'`` filter first (supported
         by the device-inventory API), then falls back to a cursor-paginated
         scan using the `next` token returned by each page (not offset — the
-        API doesn't support it). Prefers v1, falls back to v1alpha1.
+        API doesn't support it).
         """
         serial_escaped = _odata_string(serial_number)
         try:
@@ -185,19 +173,25 @@ class MCPClient:
     # ------------------------------------------------------------------
 
     def _all_sites(self) -> list[dict[str, Any]]:
-        """Return the full, unsliced site list (the API has no paging)."""
+        """Return the full site list, 100 at a time (offset is required, limit at most 100)."""
+        sites: list[dict[str, Any]] = []
         try:
-            result = self._client.get("/network-config/v1/sites")
-            sites = result.get("items", result.get("sites", []))
-            return sites if isinstance(sites, list) else []
+            for page in range(_MAX_SEARCH_PAGES):
+                result = self._client.get("/network-config/v1/sites", params={"limit": 100, "offset": page * 100})
+                items = result.get("items", result.get("sites", []))
+                if not isinstance(items, list):
+                    break
+                sites.extend(items)
+                if len(items) < 100:
+                    break
+            return sites
         except Exception as exc:
             logger.warning("MCPClient.get_sites failed: %s", exc)
-            return []
+            return sites
 
     def get_sites(self, limit: int = _DEFAULT_LIST_LIMIT, offset: int = 0) -> list[dict[str, Any]]:
         """Return a bounded page of sites with their IDs."""
-        # The sites config API does not support limit/offset query params;
-        # slice client-side.
+        # Read the whole list, then slice client-side.
         off = max(0, offset)
         lim = _bounded_limit(limit)
         return self._all_sites()[off : off + lim]
@@ -431,7 +425,7 @@ class MCPClient:
     def get_gw_clusters(self) -> list[dict[str, Any]]:
         """Return unique gateway clusters by scanning /network-config/v1/overlay-wlan."""
         try:
-            result = self._client.get("/network-config/v1/overlay-wlan")
+            result = self._client.get("/network-config/v1alpha1/overlay-wlan")
             seen: dict[str, dict[str, Any]] = {}
             for profile in result.get("ssid-cluster", []):
                 for entry in profile.get("gw-cluster-list", []):

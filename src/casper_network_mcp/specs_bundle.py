@@ -27,6 +27,7 @@ class Operation:
     tag: str
     query_params: tuple[str, ...]
     enums: dict[str, tuple[str, ...]]
+    required_query: tuple[str, ...] = ()
 
     def __hash__(self) -> int:  # enums is a dict; identity is method + path
         return hash((self.method, self.path))
@@ -114,6 +115,7 @@ def _operations_in(spec: dict[str, Any]) -> list[Operation]:
                 if isinstance(p, dict) and p.get("name") and p.get("in"):
                     params[(p["in"], p["name"])] = p
             query = tuple(name for (where, name) in params if where == "query")
+            required = tuple(name for (where, name), p in params.items() if where == "query" and p.get("required"))
             enums = {}
             for (where, name), p in params.items():
                 if where in ("query", "path"):
@@ -129,6 +131,7 @@ def _operations_in(spec: dict[str, Any]) -> list[Operation]:
                     tag=str(tags[0]) if tags else "",
                     query_params=query,
                     enums=enums,
+                    required_query=required,
                 )
             )
     return out

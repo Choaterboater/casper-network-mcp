@@ -15,7 +15,7 @@ SLE metrics, WLANs, gateway clusters, anomaly detection (client flapping,
 SSH brute force), site health summary, client roaming history, switch stacking,
 rogue APs, AP neighbors, channel utilization, client signal history, air quality,
 SSID clients, client location, topology, BSSID inventory, swarm inventory, AP tunnel telemetry,
-application visibility, reporting (reports/report-runs/metadata/health, plus
+application visibility, reporting (reports/report-runs/metadata, plus
 report create/get/update/delete and report-run
 delete/download-link execution), client onboarding events, best-effort
 notification-rule CRUD, and a guarded read-only `central_get` escape hatch
@@ -35,7 +35,7 @@ tools accept both `next_cursor` (preferred) and a legacy `offset` that is
 translated to an approximate starting cursor.
 """
 
-import time
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import quote
 
@@ -249,17 +249,20 @@ def list_devices(
     forward. offset is accepted for backward compatibility and translated
     to an approximate starting cursor when next_cursor is omitted.
     """
-    filters: dict[str, Any] = {}
+    # Device inventory filters only through its OData `filter` (spec:
+    # getDeviceInventoryV1); a bare siteId/deviceType query is not a parameter.
+    clauses: list[str] = []
     if device_type:
-        filters["deviceType"] = device_type
+        clauses.append(f"deviceType eq '{_odata_string(_normalize_device_type_filter(device_type))}'")
     if site_id:
-        filters["siteId"] = site_id
+        clauses.append(f"siteId eq '{_odata_string(site_id)}'")
+    filters: dict[str, Any] = {"filter": " and ".join(clauses)} if clauses else {}
     off = max(0, offset)
     cursor = next_cursor or (str(off + 1) if off > 0 else None)
     devices, returned_cursor = get_mcp_client().get_devices_page(
         filters or None, limit=clamp_limit(limit), next_cursor=cursor
     )
-    # deviceType query param is ignored server-side; apply client-side post-filter.
+    # Keep a client-side check too, in case a tenant ignores the filter.
     if device_type:
         want = device_type.upper()
         if want == "AP":
@@ -373,12 +376,9 @@ def get_client_details(mac_address: str) -> dict[str, Any]:
     """Fetch detailed info (usage, bandwidth, auth) for a single client by MAC address."""
     client = get_client()
     errors: list[str] = []
-    mac = mac_address.replace(":", "").replace("-", "").lower()
 
     for endpoint in [
         f"/network-monitoring/v1/clients/{seg(mac_address)}",
-        f"/network-monitoring/v1/clients/details?macAddress={seg(mac_address)}",
-        f"/network-monitoring/v1alpha1/clients/{seg(mac)}",
     ]:
         try:
             response = client._request("GET", endpoint)
@@ -689,37 +689,16 @@ def list_events(
 def get_events_count(serial_number: str, hours: int = 24) -> dict[str, Any]:
     """Count events for a device over the past N hours (default 24).
 
-    KNOWN ISSUE: events endpoint unstable. Legacy /events/count 404s;
-    /event-filters 400s with unknown param shape. Tries both; surfaces errors.
+    Counts what the events list returns (``/network-troubleshooting/v1/events``,
+    device type and site worked out from the inventory). The source's
+    ``/network-monitoring/v1/events/count`` is in no bundled document.
     """
-    client = get_client()
-    errors: list[str] = []
-    now_ms = int(time.time() * 1000)
-    params = {
-        "serialNumber": serial_number,
-        "startTime": now_ms - hours * 3_600_000,
-        "endTime": now_ms,
+    events = get_mcp_client().get_events(serial_number, hours=hours)
+    return {
+        "serial_number": serial_number,
+        "count": len(events),
+        "endpoint_used": "/network-troubleshooting/v1/events",
     }
-    # Try peer-consensus path first, then legacy fallback.
-    for endpoint in (
-        "/network-troubleshooting/v1/event-filters",
-        "/network-monitoring/v1/events/count",
-    ):
-        try:
-            result = client.get(endpoint, params=params)
-            count = result.get("count")
-            if count is None:
-                items = result.get("items", [])
-                count = sum(i.get("count", 0) for i in items) if items else 0
-            return {
-                "serial_number": serial_number,
-                "count": count,
-                "endpoint_used": endpoint,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {"serial_number": serial_number, "count": 0, "endpoint_used": None, "errors": errors}
 
 
 @mcp.tool()
@@ -743,10 +722,13 @@ def list_radios(
     cursor = next_cursor or (str(off + 1) if off > 0 else None)
     if cursor:
         params["next"] = cursor
+    clauses = []
     if site_id:
-        params["siteId"] = site_id
+        clauses.append(f"siteId eq '{_odata_string(site_id)}'")
     if serial_number:
-        params["serialNumber"] = serial_number
+        clauses.append(f"serialNumber eq '{_odata_string(serial_number)}'")
+    if clauses:
+        params["filter"] = " and ".join(clauses)
     try:
         return client.get("/network-monitoring/v1/radios", params=params)
     except Exception as exc:
@@ -829,7 +811,7 @@ def list_gateways(
     if cursor:
         params["next"] = cursor
     if site_id:
-        params["siteId"] = site_id
+        params["filter"] = f"siteId eq '{_odata_string(site_id)}'"
     try:
         return client.get("/network-monitoring/v1/gateways", params=params)
     except Exception as exc:
@@ -1174,7 +1156,7 @@ def list_scope_devices(
     cursor: str | None = None
     for _ in range(50):
         page, cursor_next = get_mcp_client().get_devices_page(
-            {"siteId": scope},
+            {"filter": f"siteId eq '{_odata_string(scope)}'"},
             limit=page_size,
             next_cursor=cursor,
         )
@@ -1271,9 +1253,8 @@ def list_inventory(
     normalized to ACCESS_POINT). Both are translated into a getDeviceInventoryV1
     OData `filter` so results span the whole inventory rather than one page.
 
-    Uses device-inventory v1 (getdeviceinventoryv1), falling back to
-    v1alpha1 automatically if v1 is unavailable on this tenant. Both
-    versions paginate with a `next` cursor, not offset — pass next_cursor
+    Uses device-inventory v1 (getdeviceinventoryv1), which paginates
+    with a `next` cursor, not offset — pass next_cursor
     from a prior response's _pagination.next_cursor to page forward;
     offset is translated to an approximate starting cursor when
     next_cursor is omitted.
@@ -1319,41 +1300,47 @@ def list_inventory(
 
 @mcp.tool()
 def list_audit_logs(
-    start_at: int | None = None,
-    end_at: int | None = None,
+    start_at: int | str | None = None,
+    end_at: int | str | None = None,
     limit: int = 100,
     offset: int = 0,
     filter: str | None = None,
     sort: str | None = None,
 ) -> dict[str, Any]:
-    """Audit logs are not available on New Central instances.
+    """List Central audit logs (GET /network-services/v1/audits).
 
-    The audit-log endpoint 404s and is absent from all OpenAPI specs. Use
-    the GreenLake Platform audit log instead (not part of this server yet).
+    start_at/end_at: epoch milliseconds or RFC 3339 text; the window defaults
+    to the last 24 hours. filter/sort: OData, as the API documents them.
     """
-    return {
-        "items": [],
-        "errors": [
-            "audit-log endpoint not available on New Central instances — use the GreenLake audit log "
-            "instead (not part of this server yet)"
-        ],
+    now = datetime.now(UTC)
+    params: dict[str, Any] = {
+        "start-at": _rfc3339(start_at, now - timedelta(hours=24)),
+        "end-at": _rfc3339(end_at, now),
+        "limit": clamp_limit(limit),
+        "offset": max(0, offset),
     }
+    if filter:
+        params["filter"] = filter
+    if sort:
+        params["sort"] = sort
+    return get_client().get("/network-services/v1/audits", params=params)
 
 
 @mcp.tool()
 def get_audit_log(audit_id: str) -> dict[str, Any]:
-    """Audit logs are not available on New Central instances.
+    """Fetch one Central audit log entry (GET /network-services/v1/audits/{id})."""
+    return get_client().get(f"/network-services/v1/audits/{seg(audit_id)}")
 
-    The audit-log endpoint 404s and is absent from all OpenAPI specs. Use
-    the GreenLake Platform audit log instead (not part of this server yet).
-    """
-    return {
-        "items": [],
-        "errors": [
-            "audit-log endpoint not available on New Central instances — use the GreenLake audit log "
-            "instead (not part of this server yet)"
-        ],
-    }
+
+def _rfc3339(value: int | str | None, default: datetime) -> str:
+    """Epoch milliseconds or text as the RFC 3339 UTC time the audit API wants."""
+    if value is None or value == "":
+        moment = default
+    elif isinstance(value, int) or str(value).isdigit():
+        moment = datetime.fromtimestamp(int(value) / 1000, tz=UTC)
+    else:
+        return str(value)
+    return moment.strftime("%Y-%m-%dT%H:%M:%S.") + f"{moment.microsecond // 1000:03d}Z"
 
 
 # ── Device Health & Trends ────────────────────────────────────────────────────
@@ -1394,42 +1381,27 @@ def get_device_trends(
 
     dt = (device_type or "").upper()
     m = metric.lower()
+    if m not in ("cpu", "memory", "throughput"):
+        raise ValueError("metric must be cpu, memory or throughput")
+    sn = seg(serial_number)
+    # Only the trend endpoints in the bundled Monitoring document (Task 10).
+    ap = f"/network-monitoring/v1/aps/{sn}/" + ("throughput-trends" if m == "throughput" else f"{m}-utilization-trends")
+    switch = f"/network-monitoring/v1/switches/{sn}/" + ("interface-trends" if m == "throughput" else "hardware-trends")
     if dt in ("AP", "ACCESS_POINT"):
-        metric_segment = "throughput-trends" if m == "throughput" else f"{m}-utilization-trends"
-        candidates = [f"/network-monitoring/v1/aps/{seg(serial_number)}/{metric_segment}"]
-        if m == "throughput":
-            params.setdefault("interface-type", "WIRELESS")
+        candidates = [ap]
     elif dt in ("SWITCH", "CX"):
-        if m in ("cpu", "memory", "hardware"):
-            metric_segment = "hardware-trends"
-        elif m == "throughput":
-            metric_segment = "interface-trends"
-        else:
-            metric_segment = f"{m}-utilization-trends"
-        candidates = [
-            f"/network-monitoring/v1/switches/{seg(serial_number)}/{metric_segment}",
-            f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/{metric_segment}",
-        ]
-    else:
+        candidates = [switch]
+    elif dt in ("GATEWAY", "GW"):
         if m == "throughput":
-            candidates = [
-                f"/network-monitoring/v1/aps/{seg(serial_number)}/throughput-trends",
-                f"/network-monitoring/v1/switches/{seg(serial_number)}/interface-trends",
-            ]
-        elif m in ("cpu", "memory", "hardware"):
-            candidates = [
-                f"/network-monitoring/v1/aps/{seg(serial_number)}/{m}-utilization-trends",
-                f"/network-monitoring/v1/switches/{seg(serial_number)}/hardware-trends",
-            ]
-        else:
-            candidates = [
-                f"/network-monitoring/v1/aps/{seg(serial_number)}/{m}-utilization-trends",
-                f"/network-monitoring/v1/switches/{seg(serial_number)}/{m}-utilization-trends",
-            ]
+            raise ValueError("gateway throughput trends are per port; use the generated gateway port trend tool")
+        candidates = [f"/network-monitoring/v1/gateways/{sn}/{m}-utilization-trends"]
+    else:
+        candidates = [ap, switch]
 
     for endpoint in candidates:
         try:
-            response = client._request("GET", endpoint, params=params)
+            sent = {**params, "interface-type": "WIRELESS"} if endpoint == ap and m == "throughput" else params
+            response = client._request("GET", endpoint, params=sent)
             if response.status_code == 404:
                 errors.append(f"404 at {endpoint}")
                 continue
@@ -1456,19 +1428,16 @@ def get_device_trends(
 
 
 @mcp.tool()
-def get_device_health(
-    serial_number: str | None = None,
-    device_scope_id: str | None = None,
-) -> dict[str, Any]:
-    """Fetch config-health or monitoring health state for a device."""
+def get_device_health(serial_number: str | None = None) -> dict[str, Any]:
+    """Fetch config-health (and, for one serial, monitoring) state for devices."""
     client = get_client()
     errors: list[str] = []
 
     try:
-        params: dict[str, Any] = {}
-        if device_scope_id:
-            params["scope-id"] = device_scope_id
-        response = client._request("GET", "/network-config/v1alpha1/config-health/devices", params=params or None)
+        params: dict[str, Any] = {"limit": 100, "offset": 0}
+        if serial_number:
+            params["filter"] = f"serial eq '{_odata_string(serial_number)}'"
+        response = client._request("GET", "/network-config/v1alpha1/config-health/devices", params=params)
         if response.status_code == 200:
             data = response.json()
             items = data.get("items", data.get("devices", [data] if data else []))
@@ -1490,25 +1459,20 @@ def get_device_health(
         errors.append(f"config-health: {exc}")
 
     if serial_number:
-        for endpoint in [
-            f"/network-monitoring/v1/devices/{seg(serial_number)}",
-            f"/network-monitoring/v1alpha1/devices/{seg(serial_number)}",
-        ]:
-            try:
-                response = client._request("GET", endpoint)
-                if response.status_code == 404:
-                    errors.append(f"404 at {endpoint}")
-                    continue
-                if response.status_code == 200:
-                    return {
-                        "serial_number": serial_number,
-                        "health": response.json(),
-                        "endpoint_used": endpoint,
-                        "errors": errors,
-                    }
-                errors.append(f"HTTP {response.status_code} at {endpoint}")
-            except Exception as exc:
-                errors.append(str(exc))
+        # The device list filtered to one serial (the bundled document has no
+        # GET on /devices/{serial}).
+        endpoint = "/network-monitoring/v1/devices"
+        try:
+            response = client._request(
+                "GET", endpoint, params={"filter": f"serialNumber eq '{_odata_string(serial_number)}'"}
+            )
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", data) if isinstance(data, dict) else data
+                return {"serial_number": serial_number, "health": items, "endpoint_used": endpoint, "errors": errors}
+            errors.append(f"HTTP {response.status_code} at {endpoint}")
+        except Exception as exc:
+            errors.append(str(exc))
 
     return {"serial_number": serial_number, "health": None, "endpoint_used": None, "errors": errors}
 
@@ -2329,8 +2293,6 @@ def get_wireless_metrics(serial_number: str) -> dict[str, Any]:
 
     for endpoint in [
         f"/network-monitoring/v1/aps/{seg(serial_number)}",
-        f"/network-monitoring/v1/devices/{seg(serial_number)}/wireless-stats",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/rf-stats",
     ]:
         try:
             response = client._request("GET", endpoint)
@@ -2382,7 +2344,6 @@ def list_switch_ports(
 
     for endpoint in [
         f"/network-monitoring/v1/switches/{seg(serial_number)}/interfaces",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/interfaces",
     ]:
         try:
             response = client._request("GET", endpoint, params=params)
@@ -2419,7 +2380,6 @@ def get_switch_details(serial_number: str) -> dict[str, Any]:
 
     for endpoint in [
         f"/network-monitoring/v1/switches/{seg(serial_number)}",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}",
     ]:
         try:
             response = client._request("GET", endpoint)
@@ -2465,7 +2425,6 @@ def get_switch_vlans(
 
     for endpoint in [
         f"/network-monitoring/v1/switches/{seg(serial_number)}/vlans",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/vlans",
     ]:
         try:
             response = client._request("GET", endpoint, params=params)
@@ -2490,20 +2449,14 @@ def get_switch_vlans(
 
 
 @mcp.tool()
-def get_switch_interface_poe(
-    serial_number: str,
-    site_id: str | None = None,
-) -> dict[str, Any]:
+def get_switch_interface_poe(serial_number: str) -> dict[str, Any]:
     """Fetch PoE state and power draw for all ports on a switch."""
     client = get_client()
     errors: list[str] = []
     params: dict[str, Any] = {}
-    if site_id:
-        params["site-id"] = site_id
 
     for endpoint in [
         f"/network-monitoring/v1/switches/{seg(serial_number)}/interface-poe",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/interface-poe",
     ]:
         try:
             response = client._request("GET", endpoint, params=params or None)
@@ -2552,7 +2505,6 @@ def get_switch_interface_trends(
 
     for endpoint in [
         f"/network-monitoring/v1/switches/{seg(serial_number)}/interface-trends",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/interface-trends",
     ]:
         try:
             response = client._request("GET", endpoint, params=params)
@@ -2585,7 +2537,6 @@ def get_ap_radios(serial_number: str) -> dict[str, Any]:
 
     for endpoint in [
         f"/network-monitoring/v1/aps/{seg(serial_number)}/radios",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/radios",
     ]:
         try:
             response = client._request("GET", endpoint)
@@ -2617,7 +2568,6 @@ def get_ap_ports(serial_number: str) -> dict[str, Any]:
 
     for endpoint in [
         f"/network-monitoring/v1/aps/{seg(serial_number)}/ports",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/ports",
     ]:
         try:
             response = client._request("GET", endpoint)
@@ -2738,15 +2688,13 @@ def get_switch_stacking_info(serial_number: str) -> dict[str, Any]:
     Returns stack members, roles (conductor/standby/member), serial numbers,
     MAC addresses, and forwarding-plane health. Returns a not-applicable
     response for standalone switches. Note: stacking sub-path endpoints
-    are not yet exposed in New Central — use get_switch_details which
-    includes stackId and switchRole fields.
+    come from ``/network-monitoring/v1/stack/{serial}/members`` (stack id or
+    conductor serial); get_switch_details also carries stackId and switchRole.
     """
     client = get_client()
     errors: list[str] = []
     for endpoint in [
-        f"/network-monitoring/v1/switches/{seg(serial_number)}/stack",
-        f"/network-monitoring/v1alpha1/switch/{seg(serial_number)}/stack",
-        f"/network-monitoring/v1/switches/{seg(serial_number)}/stack-members",
+        f"/network-monitoring/v1/stack/{seg(serial_number)}/members",
     ]:
         try:
             resp = client._request("GET", endpoint)
@@ -2788,8 +2736,6 @@ def get_channel_utilization(serial_number: str) -> dict[str, Any]:
     errors: list[str] = []
     for endpoint in [
         f"/network-monitoring/v1/aps/{seg(serial_number)}/radios",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/rf-stats",
-        f"/network-monitoring/v1/aps/{seg(serial_number)}/channel-utilization",
     ]:
         try:
             resp = client._request("GET", endpoint)
@@ -2826,133 +2772,19 @@ def get_channel_utilization(serial_number: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def list_rogue_aps(
-    site_id: str | None = None,
-    limit: int = 100,
-) -> dict[str, Any]:
-    """List rogue and interfering APs detected by the wireless infrastructure.
+def get_ap_neighbors(serial_number: str, limit: int = 100, cutoff: int | None = None) -> dict[str, Any]:
+    """List the APs this AP hears, as AP serial numbers (AirMatch neighbour list).
 
-    Returns rogue BSSID, SSID, channel, RSSI, classification (rogue/interfering/
-    neighbour), and detecting AP. Note: rogue AP endpoints (/rogues, /rogue-aps)
-    are not yet exposed in New Central — this tool will return an empty result
-    with an explanatory note until the endpoint is available.
+    GET /network-services/v1/airmatch-ap-neighbor-list/{serial}. ``cutoff``
+    keeps neighbours up to that path loss (max 150). For radio channels and
+    signal use get_ap_radios or list_bssids.
     """
-    client = get_client()
-    errors: list[str] = []
-    params: dict[str, Any] = {"limit": clamp_limit(limit)}
-    if site_id:
-        params["site-id"] = site_id
-    for endpoint in [
-        "/network-monitoring/v1/rogues",
-        "/network-monitoring/v1alpha1/rogues",
-        "/network-monitoring/v1/rogue-aps",
-    ]:
-        try:
-            resp = client._request("GET", endpoint, params=params)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            data = resp.json()
-            items = data.get("rogues", data.get("items", data if isinstance(data, list) else []))
-            return bound_collection_response(items, limit=limit, offset=0)
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "items": [],
-        "errors": errors,
-        "_note": "Rogue AP endpoint not found or no rogues detected",
-    }
-
-
-@mcp.tool()
-def get_ap_neighbors(serial_number: str) -> dict[str, Any]:
-    """Get neighboring APs visible to this AP with RSSI and channel.
-
-    Returns BSSIDs, SSIDs, channels, and signal strength of APs heard by
-    this AP. Useful for coverage overlap analysis and co-channel interference
-    identification.
-    """
-    client = get_client()
-    errors: list[str] = []
-    for endpoint in [
-        f"/network-monitoring/v1/aps/{seg(serial_number)}/neighbors",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/neighbors",
-        f"/network-monitoring/v1/aps/{seg(serial_number)}/rf-neighbors",
-    ]:
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            data = resp.json()
-            neighbors = data.get("neighbors", data.get("items", data if isinstance(data, list) else []))
-            return {
-                "serial_number": serial_number,
-                "neighbors": neighbors,
-                "endpoint_used": endpoint,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "serial_number": serial_number,
-        "neighbors": None,
-        "errors": errors,
-        "_note": "Neighbor endpoint not found — may not be available in New Central yet",
-    }
-
-
-@mcp.tool()
-def get_client_signal_history(
-    mac_address: str,
-    hours: int = 24,
-) -> dict[str, Any]:
-    """Get RSSI and SNR history for a wireless client over the past N hours.
-
-    Returns signal strength trends showing whether a client's poor performance
-    is due to degrading signal or is intermittent. Note: client sub-path
-    endpoints (signal-history, trends) are not yet exposed in New Central.
-    Use get_client_roaming_history for event-based connection history instead.
-    """
-    client = get_client()
-    errors: list[str] = []
-    mac_clean = mac_address.replace(":", "").replace("-", "").lower()
-
-    for endpoint in [
-        f"/network-monitoring/v1/clients/{seg(mac_clean)}/signal-history",
-        f"/network-monitoring/v1/clients/{seg(mac_address)}/signal-history",
-        f"/network-monitoring/v1alpha1/clients/{seg(mac_clean)}/signal-history",
-        f"/network-monitoring/v1/clients/{seg(mac_clean)}/trends",
-    ]:
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            data = resp.json()
-            return {
-                "mac_address": mac_address,
-                "history": data,
-                "endpoint_used": endpoint,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "mac_address": mac_address,
-        "history": None,
-        "errors": errors,
-        "_note": ("Signal history endpoint not found — use get_client_roaming_history for event-based history"),
-    }
+    params: dict[str, Any] = {"limit": min(max(1, limit), 500)}
+    if cutoff is not None:
+        params["cutoff"] = min(max(0, cutoff), 150)
+    endpoint = f"/network-services/v1/airmatch-ap-neighbor-list/{seg(serial_number)}"
+    data = get_client().get(endpoint, params=params)
+    return {"serial_number": serial_number, "neighbors": data, "endpoint_used": endpoint}
 
 
 @mcp.tool()
@@ -2976,84 +2808,15 @@ def list_ssid_clients(
 
 @mcp.tool()
 def locate_client(mac_address: str) -> dict[str, Any]:
-    """Get the approximate physical location of a client.
+    """Get the latest location of a connected Wi-Fi client.
 
-    Returns floor plan coordinates, building, floor, and nearest AP where
-    available. Note: location endpoints (/location/v1) require a separate
-    location services licence and are not available on all Central instances.
+    GET /network-services/v1/wifi-clients-locations with
+    latest-connected-client-mac. Location needs Central's location service;
+    without it the list is empty.
     """
-    client = get_client()
-    errors: list[str] = []
-    mac_clean = mac_address.replace(":", "").replace("-", "").lower()
-
-    for endpoint in [
-        f"/network-monitoring/v1/clients/{seg(mac_clean)}/location",
-        f"/network-monitoring/v1/clients/{seg(mac_address)}/location",
-        f"/network-monitoring/v1alpha1/clients/{seg(mac_clean)}/location",
-        f"/location/v1/clients/{seg(mac_clean)}",
-    ]:
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            return {
-                "mac_address": mac_address,
-                "location": resp.json(),
-                "endpoint_used": endpoint,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "mac_address": mac_address,
-        "location": None,
-        "errors": errors,
-        "_note": "Location endpoint not found — location services may require a separate licence",
-    }
-
-
-@mcp.tool()
-def get_air_quality(serial_number: str) -> dict[str, Any]:
-    """Get air quality and interference metrics for an AP.
-
-    Returns interference score, non-Wi-Fi interference sources, duty cycle,
-    and air quality index per radio. Note: air-quality and rf-health sub-paths
-    are not yet exposed in New Central — use get_channel_utilization (AP radios
-    endpoint) for available RF metrics in the meantime.
-    """
-    client = get_client()
-    errors: list[str] = []
-    for endpoint in [
-        f"/network-monitoring/v1/aps/{seg(serial_number)}/air-quality",
-        f"/network-monitoring/v1alpha1/aps/{seg(serial_number)}/air-quality",
-        f"/network-monitoring/v1/aps/{seg(serial_number)}/rf-health",
-    ]:
-        try:
-            resp = client._request("GET", endpoint)
-            if resp.status_code in (400, 404):
-                errors.append(f"HTTP {resp.status_code} at {endpoint}")
-                continue
-            if resp.status_code not in (200, 201, 202):
-                errors.append(compact_http_error(resp, endpoint))
-                continue
-            return {
-                "serial_number": serial_number,
-                "air_quality": resp.json(),
-                "endpoint_used": endpoint,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(f"{endpoint}: {exc}")
-    return {
-        "serial_number": serial_number,
-        "air_quality": None,
-        "errors": errors,
-        "_note": "Air quality endpoint not found — may not be available in New Central yet",
-    }
+    endpoint = "/network-services/v1/wifi-clients-locations"
+    data = get_client().get(endpoint, params={"latest-connected-client-mac": mac_address})
+    return {"mac_address": mac_address, "location": data, "endpoint_used": endpoint}
 
 
 # ── Client History ───────────────────────────────────────────────────────────
@@ -3262,7 +3025,7 @@ def get_site_health_summary(
     else:
         return {"error": "Provide site_id or site_name"}
 
-    devices = client.get_devices(filters={"siteId": site_id} if site_id else {}, limit=200)
+    devices = client.get_devices(filters={"filter": f"siteId eq '{_odata_string(str(site_id))}'"}, limit=200)
     clients = client.get_clients(site_id=site_id, limit=200)
     alerts = client.get_alerts(site_id=site_id, limit=200)
 
@@ -3454,9 +3217,7 @@ def get_ap_tunnel_throughput(
     start_time/end_time: ISO 8601, applied as an OData `timestamp` filter
     (matches get_device_trends convention elsewhere in this module).
     """
-    endpoint = (
-        f"/network-monitoring/v1/aps/{quote(serial_number, safe='')}/tunnels/{quote(tunnel_id, safe='')}/throughput"
-    )
+    endpoint = f"/network-monitoring/v1/aps/{quote(serial_number, safe='')}/tunnels/{quote(tunnel_id, safe='')}/throughput-trends"
     params = {"filter": f"timestamp gt {start_time} and timestamp lt {end_time}"}
     try:
         return get_client().get(endpoint, params=params)
@@ -3538,14 +3299,14 @@ def list_report_runs(
 ) -> dict[str, Any]:
     """List report-run history for a saved report.
 
-    GET /network-reporting/v1alpha1/reports/{report_id}/report-runs.
+    GET /network-reporting/v1/reports/{report_id}/report-runs.
     """
     params: dict[str, Any] = {"limit": max(1, min(limit, 100))}
     if next_cursor:
         params["next"] = next_cursor
     if sort:
         params["sort"] = sort
-    endpoint = f"/network-reporting/v1alpha1/reports/{quote(str(report_id), safe='')}/report-runs"
+    endpoint = f"/network-reporting/v1/reports/{quote(str(report_id), safe='')}/report-runs"
     try:
         return get_client().get(endpoint, params=params)
     except Exception as exc:
@@ -3556,21 +3317,12 @@ def list_report_runs(
 def get_reports_metadata() -> dict[str, Any]:
     """Fetch reporting metadata (available report types/fields).
 
-    GET /network-reporting/v1alpha1/reports-metadata.
+    GET /network-reporting/v1/reports-meta.
     """
     try:
-        return get_client().get("/network-reporting/v1alpha1/reports-metadata")
+        return get_client().get("/network-reporting/v1/reports-meta")
     except Exception as exc:
-        return {"error": str(exc), "endpoint_used": "/network-reporting/v1alpha1/reports-metadata"}
-
-
-@mcp.tool()
-def get_reporting_service_health() -> dict[str, Any]:
-    """Fetch reporting-service health status from network-reporting/v1alpha1/reports/health."""
-    try:
-        return get_client().get("/network-reporting/v1alpha1/reports/health")
-    except Exception as exc:
-        return {"error": str(exc), "endpoint_used": "/network-reporting/v1alpha1/reports/health"}
+        return {"error": str(exc), "endpoint_used": "/network-reporting/v1/reports-meta"}
 
 
 # ── Report Lifecycle & Report-Run Execution ──────────────────────────────────
@@ -3764,17 +3516,14 @@ def list_client_onboarding_events(
     return bound_collection_response(onboarding, limit=limit, offset=offset)
 
 
-# ── Notification Rule CRUD (alert-config) ────────────────────────────────────
+# ── Notification Rule CRUD ───────────────────────────────────────────────────
 #
-# GOTCHA: the vendor API reference documents only GET for alert-config
-# (backing list_alert_configs above). The Central UI's "Notification Rules"
-# page supports create/edit/delete/enable/disable, so a REST counterpart
-# plausibly exists at the same base path, but its exact shape is NOT
-# confirmed. These tools try the usual REST convention and surface a clear
-# 404 instead of guessing again (the spec check in Task 10 decides whether
-# they stay).
+# The source guessed these at .../alert-config (the bundled document has only
+# GET there). The bundled Notifications document has the real CRUD at
+# /network-notifications/v1/notification-rules, with the rule wrapped in
+# ``notificationRuleInput`` and PATCH sent as merge-patch (Task 10).
 
-_ALERT_CONFIG_BASE = "/network-notifications/v1/alert-config"
+_ALERT_CONFIG_BASE = "/network-notifications/v1/notification-rules"
 
 
 @mcp.tool()
@@ -3782,14 +3531,14 @@ async def create_notification_rule(
     body: dict[str, Any],
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Create a notification rule (alert-config).
+    """Create a notification rule.
 
-    UNCONFIRMED endpoint shape — see module note above.
-
-    body must match the alert-config schema returned by list_alert_configs
-    (scopeId, scopeType, category, destination, etc.). dry_run returns the
-    payload without sending.
+    body is the rule (description, enabled, sourceTypes, source, destination);
+    it is sent as ``notificationRuleInput``. dry_run returns the payload
+    without sending.
     """
+    if "notificationRuleInput" not in body:
+        body = {"notificationRuleInput": body}
     if dry_run:
         return {"dry_run": True, "endpoint": _ALERT_CONFIG_BASE, "payload": body}
     response = await get_client()._arequest("POST", _ALERT_CONFIG_BASE, json=body)
@@ -3807,14 +3556,15 @@ async def update_notification_rule(
     updates: dict[str, Any],
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Update a notification rule by ID (alert-config).
-
-    UNCONFIRMED endpoint shape — see module note above.
-    """
+    """Update a notification rule by ID (merge-patch of ``notificationRuleInput``)."""
     endpoint = f"{_ALERT_CONFIG_BASE}/{quote(rule_id, safe='')}"
+    if "notificationRuleInput" not in updates:
+        updates = {"notificationRuleInput": updates}
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint, "payload": updates}
-    response = await get_client()._arequest("PATCH", endpoint, json=updates)
+    response = await get_client()._arequest(
+        "PATCH", endpoint, json=updates, content_type="application/merge-patch+json"
+    )
     if response.status_code not in (200, 201, 202, 204):
         return {"error": compact_http_error(response, endpoint), "endpoint_used": endpoint}
     return _json_response(response) | {"endpoint_used": endpoint}
@@ -3828,16 +3578,15 @@ async def set_notification_rule_enabled(
 ) -> dict[str, Any]:
     """Enable or disable a notification rule by ID.
 
-    UNCONFIRMED endpoint shape — see module note above.
-
-    Central UI disallows enabling a rule with no destination configured;
-    the API is expected to enforce the same constraint (surfaced as a 400).
+    Central refuses to enable a rule with no destination (a 400).
     """
     endpoint = f"{_ALERT_CONFIG_BASE}/{quote(rule_id, safe='')}"
-    payload = {"enable": enabled}
+    payload = {"notificationRuleInput": {"enabled": enabled}}
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint, "payload": payload}
-    response = await get_client()._arequest("PATCH", endpoint, json=payload)
+    response = await get_client()._arequest(
+        "PATCH", endpoint, json=payload, content_type="application/merge-patch+json"
+    )
     if response.status_code not in (200, 201, 202, 204):
         return {"error": compact_http_error(response, endpoint), "endpoint_used": endpoint}
     return _json_response(response) | {"endpoint_used": endpoint}
@@ -3848,7 +3597,7 @@ async def delete_notification_rule(
     rule_id: str,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Delete a notification rule by ID. UNCONFIRMED endpoint shape — see module note above."""
+    """Delete a notification rule by ID."""
     endpoint = f"{_ALERT_CONFIG_BASE}/{quote(rule_id, safe='')}"
     if dry_run:
         return {"dry_run": True, "endpoint": endpoint}

@@ -340,17 +340,22 @@ async def mist_search_marvis_clients(
 async def mist_get_client_insights(
     site_id: str,
     client_mac: str,
+    metrics: str,
     start: str | None = None,
     end: str | None = None,
 ) -> dict[str, Any]:
     """Experience metrics over time for one wireless client.
 
-    Uses ``GET /api/v1/sites/{site_id}/insights/client/{client_mac}``;
+    Uses ``GET /api/v1/sites/{site_id}/insights/client/{client_mac}``.
+    ``metrics`` is a comma-separated list of Mist insight metric names (Mist
+    lists them at ``/api/v1/const/insight_metrics``, readable with mist_get);
     ``start``/``end`` are epoch seconds.
     """
     normalized = normalize_mac(client_mac)
     data = await get(
-        f"/api/v1/sites/{seg(site_id)}/insights/client/{normalized}", {"start": start, "end": end}, site_id=site_id
+        f"/api/v1/sites/{seg(site_id)}/insights/client/{normalized}",
+        {"metrics": metrics, "start": start, "end": end},
+        site_id=site_id,
     )
     return {"normalized_mac": normalized, "insights": data}
 

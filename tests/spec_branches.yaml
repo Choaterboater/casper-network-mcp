@@ -1,0 +1,68 @@
+# Extra calls for the spec check (tests/spec_check.py).
+#
+# defaults:       arguments that replace a tool's placeholders for every call
+# branches:       extra calls (merged over the defaults) that reach another endpoint
+# replies:        fake replies a multi-step tool needs to reach its later requests
+#                 (a list of {method, path, reply})
+# validate_first: tools that send nothing for placeholder arguments, with why
+default_reply: {items: [], count: 0}
+
+x-profiles: &profiles
+  - {profile_type: bgp}
+  - {profile_type: ospfv2}
+  - {profile_type: ospfv3}
+  - {profile_type: vrf}
+  - {profile_type: vsx}
+  - {profile_type: vsx-pair}
+  - {profile_type: vrrp}
+  - {profile_type: telemetry}
+  - {profile_type: app-bandwidth-contract}
+  - {profile_type: app-recognition}
+  - {profile_type: config-checkpoint}
+  - {profile_type: vsf-template}
+
+defaults:
+  clear_alerts: {reason: Problem was resolved}
+  set_alert_priority: {priority: High}
+  get_network_profile: {profile_type: bgp}
+  set_network_profile: {profile_type: bgp, body: {name: x1}}
+  delete_network_profile: {profile_type: bgp}
+  get_site_health_summary: {site_id: "1001"}
+  plan_site_troubleshooting: {site_id: "1001"}
+  run_troubleshooting_bundle: {device_type: cx}
+  test_aaa: {server_name: x1}
+  clearpass_delete_guest: {username: x1}
+  clearpass_set_guest_enabled: {username: x1}
+  clearpass_get_network_device: {name: x1}
+  marvis_troubleshoot: {site_id: x1}
+  mist_update_wlan: {changes: {vlan_id: 30}}
+  gateway_join_cluster: {gateways: [{ip: 192.0.2.10, mac: "00:00:5e:00:53:01", priority: 128}]}
+  run_firmware_compliance_campaign: {targets: [{scope_id: "1001", device_function: ACCESS_SWITCH}]}
+
+branches:
+  get_network_profile:
+    - {profile_type: static-route}
+    - {profile_type: vrrp-interface}
+    - {profile_type: bgp, name: x1}
+  set_network_profile: *profiles
+  delete_network_profile: *profiles
+  run_troubleshooting_bundle:
+    - {device_type: aos-s}
+  test_aaa:
+    - {device_type: cx}
+  clearpass_delete_guest:
+    - {username: null, guest_id: x1}
+  clearpass_set_guest_enabled:
+    - {username: null, guest_id: x1}
+  clearpass_get_network_device:
+    - {name: null, device_id: x1}
+  marvis_troubleshoot:
+    - {site_id: null, mac: "00:00:5e:00:53:01"}
+  get_site_health_summary:
+    - {site_id: null, site_name: Branch-12}
+
+replies: {}
+
+validate_first:
+  get_config_rollback_status: "answers from built-in notes about Central's checkpoint feature; sends nothing"
+  list_central_get_prefixes: "lists the paths central_get accepts; sends nothing"

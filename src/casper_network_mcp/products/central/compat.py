@@ -76,7 +76,7 @@ class CentralHTTPError(ApiError):
         super().__init__("central", response.status_code, response.data, url=response.url, method=method)
 
 
-_SENT_KWARGS = ("params", "json", "headers")
+_SENT_KWARGS = ("params", "json", "headers", "content_type")
 
 
 def _split_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -441,8 +441,10 @@ def device_type_for_troubleshoot(serial_number: str, device_type: str | None) ->
         upper = device_type.upper()
         if upper in _DTYPE_MAP:
             return _DTYPE_MAP[upper]
-        if upper not in ("SWITCH", "SWITCHES"):
+        if upper in {"APS", "GATEWAYS"}:
             return upper.lower()
+        if upper not in ("SWITCH", "SWITCHES"):
+            raise ValueError("device_type must be AP, CX, AOS-S, GATEWAY or SWITCH")
     device = get_mcp_client().get_device_by_serial(serial_number)
     if not device:
         return None

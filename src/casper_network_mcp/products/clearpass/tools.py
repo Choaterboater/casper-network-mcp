@@ -179,7 +179,7 @@ async def clearpass_get_endpoint_by_mac(mac_address: str) -> dict[str, Any]:
     Accepts colon, dash, dotted or compact MACs.
     """
     normalized = _normalize_mac(mac_address)
-    data = await _get(f"/api/endpoint/mac-address/{normalized}")
+    data = await _get(f"/api/endpoint/mac-address/{normalized}", {"profile_details": "true"})
     return {"normalized_mac": normalized, "endpoint": _pick(_first(data), _ENDPOINT_FIELDS)}
 
 
@@ -288,6 +288,7 @@ async def clearpass_list_endpoints(limit: int = 25, offset: int = 0, status: str
     safe_limit, params = _page(limit, offset)
     if status is not None:
         params["filter"] = json.dumps({"status": status}, separators=(",", ":"))
+    params["profile_details"] = "false"  # required by the spec; profiles come from get_endpoint_by_mac
     items = [_pick(item, _ENDPOINT_FIELDS) for item in _items(await _get("/api/endpoint", params))]
     return {"endpoints": _listed(items, safe_limit, offset)}
 
