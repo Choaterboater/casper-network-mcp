@@ -3,7 +3,7 @@
 Adapted from hpe-networking-mcp ``pipeline/clients/token_manager.py`` and
 ``central_client.py`` (MIT, nowireless4u/hpe-networking-mcp). What changed:
 the login is ``CENTRAL_BASE_URL``, ``CENTRAL_CLIENT_ID`` and
-``CENTRAL_CLIENT_SECRET`` from the process environment (no credentials.yaml,
+``CENTRAL_CLIENT_SECRET`` from the process environment (no credentials file,
 no env files); the token lives in memory only (never written to disk); the
 source's write gate and its env switches are gone, replaced by the shared
 gate every product uses.

@@ -33,12 +33,14 @@ from urllib.parse import quote
 
 from casper_network_mcp.core.budget import DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, bound_collection_response, clamp_limit
 from casper_network_mcp.core.http import compact_http_error
-from casper_network_mcp.core.paths import safe_api_path
+from casper_network_mcp.core.paths import path_segment, safe_api_path
 from casper_network_mcp.products._base import ApiError, Reply
 from casper_network_mcp.products._tools import client
 
 __all__ = [
     "DEFAULT_LIST_LIMIT",
+    "IDENTITY_STORES_PATH",
+    "MAC_ADDRESS_STORE_NAME",
     "MAX_LIST_LIMIT",
     "POLL_INTERVAL",
     "POLL_MAX",
@@ -52,11 +54,13 @@ __all__ = [
     "clamp_limit",
     "compact_http_error",
     "device_type_for_troubleshoot",
+    "find_identity_store_id",
     "get_client",
     "get_mcp_client",
     "maybe_bound",
     "resp_json",
     "safe_api_path",
+    "seg",
     "troubleshooting_endpoint_candidates",
     "validate_write_result",
 ]
@@ -167,6 +171,45 @@ def get_mcp_client() -> Any:
     from casper_network_mcp.products.central.reads import MCPClient
 
     return MCPClient(get_client())
+
+
+# ── ids in paths ────────────────────────────────────────────────────────────
+
+
+def seg(value: Any) -> str:
+    """One id in a Central path: refused if it holds ``/ \\ ? # %``, ``..`` or control characters.
+
+    The copied tools put ids from the AI straight into their paths; every such
+    id now goes through this, so an id can never change which endpoint is
+    called (the request sent is the one Casper's box showed). Readable
+    characters such as ``:`` in a MAC stay as they are.
+    """
+    text = str(value) if isinstance(value, int) and not isinstance(value, bool) else value
+    path_segment(text)  # raises UnsafePath (a ValueError) for anything unsafe
+    return quote(text, safe="-._~:@")
+
+
+# ── NAC identity stores ─────────────────────────────────────────────────────
+
+#: The built-in Central NAC store for MAC authentication, found by name (its id differs per tenant).
+MAC_ADDRESS_STORE_NAME = "MAC Address Store"
+IDENTITY_STORES_PATH = "/network-config/v1alpha1/identity-stores"
+
+
+def find_identity_store_id(central: CentralShim, name: str = MAC_ADDRESS_STORE_NAME) -> str:
+    """The id of the NAC identity store called ``name`` (``GET .../identity-stores``, field ``store``).
+
+    The source hard-coded one tenant's id; this reads it from the tenant
+    being changed. Raises ``ValueError`` (a plain error to the AI) if no
+    store has that name.
+    """
+    data = central.get(IDENTITY_STORES_PATH)
+    stores = data.get("store") or data.get("items") or []
+    wanted = name.strip().lower()
+    for store in stores if isinstance(stores, list) else []:
+        if isinstance(store, dict) and str(store.get("name", "")).strip().lower() == wanted and store.get("id"):
+            return str(store["id"])
+    raise ValueError(f"Central has no NAC identity store named {name!r}; list them with list_identity_stores.")
 
 
 # ── shared helpers (from hpe-networking-mcp shared.py) ──────────────────────

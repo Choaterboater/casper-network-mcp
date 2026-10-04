@@ -10,7 +10,8 @@
   client from the login variables behind a read-only gate, so nothing changes
   by accident.
 * :func:`guarded` turns a refusal, a missing login, an API error, a network
-  failure or a bad argument into ``{"error": ...}`` instead of a stack trace.
+  failure, a bad argument or a failed step the copied code reports with
+  ``RuntimeError`` into ``{"error": ...}`` instead of a stack trace.
 * :func:`would_send` is the opt-in preview every change tool returns when
   called with ``dry_run=True``; nothing is sent.
 """
@@ -78,7 +79,7 @@ def _as_error(product: str, exc: Exception) -> dict[str, Any]:
     return {"error": redact_tool_error_text(str(exc))}
 
 
-_HANDLED = (ToolError, httpx.HTTPError, ValueError)
+_HANDLED = (ToolError, httpx.HTTPError, ValueError, RuntimeError)
 
 
 def guarded(product: str, fn: Callable[..., Any]) -> Callable[..., Any]:

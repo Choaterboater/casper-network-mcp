@@ -30,5 +30,5 @@ target-version = "py311"
 
 [tool.ruff.lint.per-file-ignores]
 # Copied Central code catches broadly on purpose (one failed step is reported, the rest go on).
-"src/casper_network_mcp/products/central/*.py" = ["BLE001", "TRY004"]
+"src/casper_network_mcp/products/central/*.py" = ["BLE001", "TRY004", "ISC004"]
 "src/casper_network_mcp/core/scope_ids.py" = ["TRY004"]

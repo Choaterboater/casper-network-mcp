@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import inspect
 import json as jsonlib
+import types
+import typing
 from typing import Any
 
 import httpx
@@ -159,28 +161,39 @@ def first_write_tool(product: str) -> str:
     raise AssertionError(f"no config tool for {product}")
 
 
+def _placeholder(ann: Any, name: str) -> Any:
+    origin = typing.get_origin(ann)
+    args = typing.get_args(ann)
+    if origin is typing.Literal:
+        return args[0]
+    if origin in (typing.Union, types.UnionType):
+        real = [a for a in args if a is not type(None)]
+        return _placeholder(real[0], name) if real else None
+    if name == "body" or ann is dict or origin is dict:
+        return {}
+    if ann is list or origin is list:
+        return []
+    if ann is bool:
+        return False
+    if ann is int:
+        return 1
+    if ann is float:
+        return 1.0
+    return "x1"
+
+
 def placeholder_args(tool: Any = None) -> dict[str, Any]:
     """Fill every required argument of ``tool`` with a harmless placeholder."""
     if tool is None:
         return {}
+    fn = inspect.unwrap(tool.fn)
+    try:
+        hints = typing.get_type_hints(fn)
+    except Exception:  # noqa: BLE001 - an unresolvable hint: fall back to the raw annotation
+        hints = {}
     args: dict[str, Any] = {}
     for name, param in inspect.signature(tool.fn).parameters.items():
-        if param.default is not inspect.Parameter.empty:
+        if param.default is not inspect.Parameter.empty or param.kind is inspect.Parameter.VAR_KEYWORD:
             continue
-        ann = param.annotation
-        origin = getattr(ann, "__origin__", None)
-        if name == "body" or ann is dict:
-            args[name] = {}
-        elif ann is int:
-            args[name] = 1
-        elif ann is float:
-            args[name] = 1.0
-        elif ann is bool:
-            args[name] = False
-        elif ann is list or origin is list:
-            args[name] = []
-        elif getattr(ann, "__args__", None) and origin is not list and str(ann).startswith("typing.Literal"):
-            args[name] = ann.__args__[0]
-        else:
-            args[name] = "x1"
+        args[name] = _placeholder(hints.get(name, param.annotation), name)
     return args
