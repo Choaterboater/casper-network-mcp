@@ -27,6 +27,8 @@ mist_claim_devices: {kind: config, vendor_category: "Orgs > Inventory", checked:
 mist_list_switches: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices?type=switch"}
 mist_list_switch_ports: {kind: read, vendor_category: "Sites > Stats - Ports", checked: "GET /api/v1/sites/{site_id}/stats/ports/search"}
 mist_list_gateways: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices?type=gateway"}
+mist_site_overview: {kind: read, vendor_category: "Sites > Stats, Stats - Devices, Alarms", checked: "three GETs: /sites/{site_id}/stats, /stats/devices?type=all, /alarms/search"}
+mist_list_site_clients: {kind: read, vendor_category: "Sites > Clients - Wireless", checked: "GET /api/v1/sites/{site_id}/clients/search"}
 mist_get_gateway: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices/{device_id}"}
 mist_get_site_assurance_snapshot: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "runs the switch, gateway and alarm reads above; GETs only"}
 mist_get_org_sle_overview: {kind: read, vendor_category: "Orgs > Insights", checked: "GET /api/v1/orgs/{org_id}/insights/{metric}"}

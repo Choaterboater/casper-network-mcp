@@ -28,6 +28,7 @@ defaults:
   set_network_profile: {profile_type: bgp, body: {name: x1}}
   delete_network_profile: {profile_type: bgp}
   get_site_health_summary: {site_id: "1001"}
+  central_site_overview: {site_id: "1001"}
   plan_site_troubleshooting: {site_id: "1001"}
   run_troubleshooting_bundle: {device_type: cx}
   test_aaa: {server_name: x1}
@@ -59,6 +60,8 @@ branches:
   marvis_troubleshoot:
     - {site_id: null, mac: "00:00:5e:00:53:01"}
   get_site_health_summary:
+    - {site_id: null, site_name: Branch-12}
+  central_site_overview:
     - {site_id: null, site_name: Branch-12}
 
 replies: {}

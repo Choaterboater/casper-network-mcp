@@ -551,6 +551,107 @@ async def mist_get_site_assurance_snapshot(
     }
 
 
+_SITE_STATS_FIELDS = (
+    "id", "name", "timezone", "country_code", "address", "num_ap", "num_ap_connected", "num_clients",
+    "num_devices", "num_devices_connected", "num_switch", "num_switch_connected", "num_gateway",
+    "num_gateway_connected",
+)  # fmt: skip
+_SEVERITY_RANK = {"critical": 0, "warn": 1, "info": 2}
+
+
+def _device_counts(devices: list[Any]) -> dict[str, Any]:
+    by_type: dict[str, dict[str, int]] = {}
+    for device in devices:
+        if not isinstance(device, dict):
+            continue
+        kind = str(device.get("type") or "unknown")
+        status = str(device.get("status") or "unknown")
+        by_type.setdefault(kind, {})
+        by_type[kind][status] = by_type[kind].get(status, 0) + 1
+    return {"total": sum(sum(v.values()) for v in by_type.values()), "by_type": by_type}
+
+
+@mcp.tool()
+async def mist_site_overview(site_id: str, top_alarms: int = 5, alarm_duration: str = "1d") -> dict[str, Any]:
+    """How a site is doing, in one call: health counts, devices by type and status, and the top alarms.
+
+    Reads ``GET /api/v1/sites/{site_id}/stats`` (AP, switch, gateway and
+    client counts), ``.../stats/devices?type=all`` (each device's status)
+    and ``.../alarms/search`` (the most severe, newest alarms of the last
+    ``alarm_duration``). A part that fails carries its own ``error`` and
+    ``degraded`` is true; the rest still comes back.
+    """
+    site = seg(site_id)
+    top = clamp_limit(top_alarms, default=5)
+    stats_call = get(f"/api/v1/sites/{site}/stats", site_id=site_id)
+    devices_call = get(f"/api/v1/sites/{site}/stats/devices", {"type": "all", "limit": 1000}, site_id=site_id)
+    alarms_call = get(
+        f"/api/v1/sites/{site}/alarms/search",
+        {"duration": alarm_duration, "limit": 100, "sort": "-timestamp"},
+        site_id=site_id,
+    )
+    stats, devices, alarms = await asyncio.gather(_section(stats_call), _section(devices_call), _section(alarms_call))
+    out: dict[str, Any] = {"site_id": site_id}
+    out["site"] = stats if _failed(stats) else pick(stats, _SITE_STATS_FIELDS)
+    out["devices"] = devices if _failed(devices) else _device_counts(extract_items(devices))
+    if _failed(alarms):
+        out["top_alarms"] = alarms
+    else:
+        items = [a for a in extract_items(alarms) if isinstance(a, dict)]
+        by_severity: dict[str, int] = {}
+        for alarm in items:
+            sev = str(alarm.get("severity") or "unknown")
+            by_severity[sev] = by_severity.get(sev, 0) + 1
+        items.sort(key=lambda a: (_SEVERITY_RANK.get(str(a.get("severity")), 3), -float(a.get("timestamp") or 0)))
+        out["alarms_by_severity"] = by_severity
+        out["top_alarms"] = [pick(a, _ALARM_FIELDS) for a in items[:top]]
+    out["degraded"] = any(_failed(part) for part in (stats, devices, alarms))
+    return out
+
+
+def _failed(part: Any) -> bool:
+    return isinstance(part, dict) and "error" in part
+
+
+@mcp.tool()
+async def mist_list_site_clients(
+    site_id: str,
+    ssid: str | None = None,
+    hostname: str | None = None,
+    username: str | None = None,
+    mac: str | None = None,
+    ip: str | None = None,
+    text: str | None = None,
+    duration: str = "1d",
+    limit: int = 100,
+    search_after: str | None = None,
+) -> dict[str, Any]:
+    """List the wireless clients a site has seen, optionally on one SSID.
+
+    Uses ``GET /api/v1/sites/{site_id}/clients/search`` over the last
+    ``duration`` (``1h``, ``1d``). Filters: ``ssid``, ``hostname``,
+    ``username``, ``mac``, ``ip`` and free ``text``. Pass ``search_after``
+    from a previous reply to continue.
+    """
+    safe_limit = clamp_limit(limit, default=100)
+    params = {
+        "ssid": ssid,
+        "hostname": hostname,
+        "username": username,
+        "mac": normalize_mac(mac) if mac else None,
+        "ip": ip,
+        "text": text,
+        "duration": duration,
+        "limit": safe_limit,
+        "search_after": search_after,
+    }
+    data = await get(f"/api/v1/sites/{seg(site_id)}/clients/search", params, site_id=site_id)
+    out: dict[str, Any] = {"clients": _bounded(extract_items(data), _CLIENT_FIELDS, safe_limit)}
+    if isinstance(data, dict) and data.get("next"):
+        out["next"] = data["next"]
+    return out
+
+
 # ── SLE convenience reads ───────────────────────────────────────────────────
 
 

@@ -18,7 +18,7 @@ from mcp.server.mcpserver import MCPServer
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.kinds import label_for_kind, tool_meta
 from casper_network_mcp.router import dispatch, find
-from casper_network_mcp.router.index import Catalog, _entry
+from casper_network_mcp.router.index import Catalog, _entry, index_of
 
 _RAW_BEARER = "Bearer sk-abc1234567890-raise-path-secret-value"
 
@@ -77,6 +77,7 @@ def fake_catalog(monkeypatch):
     cat = Catalog(entries)
     monkeypatch.setattr(dispatch, "catalog", lambda: cat)
     monkeypatch.setattr(find, "catalog", lambda: cat)
+    monkeypatch.setattr(find, "load_index", lambda: index_of(cat))
     return cat
 
 

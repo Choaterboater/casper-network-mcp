@@ -25,6 +25,7 @@ ClearPass documents (served under ``/api``). What changed:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from typing import Any, Literal
@@ -362,6 +363,88 @@ async def clearpass_list_cluster_servers(limit: int = 25, offset: int = 0) -> di
     return {
         "cluster_servers": bound_collection_response(items, limit=clamp_limit(limit, default=25), offset=max(0, offset))
     }
+
+
+# Spec ``ServerConfigurationResult``.
+_CLUSTER_FIELDS = (
+    "name", "server_ip", "fqdn", "server_uuid", "is_publisher", "is_insight_enabled", "replication_status",
+    "last_replication_timestamp",
+)  # fmt: skip
+_ENDPOINT_STATUSES = ("Known", "Unknown", "Disabled")
+
+
+async def _part(coro: Any) -> Any:
+    from casper_network_mcp.products._tools import _HANDLED, _as_error
+
+    try:
+        return await coro
+    except _HANDLED as exc:
+        return _as_error("clearpass", exc)
+
+
+def _failed(part: Any) -> bool:
+    return isinstance(part, dict) and "error" in part
+
+
+def _count(data: Any) -> Any:
+    return data.get("count") if isinstance(data, dict) else None
+
+
+@mcp.tool()
+async def clearpass_overview(top_failures: int = 5) -> dict[str, Any]:
+    """How ClearPass is doing, in one call: version, cluster nodes, endpoint counts and recent login failures.
+
+    Reads ``GET /api/server/version``, ``/api/cluster/server``,
+    ``/api/endpoint`` (counts only, in total and per status: Known, Unknown,
+    Disabled) and ``/api/session`` (failed authentications, newest first,
+    with their count). A part that fails carries its own ``error`` and
+    ``degraded`` is true.
+    """
+    top = clamp_limit(top_failures, default=5)
+
+    def endpoint_count(status: str | None) -> Any:
+        params: dict[str, Any] = {"limit": 1, "offset": 0, "calculate_count": "true", "profile_details": "false"}
+        if status:
+            params["filter"] = json.dumps({"status": status}, separators=(",", ":"))
+        return _part(_get("/api/endpoint", params))
+
+    failures_params = {
+        "limit": top,
+        "offset": 0,
+        "calculate_count": "true",
+        "filter": json.dumps({"auth_status": "FAILED"}, separators=(",", ":")),
+        "sort": "-acctstarttime",
+    }
+    version, cluster, failures, total, *per_status = await asyncio.gather(
+        _part(_get("/api/server/version")),
+        _part(_get("/api/cluster/server")),
+        _part(_get("/api/session", failures_params)),
+        endpoint_count(None),
+        *(endpoint_count(status) for status in _ENDPOINT_STATUSES),
+    )
+    out: dict[str, Any] = {"version": version}
+    if _failed(cluster):
+        out["cluster"] = cluster
+    else:
+        rows = _items(cluster) or ([cluster] if isinstance(cluster, dict) and cluster.get("name") else [])
+        servers = [_pick(item, _CLUSTER_FIELDS) for item in rows]
+        out["cluster"] = {"total": len(servers), "servers": servers[:25]}
+    if _failed(total):
+        out["endpoints"] = total
+    else:
+        endpoints: dict[str, Any] = {"total": _count(total)}
+        for status, reply in zip(_ENDPOINT_STATUSES, per_status, strict=True):
+            endpoints[status] = reply if _failed(reply) else _count(reply)
+        out["endpoints"] = endpoints
+    if _failed(failures):
+        out["auth_failures"] = failures
+    else:
+        out["auth_failures"] = {
+            "total": _count(failures),
+            "recent": [_session(item) for item in _items(failures)[:top]],
+        }
+    out["degraded"] = any(_failed(p) for p in (version, cluster, failures, total, *per_status))
+    return out
 
 
 # ── changes ─────────────────────────────────────────────────────────────────

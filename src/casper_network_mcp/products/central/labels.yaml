@@ -29,6 +29,7 @@ list_bssids: {kind: read, vendor_category: "Monitoring & Reporting", checked: "G
 list_gateways: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 list_sites_client_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_tenant_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
+central_site_overview: {kind: read, vendor_category: "Monitoring & Reporting", checked: "three GETs: sites-health, devices and alerts, each filtered to the site; new in Task 13"}
 list_scopes: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_global_scope_id: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 find_scope: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}

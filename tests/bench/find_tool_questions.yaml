@@ -1,0 +1,193 @@
+# The fixed question set for find_tool: 60 plain questions, 20 per product.
+#
+# Written fresh for this server in a network engineer's own words (no question
+# is copied from any other project's benchmark). Names are examples only.
+# `product` is passed to find_tool as its product filter; `expect` lists every
+# tool that would answer the question (hand-written or generated). A question
+# counts as found when one of them is in the top 1 or top 3.
+
+# --- Central ---------------------------------------------------------------
+- q: "bounce port 7 on the closet switch"
+  product: central
+  expect: [port_bounce]
+- q: "power cycle the camera plugged into port 12"
+  product: central
+  expect: [poe_bounce]
+- q: "reboot the access point in the lobby"
+  product: central
+  expect: [reboot_device]
+- q: "kick a wireless client off the network"
+  product: central
+  expect: [disconnect_client]
+- q: "which switch port is mac 00:00:5e:00:53:01 plugged into"
+  product: central
+  expect: [find_mac_on_switch]
+- q: "show the lldp neighbors on the core switch"
+  product: central
+  expect: [get_lldp_neighbors]
+- q: "ping 192.0.2.1 from the AP"
+  product: central
+  expect: [ap_ping]
+- q: "run show version on a CX switch"
+  product: central
+  expect: [cx_show]
+- q: "what alerts are open right now"
+  product: central
+  expect: [list_active_alerts, list_alerts, central_get_alert_list_v1]
+- q: "how healthy is site Branch-12"
+  product: central
+  expect: [get_site_health_summary, central_site_overview, central_list_sites_health_v1]
+- q: "list every site"
+  product: central
+  expect: [list_sites, central_get_sites_v1]
+- q: "who is connected to the guest SSID"
+  product: central
+  expect: [list_ssid_clients, list_clients]
+- q: "what channel is the AP on and how busy is it"
+  product: central
+  expect: [get_channel_utilization, get_ap_radios]
+- q: "what firmware are my switches running"
+  product: central
+  expect: [get_firmware, list_firmware_upgrades]
+- q: "create VLAN 30 for the cameras"
+  product: central
+  expect: [create_vlan]
+- q: "are there CRC errors on any switch ports"
+  product: central
+  expect: [get_switch_port_errors]
+- q: "blink the locate light on an access point"
+  product: central
+  expect: [locate_ap]
+- q: "who changed the config yesterday"
+  product: central
+  expect: [list_audit_logs]
+- q: "test the cable on port 3"
+  product: central
+  expect: [cable_test]
+- q: "how much PoE power is each port drawing"
+  product: central
+  expect: [get_switch_interface_poe]
+
+# --- Mist ------------------------------------------------------------------
+- q: "who is on the guest wifi right now"
+  product: mist
+  expect: [mist_list_site_clients, mist_search_site_wireless_clients, mist_list_site_wireless_clients_stats]
+- q: "list my sites"
+  product: mist
+  expect: [mist_list_sites]
+- q: "why is the wifi slow at this site"
+  product: mist
+  expect: [sle_summary, mist_get_site_sle_metric_summary, sle_metrics, marvis_troubleshoot, mist_site_overview]
+- q: "ask marvis what is wrong with a client"
+  product: mist
+  expect: [marvis_troubleshoot]
+- q: "acknowledge that alarm"
+  product: mist
+  expect: [mist_ack_alarm, alarms_ack]
+- q: "show the site's alarms"
+  product: mist
+  expect: [mist_list_alarms, alarms_list]
+- q: "change the vlan on the corporate ssid"
+  product: mist
+  expect: [mist_update_wlan]
+- q: "delete the old test ssid"
+  product: mist
+  expect: [mist_delete_wlan]
+- q: "which switch ports are down"
+  product: mist
+  expect: [mist_list_switch_ports]
+- q: "are all the switches up and what version are they on"
+  product: mist
+  expect: [mist_list_switches]
+- q: "is the WAN edge gateway healthy"
+  product: mist
+  expect: [mist_list_gateways, mist_get_gateway]
+- q: "claim new devices with a claim code"
+  product: mist
+  expect: [mist_claim_devices]
+- q: "move an AP from inventory to the Branch-12 site"
+  product: mist
+  expect: [inventory_assign]
+- q: "who changed the wlan settings last week"
+  product: mist
+  expect: [audit_logs]
+- q: "are there rogue access points near the office"
+  product: mist
+  expect: [rogue_aps]
+- q: "service levels for every site in the org"
+  product: mist
+  expect: [sle_org_summary, mist_get_org_sle_overview]
+- q: "give me one view of how the site is doing"
+  product: mist
+  expect: [mist_get_site_assurance_snapshot, mist_site_overview]
+- q: "look up a wireless client by its mac address"
+  product: mist
+  expect: [mist_get_client, mist_get_site_wireless_client_stats]
+- q: "what did the access points log today"
+  product: mist
+  expect: [mist_search_events, site_events]
+- q: "which devices in inventory are not assigned to a site"
+  product: mist
+  expect: [mist_list_org_inventory]
+
+# --- ClearPass -------------------------------------------------------------
+- q: "why can't the laptop with mac 00:00:5e:00:53:01 get on"
+  product: clearpass
+  expect: [clearpass_list_access_tracker_sessions, clearpass_list_auth_failures, clearpass_get_endpoint_by_mac]
+- q: "show recent radius login failures"
+  product: clearpass
+  expect: [clearpass_list_auth_failures]
+- q: "make a guest account for a visitor"
+  product: clearpass
+  expect: [clearpass_create_guest]
+- q: "find the contractor's guest account by email"
+  product: clearpass
+  expect: [clearpass_find_guest]
+- q: "disable a guest account"
+  product: clearpass
+  expect: [clearpass_set_guest_enabled]
+- q: "kick a user off with a CoA"
+  product: clearpass
+  expect: [clearpass_disconnect_session]
+- q: "what version is the server running"
+  product: clearpass
+  expect: [clearpass_get_server_version]
+- q: "list the nodes in the cluster"
+  product: clearpass
+  expect: [clearpass_list_cluster_servers]
+- q: "show the enforcement policies"
+  product: clearpass
+  expect: [clearpass_list_enforcement_policies]
+- q: "is the 802.1X wireless service turned on"
+  product: clearpass
+  expect: [clearpass_get_service, clearpass_list_services]
+- q: "turn off an authentication service"
+  product: clearpass
+  expect: [clearpass_set_service_enabled]
+- q: "what device profile did this endpoint get"
+  product: clearpass
+  expect: [clearpass_get_endpoint_by_mac, clearpass_get_insight_endpoint]
+- q: "list the unknown endpoints"
+  product: clearpass
+  expect: [clearpass_list_endpoints]
+- q: "remove an endpoint by mac"
+  product: clearpass
+  expect: [clearpass_delete_endpoint]
+- q: "show the posture check results for a laptop"
+  product: clearpass
+  expect: [clearpass_get_onguard_activity_by_mac, clearpass_list_onguard_activity]
+- q: "check the NAD settings for a switch"
+  product: clearpass
+  expect: [clearpass_get_network_device]
+- q: "where are the syslogs sent"
+  product: clearpass
+  expect: [clearpass_list_syslog_targets]
+- q: "which roles exist"
+  product: clearpass
+  expect: [clearpass_list_roles]
+- q: "who am I logged in as"
+  product: clearpass
+  expect: [clearpass_who_am_i]
+- q: "tag an endpoint as a printer"
+  product: clearpass
+  expect: [clearpass_update_endpoint_attributes]

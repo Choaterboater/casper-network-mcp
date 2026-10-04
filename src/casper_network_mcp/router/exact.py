@@ -10,10 +10,23 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
-
-from casper_network_mcp.router.index import Entry
+from typing import Protocol, TypeVar
 
 __all__ = ["exact_hit", "parse_method_path"]
+
+
+class _Operation(Protocol):
+    @property
+    def origin(self) -> str: ...
+    @property
+    def method(self) -> str: ...
+    @property
+    def path(self) -> str: ...
+    @property
+    def operation_id(self) -> str: ...
+
+
+Entry = TypeVar("Entry", bound=_Operation)
 
 _METHOD_PATH = re.compile(r"^\s*(GET|POST|PUT|PATCH|DELETE)\s+(/\S*)\s*$", re.IGNORECASE)
 _OPERATION_ID = re.compile(r"^\s*[A-Za-z][A-Za-z0-9_.-]{2,}\s*$")

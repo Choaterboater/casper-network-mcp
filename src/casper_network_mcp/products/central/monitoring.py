@@ -854,6 +854,81 @@ def list_sites_client_health(
         return {"error": str(exc), "endpoint_used": "/network-monitoring/v1/sites-client-health"}
 
 
+_ALERT_SEVERITY_RANK = {"CRITICAL": 0, "MAJOR": 1, "MINOR": 2, "WARNING": 3, "INFO": 4}
+
+
+@mcp.tool()
+def central_site_overview(
+    site_id: str | None = None,
+    site_name: str | None = None,
+    top_alerts: int = 5,
+) -> dict[str, Any]:
+    """How a site is doing, in one call: its health, devices by type and status, and the top active alerts.
+
+    Reads ``GET /network-monitoring/v1/sites-health`` (the site's health
+    record), ``/network-monitoring/v1/devices`` and
+    ``/network-notifications/v1/alerts`` (active, most severe first), each
+    filtered to the site. Give ``site_id`` or ``site_name``. A part that
+    fails carries its own ``error`` and ``degraded`` is true.
+    """
+    if not site_id and not site_name:
+        return {"error": "Give site_id or site_name."}
+    if not site_id:
+        site = get_mcp_client().get_site_by_name(str(site_name))
+        if not site:
+            return {"error": f"No site is named {site_name!r}."}
+        site_id = str(site.get("scopeId") or site.get("siteId") or site.get("id") or "")
+        if not site_id:
+            return {"error": f"The site {site_name!r} has no id in Central's reply."}
+    top = clamp_limit(top_alerts, default=5)
+    site_filter = f"siteId eq '{_odata_string(site_id)}'"
+    client = get_client()
+    out: dict[str, Any] = {"site_id": site_id}
+    failed = False
+
+    try:
+        rows = _items_from_collection(
+            client.get("/network-monitoring/v1/sites-health", params={"filter": site_filter, "limit": 1, "offset": 0})
+        )
+        out["health"] = rows[0] if rows else None
+    except Exception as exc:
+        out["health"], failed = {"error": str(exc)}, True
+
+    try:
+        devices = _items_from_collection(
+            client.get("/network-monitoring/v1/devices", params={"filter": site_filter, "limit": 1000})
+        )
+        by_type: dict[str, dict[str, int]] = {}
+        for device in devices:
+            kind = str(device.get("deviceType") or "UNKNOWN").upper()
+            status = str(device.get("status") or "UNKNOWN").upper()
+            by_type.setdefault(kind, {})
+            by_type[kind][status] = by_type[kind].get(status, 0) + 1
+        out["devices"] = {"total": len(devices), "by_type": by_type}
+    except Exception as exc:
+        out["devices"], failed = {"error": str(exc)}, True
+
+    try:
+        alerts = _items_from_collection(
+            client.get(
+                "/network-notifications/v1/alerts",
+                params={"filter": f"status eq 'Active' and {site_filter}", "limit": 100, "sort": "severity desc"},
+            )
+        )
+        by_severity: dict[str, int] = {}
+        for alert in alerts:
+            sev = str(alert.get("severity") or "UNKNOWN").upper()
+            by_severity[sev] = by_severity.get(sev, 0) + 1
+        alerts.sort(key=lambda a: _ALERT_SEVERITY_RANK.get(str(a.get("severity") or "").upper(), 9))
+        out["alerts_by_severity"] = by_severity
+        out["top_alerts"] = alerts[:top]
+    except Exception as exc:
+        out["top_alerts"], failed = {"error": str(exc)}, True
+
+    out["degraded"] = failed
+    return out
+
+
 @mcp.tool()
 def get_tenant_health() -> dict[str, Any]:
     """Return tenant-wide device and client health summaries."""
