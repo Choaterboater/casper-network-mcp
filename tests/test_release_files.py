@@ -43,6 +43,7 @@ def test_readme_says_clearpass_tokens_expire_and_what_happens():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "ClearPass API tokens expire" in readme
     assert '"login": "expired"' in readme
+    assert '{"error": "login_expired", "product": ...}' in readme
 
 
 def test_security_policy_uses_private_reports_only():

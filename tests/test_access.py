@@ -346,5 +346,13 @@ async def test_other_failures_do_not_say_expired(server_with_replies):
 async def test_tool_call_on_401_says_the_login_expired(server_with_replies):
     s = server_with_replies({("GET", "/api/v1/orgs/o1/sites"): 401})
     out = await s.call("invoke_read_tool", {"name": "mist_list_sites", "arguments": {"org_id": "o1"}})
-    assert out["login"] == "expired" and out["product"] == "mist" and out["status"] == 401
-    assert "login has expired" in out["error"] and "Casper will ask for a new one" in out["error"]
+    assert out == {"error": "login_expired", "product": "mist"}
+
+
+async def test_clearpass_tool_call_on_401_says_the_login_expired(server_with_replies):
+    s = server_with_replies(
+        {("GET", "/api/oauth/me"): 401},
+        environ={"CLEARPASS_BASE_URL": "https://198.51.100.20", "CLEARPASS_API_TOKEN": "t"},
+    )
+    out = await s.call("invoke_read_tool", {"name": "clearpass_get", "arguments": {"path": "/api/oauth/me"}})
+    assert out == {"error": "login_expired", "product": "clearpass"}

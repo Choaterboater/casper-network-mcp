@@ -52,8 +52,8 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, `CLEARPASS_API_TOKEN` |
 
 ClearPass API tokens expire (the API client's token lifetime in ClearPass sets when). When a product turns a login
-away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a call to one of its tools says
-the login has expired; Casper then asks you for a new one.
+away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a call to one of its tools returns
+`{"error": "login_expired", "product": ...}`, so the client can ask you for a new one.
 
 ## Changes to your network
 
