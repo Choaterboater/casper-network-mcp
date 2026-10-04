@@ -464,12 +464,12 @@
     {
       "path": "mist.openapi.json",
       "title": "Mist API",
-      "source_url": "https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/mist.openapi.json",
-      "sha256": "2c3d769ef188bbce1b9db7a0774b5a10812d0a5bc11960b768de47b66bb88bbf",
+      "source_url": "https://raw.githubusercontent.com/mistsys/mist_openapi/79274e6cd85327ef51a9ab99a9c40a999d4b669a/mist.openapi.json",
+      "sha256": "733b04480520a9ddd99228a5bc98ebe5a8a3a3a107867c3de5208bdf9cdb7668",
       "fetched": "2026-10-04",
       "license": "MIT",
-      "path_count": 756,
-      "upstream_commit": "315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e"
+      "path_count": 762,
+      "upstream_commit": "79274e6cd85327ef51a9ab99a9c40a999d4b669a"
     }
   ]
 }

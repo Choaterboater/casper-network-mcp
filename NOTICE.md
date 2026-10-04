@@ -99,7 +99,7 @@ should make their own assessment.
 ### What it is
 
 One OpenAPI 3.1.0 document describing the entire **Juniper Mist** REST API —
-756 API paths, `info.version` `2607.1.0`. It is the upstream
+762 API paths, `info.version` `2610.1.0`. It is the upstream
 file byte for byte.
 
 ### Who publishes it, and where it came from
@@ -107,11 +107,11 @@ file byte for byte.
 Mist Systems / Juniper Networks, at <https://github.com/mistsys/mist_openapi>.
 
 Pinned to commit
-[`315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e`](https://github.com/mistsys/mist_openapi/commit/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e)
+[`79274e6cd85327ef51a9ab99a9c40a999d4b669a`](https://github.com/mistsys/mist_openapi/commit/79274e6cd85327ef51a9ab99a9c40a999d4b669a)
 and fetched by `scripts/refresh_specs.py` from the immutable raw URL
 
 ```
-https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/mist.openapi.json
+https://raw.githubusercontent.com/mistsys/mist_openapi/79274e6cd85327ef51a9ab99a9c40a999d4b669a/mist.openapi.json
 ```
 
 A branch URL is deliberately not used: it changes under you, so it could not
@@ -146,7 +146,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-Source: <https://raw.githubusercontent.com/mistsys/mist_openapi/315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e/LICENSE>.
+Source: <https://raw.githubusercontent.com/mistsys/mist_openapi/79274e6cd85327ef51a9ab99a9c40a999d4b669a/LICENSE>.
 "Juniper", "Mist" and "Marvis" are marks of Juniper Networks, used here only to
 identify the API being described. No endorsement by Juniper is claimed.
 

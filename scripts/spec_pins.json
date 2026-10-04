@@ -285,7 +285,7 @@
       "path": "mist.openapi.json",
       "title": "Mist API",
       "repo": "mistsys/mist_openapi",
-      "commit": "315b30ff4fa65c1dc3a2b5c1f27931e1b14ed01e",
+      "commit": "79274e6cd85327ef51a9ab99a9c40a999d4b669a",
       "version": "2607.1.0"
     }
   ]

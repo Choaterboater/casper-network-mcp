@@ -4,17 +4,17 @@
  "base_path": "",
  "source": {
   "file_count": 1,
-  "sha256": "3334af74c31a5482fb45a90844d150f88aa0b0a0089721771cdd69d90eab9f91",
-  "operation_count": 1059,
+  "sha256": "41ca11124af54a8f1723368e0e483ac06f342d5da5558df3aa2b1950cac382cd",
+  "operation_count": 1072,
   "duplicate_operation_count": 0,
   "files": [
    {
     "file": "mist.openapi.json",
-    "sha256": "2c3d769ef188bbce1b9db7a0774b5a10812d0a5bc11960b768de47b66bb88bbf",
+    "sha256": "733b04480520a9ddd99228a5bc98ebe5a8a3a3a107867c3de5208bdf9cdb7668",
     "openapi": "3.1.0",
     "title": "Mist API",
-    "version": "2607.1.0",
-    "operation_count": 1059
+    "version": "2610.1.0",
+    "operation_count": 1072
    }
   ]
  },
@@ -1161,14 +1161,14 @@
      "flags",
      "for_site",
      "geofences",
-     "group_idx",
-     "group_name",
      "height",
      "height_m",
      "id",
      "latlng_br",
      "latlng_tl",
      "locked",
+     "mapstack_floor",
+     "mapstack_id",
      "modified_time",
      "name",
      "occupancy_limit",
@@ -1193,6 +1193,7 @@
      "created_time": "double",
      "height_m": "double",
      "id": "uuid",
+     "mapstack_id": "uuid",
      "modified_time": "double",
      "org_id": "uuid",
      "site_id": "uuid",
@@ -1244,14 +1245,14 @@
      "flags",
      "for_site",
      "geofences",
-     "group_idx",
-     "group_name",
      "height",
      "height_m",
      "id",
      "latlng_br",
      "latlng_tl",
      "locked",
+     "mapstack_floor",
+     "mapstack_id",
      "modified_time",
      "name",
      "occupancy_limit",
@@ -1276,6 +1277,7 @@
      "created_time": "double",
      "height_m": "double",
      "id": "uuid",
+     "mapstack_id": "uuid",
      "modified_time": "double",
      "org_id": "uuid",
      "site_id": "uuid",
@@ -1434,7 +1436,8 @@
      "name": "provider",
      "in": "path",
      "required": true,
-     "type": "string"
+     "type": "string",
+     "description": "Oauth2 provider name"
     },
     {
      "name": "forward",
@@ -1462,7 +1465,8 @@
      "name": "provider",
      "in": "path",
      "required": true,
-     "type": "string"
+     "type": "string",
+     "description": "Oauth2 provider name"
     }
    ],
    "request_body": {
@@ -1495,7 +1499,8 @@
      "name": "provider",
      "in": "path",
      "required": true,
-     "type": "string"
+     "type": "string",
+     "description": "Oauth2 provider name"
     }
    ]
   },
@@ -2658,7 +2663,7 @@
    "source_file": "mist.openapi.json",
    "operation_id": "searchMspOrgs",
    "summary": "searchMspOrgs",
-   "description": "Search organizations under this MSP using organization identifiers, names, subscription state, trial state, usage types, and time-based filters.",
+   "description": "Search organizations under this MSP using organization identifiers, names, subscription state, trial state, usage types, and time-based filters. Only organizations with at least one claimed device are returned.",
    "tags": [
     "MSPs Orgs"
    ],
@@ -5247,6 +5252,7 @@
     "content_type": "application/json",
     "schema_type": "object",
     "properties": [
+     "aeroscout_forwarding",
      "ap_mac",
      "beam",
      "created_time",
@@ -5343,6 +5349,7 @@
     "schema_type": "object",
     "description": "Request Body",
     "properties": [
+     "aeroscout_forwarding",
      "ap_mac",
      "beam",
      "created_time",
@@ -9165,6 +9172,7 @@
      "id",
      "idp_profiles",
      "ip_configs",
+     "mnha_config",
      "modified_time",
      "name",
      "networks",
@@ -9272,6 +9280,7 @@
      "id",
      "idp_profiles",
      "ip_configs",
+     "mnha_config",
      "modified_time",
      "name",
      "networks",
@@ -9801,6 +9810,200 @@
      "required": true,
      "type": "string",
      "format": "uuid"
+    }
+   ]
+  },
+  {
+   "name": "mist_count_org_client_fingerprints",
+   "key": "GET /api/v1/orgs/{org_id}/insights/fingerprints/count",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/insights/fingerprints/count",
+   "source_file": "mist.openapi.json",
+   "operation_id": "countOrgClientFingerprints",
+   "summary": "countOrgClientFingerprints",
+   "description": "Count Client Fingerprints",
+   "tags": [
+    "Orgs NAC Fingerprints"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "distinct",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Field used to group this count response. enum: `family`, `model`, `os`, `os_type`",
+     "enum": [
+      "family",
+      "model",
+      "os",
+      "os_type"
+     ],
+     "default": "family"
+    },
+    {
+     "name": "start",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Lower bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d` or `-1w`"
+    },
+    {
+     "name": "end",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Upper bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d`, `-2h`, or `now`"
+    },
+    {
+     "name": "duration",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Time range duration for the query, using relative units such as `10m`, `7d`, or `2w`",
+     "default": "1d"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Maximum number of results to return per page",
+     "default": 100
+    }
+   ]
+  },
+  {
+   "name": "mist_search_org_client_fingerprints",
+   "key": "GET /api/v1/orgs/{org_id}/insights/fingerprints/search",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/insights/fingerprints/search",
+   "source_file": "mist.openapi.json",
+   "operation_id": "searchOrgClientFingerprints",
+   "summary": "searchOrgClientFingerprints",
+   "description": "Search Client Fingerprints",
+   "tags": [
+    "Orgs NAC Fingerprints"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "family",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Device Category of the client device"
+    },
+    {
+     "name": "client_type",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by client type. enum: `wireless`, `wired`, `vty`",
+     "enum": [
+      "wireless",
+      "wired",
+      "vty"
+     ]
+    },
+    {
+     "name": "model",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by device model"
+    },
+    {
+     "name": "mfg",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Manufacturer name of the client device"
+    },
+    {
+     "name": "os",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Operating System name and version of the client device"
+    },
+    {
+     "name": "os_type",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Operating system name of the client device"
+    },
+    {
+     "name": "mac",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by MAC address"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Maximum number of results to return per page",
+     "default": 100
+    },
+    {
+     "name": "start",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Lower bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d` or `-1w`"
+    },
+    {
+     "name": "end",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Upper bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d`, `-2h`, or `now`"
+    },
+    {
+     "name": "duration",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Time range duration for the query, using relative units such as `10m`, `7d`, or `2w`",
+     "default": "1d"
+    },
+    {
+     "name": "interval",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Aggregation works by giving a time range plus interval (e.g. 1d, 1h, 10m) where aggregation function would be applied to."
+    },
+    {
+     "name": "sort",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "On which field the list should be sorted, -prefix represents DESC order.",
+     "default": "wxid"
+    },
+    {
+     "name": "search_after",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Pagination cursor for retrieving subsequent pages of results. This value is automatically populated by Mist in the `next` URL from the previous response and should not be manually constructed."
     }
    ]
   },
@@ -10417,7 +10620,10 @@
      "mac",
      "site_id",
      "tunterm_port_config"
-    ]
+    ],
+    "property_formats": {
+     "site_id": "uuid"
+    }
    }
   },
   {
@@ -10428,7 +10634,7 @@
    "source_file": "mist.openapi.json",
    "operation_id": "searchOrgInventory",
    "summary": "searchOrgInventory",
-   "description": "Search organization inventory records with filters for type, MAC address, model, name, site, serial number, Virtual Chassis master state, SKU, version, status, and text.",
+   "description": "Search organization inventory records with filters for type, MAC address, Virtual Chassis MAC address, Virtual Chassis master MAC address, model, name, site, serial number, Virtual Chassis master state, SKU, version, status, and text.",
    "tags": [
     "Orgs Inventory"
    ],
@@ -10459,6 +10665,20 @@
      "required": false,
      "type": "string",
      "description": "Filter by MAC address. Partial matches may use `*` wildcards (e.g. `*5b35*` matches `5c5b350e0001` and `5c5b35000301`). Accepts multiple comma-separated values."
+    },
+    {
+     "name": "vc_mac",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Virtual Chassis MAC address. Accepts multiple comma-separated values."
+    },
+    {
+     "name": "master_mac",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "MAC address of the Virtual Chassis master device. Accepts multiple comma-separated values."
     },
     {
      "name": "model",
@@ -10530,6 +10750,20 @@
      "required": false,
      "type": "string",
      "description": "Wildcards for name, mac, serial"
+    },
+    {
+     "name": "modified_after",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Filter on inventory last modified time, in epoch"
+    },
+    {
+     "name": "disconnected_before",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Filter results to devices that were last disconnected before this time, in epoch seconds"
     },
     {
      "name": "limit",
@@ -11016,19 +11250,7 @@
      "in": "query",
      "required": false,
      "type": "string",
-     "description": "Device warranty type used to filter Juniper Support Insight inventory. enum: `Standard Hardware Warranty`, `Enhanced Hardware Warranty`, `Dead On Arrival Warranty`, `Limited Lifetime Warranty`, `Software Warranty`, `Limited Lifetime Warranty for WLA`, `Warranty-JCPO EOL (DOA Not Included)`, `MIST Enhanced Hardware Warranty`, `MIST Standard Warranty`, `Determine Lifetime warranty`",
-     "enum": [
-      "Standard Hardware Warranty",
-      "Enhanced Hardware Warranty",
-      "Dead On Arrival Warranty",
-      "Limited Lifetime Warranty",
-      "Software Warranty",
-      "Limited Lifetime Warranty for WLA",
-      "Warranty-JCPO EOL (DOA Not Included)",
-      "MIST Enhanced Hardware Warranty",
-      "MIST Standard Warranty",
-      "Determine Lifetime warranty"
-     ]
+     "description": "Device warranty type used to filter Juniper Support Insight inventory"
     },
     {
      "name": "end_of_sale_after",
@@ -15989,7 +16211,8 @@
      "subnet6",
      "tenants",
      "vlan_id",
-     "vpn_access"
+     "vpn_access",
+     "zone_id"
     ],
     "required_properties": [
      "name"
@@ -16000,7 +16223,8 @@
      "gateway6": "ipv6",
      "id": "uuid",
      "modified_time": "double",
-     "org_id": "uuid"
+     "org_id": "uuid",
+     "zone_id": "uuid"
     }
    }
   },
@@ -16083,7 +16307,8 @@
      "subnet6",
      "tenants",
      "vlan_id",
-     "vpn_access"
+     "vpn_access",
+     "zone_id"
     ],
     "required_properties": [
      "name"
@@ -16094,7 +16319,8 @@
      "gateway6": "ipv6",
      "id": "uuid",
      "modified_time": "double",
-     "org_id": "uuid"
+     "org_id": "uuid",
+     "zone_id": "uuid"
     }
    }
   },
@@ -19065,6 +19291,197 @@
    ]
   },
   {
+   "name": "mist_list_org_security_zones",
+   "key": "GET /api/v1/orgs/{org_id}/securityzones",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/securityzones",
+   "source_file": "mist.openapi.json",
+   "operation_id": "listOrgSecurityZones",
+   "summary": "listOrgSecurityZones",
+   "description": "List organization-level security zones. Security zones are used by SRX gateways, and the zone `name` is used as the security zone name on the device.",
+   "tags": [
+    "Orgs Security Zones"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Maximum number of results to return per page",
+     "default": 100
+    },
+    {
+     "name": "page",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Select the page number to return when using page-based pagination; starts at `1`",
+     "default": 1
+    }
+   ]
+  },
+  {
+   "name": "mist_create_org_security_zone",
+   "key": "POST /api/v1/orgs/{org_id}/securityzones",
+   "method": "POST",
+   "path": "/api/v1/orgs/{org_id}/securityzones",
+   "source_file": "mist.openapi.json",
+   "operation_id": "createOrgSecurityZone",
+   "summary": "createOrgSecurityZone",
+   "description": "Create an organization-level security zone for SRX gateways. Networks reference a zone through their `zone_id`, and several networks can share the same zone.",
+   "tags": [
+    "Orgs Security Zones"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ],
+   "request_body": {
+    "required": false,
+    "content_type": "application/json",
+    "schema_type": "object",
+    "description": "Request Body",
+    "properties": [
+     "created_time",
+     "id",
+     "modified_time",
+     "name",
+     "org_id"
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "created_time": "double",
+     "id": "uuid",
+     "modified_time": "double",
+     "org_id": "uuid"
+    }
+   }
+  },
+  {
+   "name": "mist_get_org_security_zone",
+   "key": "GET /api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "getOrgSecurityZone",
+   "summary": "getOrgSecurityZone",
+   "description": "Retrieve details for a specific organization security zone.",
+   "tags": [
+    "Orgs Security Zones"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "securityzone_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
+  },
+  {
+   "name": "mist_update_org_security_zone",
+   "key": "PUT /api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "method": "PUT",
+   "path": "/api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "updateOrgSecurityZone",
+   "summary": "updateOrgSecurityZone",
+   "description": "Update an organization security zone. Renaming a zone changes the security zone name used on the device for every Network referencing it.",
+   "tags": [
+    "Orgs Security Zones"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "securityzone_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ],
+   "request_body": {
+    "required": false,
+    "content_type": "application/json",
+    "schema_type": "object",
+    "description": "Request Body",
+    "properties": [
+     "created_time",
+     "id",
+     "modified_time",
+     "name",
+     "org_id"
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "created_time": "double",
+     "id": "uuid",
+     "modified_time": "double",
+     "org_id": "uuid"
+    }
+   }
+  },
+  {
+   "name": "mist_delete_org_security_zone",
+   "key": "DELETE /api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "method": "DELETE",
+   "path": "/api/v1/orgs/{org_id}/securityzones/{securityzone_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "deleteOrgSecurityZone",
+   "summary": "deleteOrgSecurityZone",
+   "description": "Delete an organization security zone by ID so it can no longer be referenced by a Network `zone_id`.",
+   "tags": [
+    "Orgs Security Zones"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "securityzone_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
+  },
+  {
    "name": "mist_list_org_service_policies",
    "key": "GET /api/v1/orgs/{org_id}/servicepolicies",
    "method": "GET",
@@ -20240,6 +20657,84 @@
      "serial_numbers"
     ]
    }
+  },
+  {
+   "name": "mist_search_org_scep_events",
+   "key": "GET /api/v1/orgs/{org_id}/setting/mist_scep/events/search",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/setting/mist_scep/events/search",
+   "source_file": "mist.openapi.json",
+   "operation_id": "searchOrgScepEvents",
+   "summary": "searchOrgScepEvents",
+   "description": "Search Mist SCEP PKI operation events for the organization. Use this to audit certificate issuance errors and diagnose client onboarding problems.",
+   "tags": [
+    "Orgs SCEP"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "type",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter by event type. enum: `failure`, `success`",
+     "enum": [
+      "failure",
+      "success"
+     ]
+    },
+    {
+     "name": "cert_provider",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter by the MDM or certificate provider that triggered the operation"
+    },
+    {
+     "name": "common_name",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Partial match against the certificate common name, such as a user UPN"
+    },
+    {
+     "name": "device_id",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter by the device identifier associated with the SCEP operation",
+     "format": "uuid"
+    },
+    {
+     "name": "text",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Keyword search within the event reason text"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Maximum number of results to return per page",
+     "default": 100
+    },
+    {
+     "name": "page",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Select the page number to return when using page-based pagination; starts at `1`",
+     "default": 1
+    }
+   ]
   },
   {
    "name": "mist_set_org_custom_bucket",
@@ -25759,6 +26254,96 @@
    ]
   },
   {
+   "name": "mist_count_org_vars",
+   "key": "GET /api/v1/orgs/{org_id}/vars/count",
+   "method": "GET",
+   "path": "/api/v1/orgs/{org_id}/vars/count",
+   "source_file": "mist.openapi.json",
+   "operation_id": "countOrgVars",
+   "summary": "countOrgVars",
+   "description": "Count organization vars, optionally grouped by `distinct` and filtered by site, variable name, and source.\n\nExample: /api/v1/orgs/{org_id}/vars/count?distinct=var",
+   "tags": [
+    "Orgs Vars"
+   ],
+   "parameters": [
+    {
+     "name": "org_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "distinct",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Field used to group this count response. enum: `site_id`, `src`, `var`",
+     "enum": [
+      "site_id",
+      "src",
+      "var"
+     ],
+     "default": "var"
+    },
+    {
+     "name": "site_id",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by site identifier. Accepts multiple comma-separated values."
+    },
+    {
+     "name": "var",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter variable results by variable name. Accepts multiple comma-separated values."
+    },
+    {
+     "name": "src",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by source. enum: `deviceprofile`, `site`",
+     "enum": [
+      "deviceprofile",
+      "site"
+     ]
+    },
+    {
+     "name": "start",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Lower bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d` or `-1w`"
+    },
+    {
+     "name": "end",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Upper bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d`, `-2h`, or `now`"
+    },
+    {
+     "name": "duration",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Time range duration for the query, using relative units such as `10m`, `7d`, or `2w`",
+     "default": "1d"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "required": false,
+     "type": "integer",
+     "description": "Maximum number of results to return per page",
+     "default": 100
+    }
+   ]
+  },
+  {
    "name": "mist_search_org_vars",
    "key": "GET /api/v1/orgs/{org_id}/vars/search",
    "method": "GET",
@@ -28467,6 +29052,7 @@
      "first_name",
      "invite_code",
      "last_name",
+     "no_tracking",
      "org_name",
      "password",
      "recaptcha",
@@ -29640,6 +30226,7 @@
      "band",
      "channels",
      "device_id",
+     "device_ids",
      "duration",
      "format"
     ],
@@ -29897,6 +30484,7 @@
     "schema_type": "object",
     "description": "Request Body",
     "properties": [
+     "aeroscout_forwarding",
      "ap_mac",
      "beam",
      "created_time",
@@ -29993,6 +30581,7 @@
     "schema_type": "object",
     "description": "Request Body",
     "properties": [
+     "aeroscout_forwarding",
      "ap_mac",
      "beam",
      "created_time",
@@ -36968,6 +37557,90 @@
    ]
   },
   {
+   "name": "mist_get_site_flow_capture_status",
+   "key": "GET /api/v1/sites/{site_id}/flow_capture",
+   "method": "GET",
+   "path": "/api/v1/sites/{site_id}/flow_capture",
+   "source_file": "mist.openapi.json",
+   "operation_id": "getSiteFlowCaptureStatus",
+   "summary": "getSiteFlowCaptureStatus",
+   "description": "Get the current flow capture session status for the site. Returns an empty object when no session is active.",
+   "tags": [
+    "Utilities PCAPs"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
+  },
+  {
+   "name": "mist_start_site_flow_capture",
+   "key": "POST /api/v1/sites/{site_id}/flow_capture",
+   "method": "POST",
+   "path": "/api/v1/sites/{site_id}/flow_capture",
+   "source_file": "mist.openapi.json",
+   "operation_id": "startSiteFlowCapture",
+   "summary": "startSiteFlowCapture",
+   "description": "Start a flow capture session on one or more online switches running JMA firmware. The same filter is applied to every switch. Only one packet or flow capture session can be active per site at a time.\n\nThe captured flow records are streamed over websocket rather than returned in the HTTP response.\n\n#### Subscribe to Flow Capture outputs\n`WS /api-ws/v1/stream`",
+   "tags": [
+    "Utilities PCAPs"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ],
+   "request_body": {
+    "required": false,
+    "content_type": "application/json",
+    "schema_type": "object",
+    "description": "Request Body",
+    "properties": [
+     "dst_ip",
+     "dst_port",
+     "duration",
+     "protocol",
+     "src_ip",
+     "src_port",
+     "switches"
+    ],
+    "required_properties": [
+     "switches"
+    ]
+   }
+  },
+  {
+   "name": "mist_stop_site_flow_capture",
+   "key": "DELETE /api/v1/sites/{site_id}/flow_capture",
+   "method": "DELETE",
+   "path": "/api/v1/sites/{site_id}/flow_capture",
+   "source_file": "mist.openapi.json",
+   "operation_id": "stopSiteFlowCapture",
+   "summary": "stopSiteFlowCapture",
+   "description": "Stop the active flow capture session for the site. Returns 400 if no flow capture session is active.",
+   "tags": [
+    "Utilities PCAPs"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
+  },
+  {
    "name": "mist_list_site_gateway_templates_derived",
    "key": "GET /api/v1/sites/{site_id}/gatewaytemplates/derived",
    "method": "GET",
@@ -37686,200 +38359,6 @@
      "type": "integer",
      "description": "Select the page number to return when using page-based pagination; starts at `1`",
      "default": 1
-    }
-   ]
-  },
-  {
-   "name": "mist_count_site_client_fingerprints",
-   "key": "GET /api/v1/sites/{site_id}/insights/fingerprints/count",
-   "method": "GET",
-   "path": "/api/v1/sites/{site_id}/insights/fingerprints/count",
-   "source_file": "mist.openapi.json",
-   "operation_id": "countSiteClientFingerprints",
-   "summary": "countSiteClientFingerprints",
-   "description": "Count Client Fingerprints",
-   "tags": [
-    "Sites NAC Fingerprints"
-   ],
-   "parameters": [
-    {
-     "name": "site_id",
-     "in": "path",
-     "required": true,
-     "type": "string",
-     "format": "uuid"
-    },
-    {
-     "name": "distinct",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Field used to group this count response. enum: `family`, `model`, `os`, `os_type`",
-     "enum": [
-      "family",
-      "model",
-      "os",
-      "os_type"
-     ],
-     "default": "family"
-    },
-    {
-     "name": "start",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Lower bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d` or `-1w`"
-    },
-    {
-     "name": "end",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Upper bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d`, `-2h`, or `now`"
-    },
-    {
-     "name": "duration",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Time range duration for the query, using relative units such as `10m`, `7d`, or `2w`",
-     "default": "1d"
-    },
-    {
-     "name": "limit",
-     "in": "query",
-     "required": false,
-     "type": "integer",
-     "description": "Maximum number of results to return per page",
-     "default": 100
-    }
-   ]
-  },
-  {
-   "name": "mist_search_site_client_fingerprints",
-   "key": "GET /api/v1/sites/{site_id}/insights/fingerprints/search",
-   "method": "GET",
-   "path": "/api/v1/sites/{site_id}/insights/fingerprints/search",
-   "source_file": "mist.openapi.json",
-   "operation_id": "searchSiteClientFingerprints",
-   "summary": "searchSiteClientFingerprints",
-   "description": "Search Client Fingerprints",
-   "tags": [
-    "Sites NAC Fingerprints"
-   ],
-   "parameters": [
-    {
-     "name": "site_id",
-     "in": "path",
-     "required": true,
-     "type": "string",
-     "format": "uuid"
-    },
-    {
-     "name": "family",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Device Category of the client device"
-    },
-    {
-     "name": "client_type",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Filter results by client type. enum: `wireless`, `wired`, `vty`",
-     "enum": [
-      "wireless",
-      "wired",
-      "vty"
-     ]
-    },
-    {
-     "name": "model",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Filter results by device model"
-    },
-    {
-     "name": "mfg",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Manufacturer name of the client device"
-    },
-    {
-     "name": "os",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Operating System name and version of the client device"
-    },
-    {
-     "name": "os_type",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Operating system name of the client device"
-    },
-    {
-     "name": "mac",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Filter results by MAC address"
-    },
-    {
-     "name": "limit",
-     "in": "query",
-     "required": false,
-     "type": "integer",
-     "description": "Maximum number of results to return per page",
-     "default": 100
-    },
-    {
-     "name": "start",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Lower bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d` or `-1w`"
-    },
-    {
-     "name": "end",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Upper bound of the time range, as an epoch timestamp in seconds or a relative value such as `-1d`, `-2h`, or `now`"
-    },
-    {
-     "name": "duration",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Time range duration for the query, using relative units such as `10m`, `7d`, or `2w`",
-     "default": "1d"
-    },
-    {
-     "name": "interval",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Aggregation works by giving a time range plus interval (e.g. 1d, 1h, 10m) where aggregation function would be applied to."
-    },
-    {
-     "name": "sort",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "On which field the list should be sorted, -prefix represents DESC order.",
-     "default": "wxid"
-    },
-    {
-     "name": "search_after",
-     "in": "query",
-     "required": false,
-     "type": "string",
-     "description": "Pagination cursor for retrieving subsequent pages of results. This value is automatically populated by Mist in the `next` URL from the previous response and should not be manually constructed."
     }
    ]
   },
@@ -38841,14 +39320,14 @@
      "flags",
      "for_site",
      "geofences",
-     "group_idx",
-     "group_name",
      "height",
      "height_m",
      "id",
      "latlng_br",
      "latlng_tl",
      "locked",
+     "mapstack_floor",
+     "mapstack_id",
      "modified_time",
      "name",
      "occupancy_limit",
@@ -38873,6 +39352,7 @@
      "created_time": "double",
      "height_m": "double",
      "id": "uuid",
+     "mapstack_id": "uuid",
      "modified_time": "double",
      "org_id": "uuid",
      "site_id": "uuid",
@@ -39002,14 +39482,14 @@
      "flags",
      "for_site",
      "geofences",
-     "group_idx",
-     "group_name",
      "height",
      "height_m",
      "id",
      "latlng_br",
      "latlng_tl",
      "locked",
+     "mapstack_floor",
+     "mapstack_id",
      "modified_time",
      "name",
      "occupancy_limit",
@@ -39034,6 +39514,7 @@
      "created_time": "double",
      "height_m": "double",
      "id": "uuid",
+     "mapstack_id": "uuid",
      "modified_time": "double",
      "org_id": "uuid",
      "site_id": "uuid",
@@ -39812,6 +40293,102 @@
      "name"
     ]
    }
+  },
+  {
+   "name": "mist_get_site_map_stack",
+   "key": "GET /api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "method": "GET",
+   "path": "/api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "getSiteMapStack",
+   "summary": "getSiteMapStack",
+   "description": "Get Site Map Stack Details",
+   "tags": [
+    "Sites Map Stacks"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "mapstack_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
+  },
+  {
+   "name": "mist_update_site_map_stack",
+   "key": "PUT /api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "method": "PUT",
+   "path": "/api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "updateSiteMapStack",
+   "summary": "updateSiteMapStack",
+   "description": "Update a Site Map Stack",
+   "tags": [
+    "Sites Map Stacks"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "mapstack_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ],
+   "request_body": {
+    "required": false,
+    "content_type": "application/json",
+    "schema_type": "object",
+    "description": "Request Body",
+    "properties": [
+     "name"
+    ]
+   }
+  },
+  {
+   "name": "mist_delete_site_map_stack",
+   "key": "DELETE /api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "method": "DELETE",
+   "path": "/api/v1/sites/{site_id}/mapstacks/{mapstack_id}",
+   "source_file": "mist.openapi.json",
+   "operation_id": "deleteSiteMapStack",
+   "summary": "deleteSiteMapStack",
+   "description": "Delete a Site Map Stack",
+   "tags": [
+    "Sites Map Stacks"
+   ],
+   "parameters": [
+    {
+     "name": "site_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    },
+    {
+     "name": "mapstack_id",
+     "in": "path",
+     "required": true,
+     "type": "string",
+     "format": "uuid"
+    }
+   ]
   },
   {
    "name": "mist_count_site_marvis_config_actions",
@@ -42940,6 +43517,13 @@
       "6-dedicated",
       "6-selectable"
      ]
+    },
+    {
+     "name": "ap",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "AP MAC address. When supplied, returns per-AP channel scores instead of site-wide scores."
     },
     {
      "name": "start",
@@ -46563,11 +47147,25 @@
      "default": "mac"
     },
     {
+     "name": "mac",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by client MAC address"
+    },
+    {
+     "name": "ap_mac",
+     "in": "query",
+     "required": false,
+     "type": "string",
+     "description": "Filter results by AP MAC address"
+    },
+    {
      "name": "rating",
      "in": "query",
      "required": false,
-     "type": "integer",
-     "description": "Feedback rating (e.g. \"rating=1\" or \"rating=1,2\")"
+     "type": "string",
+     "description": "Feedback rating, from 1 to 5; accepts comma-separated values such as \"1,2\""
     },
     {
      "name": "app",
