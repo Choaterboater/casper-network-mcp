@@ -13,4 +13,6 @@ def hand_written_backends() -> list[tuple[str, MCPServer]]:
     Tasks 7-9 add Mist, Central and ClearPass here as their tools are ported;
     each tool's label and change kind come from its product's ``labels.yaml``.
     """
-    return []
+    from casper_network_mcp.products.mist.tools import backend as mist_backend
+
+    return [("mist", mist_backend())]

@@ -1,3 +1,49 @@
-# Change kinds for Mist's hand-written tools, one row per tool, filled as the tools are ported (Task 7).
-# Row shape: tool_name: {kind: config, vendor_category: "...", checked: "why, one line"}
-{}
+# Change kinds for Mist's hand-written tools (Task 7).
+# kind: Casper's change kind. vendor_category: the Mist API reference section, a reference only.
+# checked: why this kind, one line, from reading the tool's requests by hand.
+
+# tools.py (adapted from hpe-networking-mcp mist.py)
+mist_get: {kind: read, vendor_category: "Any (GET only)", checked: "GET only; refuses a GET whose kind is not read (installer optimize)"}
+mist_list_sites: {kind: read, vendor_category: "Orgs > Sites", checked: "GET /api/v1/orgs/{org_id}/sites"}
+mist_get_client: {kind: read, vendor_category: "Sites > Stats - Clients", checked: "GET /api/v1/sites/{site_id}/stats/clients/{client_mac}"}
+mist_list_wlans: {kind: read, vendor_category: "Sites > WLANs", checked: "GET /api/v1/sites/{site_id}/wlans; passphrases hidden"}
+mist_update_wlan: {kind: config, vendor_category: "Sites > WLANs", checked: "PUT /api/v1/sites/{site_id}/wlans/{wlan_id} with the given fields"}
+mist_delete_wlan: {kind: delete, vendor_category: "Sites > WLANs", checked: "DELETE /api/v1/sites/{site_id}/wlans/{wlan_id}"}
+mist_list_alarms: {kind: read, vendor_category: "Sites > Alarms", checked: "GET /api/v1/sites/{site_id}/alarms/search"}
+mist_ack_alarm: {kind: config, vendor_category: "Sites > Alarms", checked: "POST .../alarms/{alarm_id}/ack changes alarm state only"}
+mist_unack_alarm: {kind: config, vendor_category: "Sites > Alarms", checked: "POST .../alarms/{alarm_id}/unack changes alarm state only"}
+mist_list_nac_tags: {kind: read, vendor_category: "Orgs > NAC Tags", checked: "GET /api/v1/orgs/{org_id}/nactags"}
+mist_list_nac_portals: {kind: read, vendor_category: "Orgs > NAC Portals", checked: "GET /api/v1/orgs/{org_id}/nacportals"}
+mist_list_nac_idps: {kind: read, vendor_category: "Orgs > Setting", checked: "GET /api/v1/orgs/{org_id}/setting, mist_nac.idps"}
+mist_list_user_macs: {kind: read, vendor_category: "Orgs > User MACs", checked: "GET /api/v1/orgs/{org_id}/usermacs/search"}
+mist_upsert_user_mac: {kind: admin, vendor_category: "Orgs > User MACs", checked: "POST /api/v1/orgs/{org_id}/usermacs adds a NAC MAC entry; admin because Casper reads 'user' in the name as an account word"}
+mist_search_marvis_clients: {kind: read, vendor_category: "Orgs > Stats - Marvis Clients", checked: "GET /api/v1/orgs/{org_id}/stats/marvisclients/search"}
+mist_get_client_insights: {kind: read, vendor_category: "Sites > Insights", checked: "GET /api/v1/sites/{site_id}/insights/client/{client_mac}"}
+mist_search_events: {kind: read, vendor_category: "Sites > Devices", checked: "GET /api/v1/sites/{site_id}/devices/events/search"}
+mist_get_marvis_settings: {kind: read, vendor_category: "Orgs > Setting", checked: "GET /api/v1/orgs/{org_id}/setting, the marvis part"}
+mist_set_marvis_settings: {kind: config, vendor_category: "Orgs > Setting", checked: "PUT /api/v1/orgs/{org_id}/setting with {marvis: ...}"}
+mist_list_org_inventory: {kind: read, vendor_category: "Orgs > Inventory", checked: "GET /api/v1/orgs/{org_id}/inventory; claim codes left out"}
+mist_claim_devices: {kind: config, vendor_category: "Orgs > Inventory", checked: "POST /api/v1/orgs/{org_id}/inventory adds claimed devices; removes nothing"}
+mist_list_switches: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices?type=switch"}
+mist_list_switch_ports: {kind: read, vendor_category: "Sites > Stats - Ports", checked: "GET /api/v1/sites/{site_id}/stats/ports/search"}
+mist_list_gateways: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices?type=gateway"}
+mist_get_gateway: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices/{device_id}"}
+mist_get_site_assurance_snapshot: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "runs the switch, gateway and alarm reads above; GETs only"}
+mist_get_org_sle_overview: {kind: read, vendor_category: "Orgs > Insights", checked: "GET /api/v1/orgs/{org_id}/insights/{metric}"}
+mist_get_site_sle_metric_summary: {kind: read, vendor_category: "Sites > SLEs", checked: "GET /api/v1/sites/{site_id}/sle/{scope}/{scope_id}/metric/{metric}/summary"}
+
+# sle.py, marvis.py, alarms.py, events.py, inventory.py (adapted from mist-mcp)
+sle_metrics: {kind: read, vendor_category: "Sites > SLEs", checked: "GET /api/v1/sites/{site_id}/sle/{scope}/{scope_id}/metrics"}
+sle_summary: {kind: read, vendor_category: "Sites > SLEs", checked: "GET /api/v1/sites/{site_id}/sle/{scope}/{scope_id}/metric/{metric}/summary"}
+sle_org_summary: {kind: read, vendor_category: "Orgs > Insights", checked: "GET /api/v1/orgs/{org_id}/insights/sites-sle"}
+marvis_troubleshoot: {kind: read, vendor_category: "Orgs > Marvis", checked: "GET /api/v1/orgs/{org_id}/troubleshoot asks Marvis; changes nothing"}
+alarms_list: {kind: read, vendor_category: "Orgs > Alarms", checked: "GET /api/v1/orgs/{org_id}/alarms/search"}
+alarms_ack: {kind: config, vendor_category: "Orgs > Alarms", checked: "POST /api/v1/orgs/{org_id}/alarms/ack changes alarm state only"}
+alarms_unack: {kind: config, vendor_category: "Orgs > Alarms", checked: "POST /api/v1/orgs/{org_id}/alarms/unack changes alarm state only"}
+site_events: {kind: read, vendor_category: "Sites > Events", checked: "GET .../events/system/search, devices/events/search or clients/events/search"}
+org_events: {kind: read, vendor_category: "Orgs > Events", checked: "GET /api/v1/orgs/{org_id}/(devices|clients)/events/search or events/search"}
+audit_logs: {kind: read, vendor_category: "Orgs > Logs", checked: "GET /api/v1/orgs/{org_id}/logs"}
+rogue_aps: {kind: read, vendor_category: "Sites > Insights", checked: "GET /api/v1/sites/{site_id}/insights/rogues"}
+inventory_assign: {kind: config, vendor_category: "Orgs > Inventory", checked: "PUT /api/v1/orgs/{org_id}/inventory op=assign moves devices to a site"}
+inventory_unassign: {kind: config, vendor_category: "Orgs > Inventory", checked: "PUT /api/v1/orgs/{org_id}/inventory op=unassign; devices stay in the org"}
+inventory_delete: {kind: delete, vendor_category: "Orgs > Inventory", checked: "PUT /api/v1/orgs/{org_id}/inventory op=delete releases devices from the org"}

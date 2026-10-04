@@ -124,6 +124,20 @@ class Backend:
         assert tool is not None, name
         return tool.parameters
 
+    def description(self, name: str) -> str:
+        tool = sdk_compat.get_tool(self.server, name)
+        assert tool is not None, name
+        return tool.description or ""
+
+
+@pytest.fixture
+def mist_backend(recording_transport, mist_client_factory) -> Backend:
+    """The hand-written Mist backend on the recording fake (writes allowed)."""
+    from casper_network_mcp.products.mist import tools as mist
+
+    client = mist_client_factory(gate=Gate(read_only=False), transport=recording_transport)
+    return Backend(mist.backend(client=lambda: client))
+
 
 @pytest.fixture
 def generated_backend_factory(mist_client_factory, central_client_factory, clearpass_client_factory):
