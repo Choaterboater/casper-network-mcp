@@ -1835,8 +1835,6 @@ def _plan_action(
     capability: str,
     reason: str,
     arguments: dict[str, Any],
-    *,
-    requires_confirmation: bool = False,
 ) -> dict[str, Any]:
     dispatcher = "invoke_read_tool" if capability == "read" else "invoke_tool"
     action: dict[str, Any] = {
@@ -1847,8 +1845,6 @@ def _plan_action(
         "arguments": arguments,
         "execute": False,
     }
-    if requires_confirmation:
-        action["requires_confirmation"] = True
     return action
 
 
@@ -1871,8 +1867,9 @@ def plan_device_troubleshooting(
     Composes existing Central tools only: find_device, get_device_health,
     get_device_config_issues, list_events, and list_active_alerts. It never
     executes diagnostics or writes. Recommended next steps point at already
-    registered read, diagnostic, and gated remediation tools. Destructive
-    suggestions always set execute=False and requires_confirmation=True.
+    registered read, diagnostic, and gated remediation tools. Every
+    suggestion has execute=False: this plan runs none of them, and the
+    person approves each change when it runs.
     """
     serial = serial_number.strip()
     if not serial:
@@ -2108,11 +2105,11 @@ def plan_device_troubleshooting(
         )
     if any(token in evidence for token in ("cable", "tdr", "interface", "link")):
         _extend_unique(
-            recommended_diagnostics,
+            recommended_destructive,
             _plan_action(
                 "cable_test",
-                "diagnostic",
-                "Interface/cable symptoms were present; run TDR after the user supplies ports.",
+                "destructive",
+                "Interface/cable symptoms were present. A TDR test takes the port's link down; ask for the ports first.",
                 {"serial_number": serial},
             ),
         )
@@ -2123,12 +2120,8 @@ def plan_device_troubleshooting(
             _plan_action(
                 "execute_config_health_remediation",
                 "write",
-                "Config-health is not synchronized; preview a resync with dry_run=True first.",
-                {
-                    "serial_numbers": [serial],
-                    "dry_run": True,
-                },
-                requires_confirmation=True,
+                "Config-health is not synchronized; a resync re-pushes Central's config.",
+                {"serial_numbers": [serial]},
             ),
         )
     if any(token in evidence for token in ("poe",)):
@@ -2137,9 +2130,8 @@ def plan_device_troubleshooting(
             _plan_action(
                 "poe_bounce",
                 "destructive",
-                "PoE symptoms were present. Do not execute unless the user confirms the port list.",
+                "PoE symptoms were present. Ask which ports first.",
                 {"serial_number": serial},
-                requires_confirmation=True,
             ),
         )
     if any(token in evidence for token in ("link", "interface")) and family == _DEVICE_FAMILY_SWITCH:
@@ -2148,9 +2140,8 @@ def plan_device_troubleshooting(
             _plan_action(
                 "port_bounce",
                 "destructive",
-                "Link/interface symptoms were present. Bounce only after confirming the port.",
+                "Link/interface symptoms were present. Ask which port first.",
                 {"serial_number": serial},
-                requires_confirmation=True,
             ),
         )
     if offline:
@@ -2159,9 +2150,8 @@ def plan_device_troubleshooting(
             _plan_action(
                 "reboot_device",
                 "destructive",
-                "Device appears down/offline. Reboot is last-resort and needs confirmation.",
+                "Device appears down/offline. Reboot is a last resort.",
                 args,
-                requires_confirmation=True,
             ),
         )
 
@@ -2183,8 +2173,7 @@ def plan_device_troubleshooting(
         "errors": errors,
         "next_step": (
             "Call the recommended_reads / recommended_diagnostics tools first. "
-            "Writes and destructive tools stay execute=False until the person agrees; "
-            "preview a config resync with dry_run=True first."
+            "Writes and destructive tools are not run here; the person approves each change when it runs."
         ),
     }
 

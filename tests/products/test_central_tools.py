@@ -348,3 +348,43 @@ async def test_delete_config_assignment_refuses_a_slash_in_any_piece(recording_t
         out = await central_backends.call("delete_config_assignment", base | {name: "zz9/qq8"})
         assert "error" in str(out).lower(), name
     assert recording_transport.calls == []
+
+
+# ── minor review fixes ──
+
+
+def test_no_tool_text_cites_the_tech_docs_or_skips_the_approval_box(central_backends):
+    from casper_network_mcp.products.central import config as central_config
+
+    out = central_config.get_config_rollback_status()
+    assert not any("tech-docs" in c for c in out["citation"])
+    for tool in central_backends.all_tools():
+        doc = inspect.getdoc(tool.fn) or ""
+        assert "tech-docs" not in doc, tool.name
+        assert "no confirmation required" not in doc.lower(), tool.name
+        assert "requires_confirmation" not in doc, tool.name
+
+
+def test_troubleshooting_plan_files_cable_test_as_disruptive_and_has_no_confirm_step(monkeypatch):
+    from casper_network_mcp.products.central import monitoring
+
+    monkeypatch.setattr(
+        monitoring, "find_device", lambda serial: {"serial": serial, "deviceType": "SWITCH", "status": "DOWN"}
+    )
+    monkeypatch.setattr(monitoring, "get_device_health", lambda serial: {"health": [{"configStatus": "NOT_SYNCED"}]})
+    monkeypatch.setattr(monitoring, "get_device_config_issues", lambda serial: {"items": [{"id": "i1"}]})
+    monkeypatch.setattr(
+        monitoring,
+        "list_events",
+        lambda serial, hours, limit: {"items": [{"eventName": "link down", "description": "cable poe interface"}]},
+    )
+    monkeypatch.setattr(monitoring, "list_active_alerts", lambda site_id, limit: {"items": []})
+
+    plan = monitoring.plan_device_troubleshooting("SN1")
+    names = lambda bucket: [a["name"] for a in plan[bucket]]
+    assert "cable_test" not in names("recommended_diagnostics")
+    assert "cable_test" in names("recommended_destructive")
+    assert "execute_config_health_remediation" in names("recommended_writes")
+    text = str(plan)
+    assert "requires_confirmation" not in text
+    assert "dry_run" not in text
