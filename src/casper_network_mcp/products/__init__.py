@@ -1,1 +1,16 @@
-"""Product backends: Central, Mist, ClearPass, and the API lookup tools."""
+"""Product backends: Central, Mist and ClearPass, plus the bundled-spec lookup."""
+
+from __future__ import annotations
+
+from mcp.server.mcpserver import MCPServer
+
+__all__ = ["hand_written_backends"]
+
+
+def hand_written_backends() -> list[tuple[str, MCPServer]]:
+    """``(product, backend)`` for every hand-written product backend.
+
+    Tasks 7-9 add Mist, Central and ClearPass here as their tools are ported;
+    each tool's label and change kind come from its product's ``labels.yaml``.
+    """
+    return []

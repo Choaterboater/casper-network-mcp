@@ -26,10 +26,9 @@ from collections.abc import Callable
 from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
-from mcp.types import ToolAnnotations
 
 from casper_network_mcp import sdk_compat
-from casper_network_mcp.core.annotations import DESTRUCTIVE, DIAGNOSTIC, READ_ONLY, WRITE
+from casper_network_mcp.core.kinds import kind_for_operation, label_for_kind, tool_meta
 from casper_network_mcp.core.paths import UnsafePath, path_segment
 from casper_network_mcp.core.redact import redact_sensitive
 from casper_network_mcp.openapi_gen.http_exec import ProductClient, send
@@ -94,25 +93,6 @@ _PY_TYPES: dict[str, Any] = {
 _MAX_DESC = 200
 _MAX_ENUM_ERROR_CHOICES = 20
 _MAX_ENUM_LITERAL_VALUES = 20
-
-
-def _method_kind(method: str, path: str, operation_id: str) -> str:
-    """Stand-in until ``core/kinds.py``: reads, deletes, everything else a change."""
-    if method == "GET":
-        return "read"
-    if method == "DELETE":
-        return "delete"
-    return "config"
-
-
-def _label(kind: str) -> ToolAnnotations:
-    if kind == "read":
-        return READ_ONLY
-    if kind == "troubleshoot":
-        return DIAGNOSTIC
-    if kind in ("delete", "disruptive"):
-        return DESTRUCTIVE
-    return WRITE
 
 
 class _ParamSpec:
@@ -427,12 +407,14 @@ def register_generated_tools(
     manifest: Manifest,
     *,
     client: ClientGetter,
-    kind_of: KindOf = _method_kind,
+    kind_of: KindOf = kind_for_operation,
 ) -> list[str]:
     """Register every operation in ``manifest`` on ``mcp``; return the tool names.
 
     ``client`` is called at call time (so a missing login is reported when a
-    tool is used, not when the server starts).
+    tool is used, not when the server starts). Each tool's change kind comes
+    from ``kind_of`` (``core.kinds.kind_for_operation``) on the full request
+    path, and sets both its annotation and ``_meta["casper/change-kind"]``.
     """
     existing = set(sdk_compat.tool_names(mcp))
     registered: list[str] = []
@@ -448,7 +430,8 @@ def register_generated_tools(
             _make_tool(op, manifest, client, kind),
             name=name,
             description=_short_description(op),
-            annotations=_label(kind),
+            annotations=label_for_kind(kind),
+            meta=tool_meta(kind),
         )
         existing.add(name)
         registered.append(name)

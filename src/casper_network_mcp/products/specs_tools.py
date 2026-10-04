@@ -15,6 +15,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.types import ToolAnnotations
 
 from casper_network_mcp import specs_bundle, specs_index
+from casper_network_mcp.core.kinds import tool_meta
 
 __all__ = ["LOCAL_READ", "backend", "list_api_families", "lookup_api"]
 
@@ -106,6 +107,6 @@ def list_api_families(product: str = "central", limit: int = 50, offset: int = 0
 def backend() -> MCPServer:
     """The inner ``specs`` backend holding the two lookup tools."""
     server = MCPServer("specs")
-    server.add_tool(lookup_api, annotations=LOCAL_READ)
-    server.add_tool(list_api_families, annotations=LOCAL_READ)
+    server.add_tool(lookup_api, annotations=LOCAL_READ, meta=tool_meta("read"))
+    server.add_tool(list_api_families, annotations=LOCAL_READ, meta=tool_meta("read"))
     return server

@@ -1,0 +1,3 @@
+# Change kinds for ClearPass's hand-written tools, one row per tool, filled as the tools are ported (Task 9).
+# Row shape: tool_name: {kind: config, vendor_category: "...", checked: "why, one line"}
+{}
