@@ -1,0 +1,25 @@
+[project]
+name = "casper-network-mcp"
+version = "0.1.0"
+description = "One small MCP router for HPE Aruba Networking Central, Juniper Mist and ClearPass, built for Casper."
+readme = "README.md"
+license = "MIT AND LicenseRef-HPE-API-Documentation"
+license-files = ["LICENSE", "NOTICE.md", "THIRD_PARTY_NOTICES.md", "src/casper_network_mcp/specs/NOTICE.md"]
+requires-python = ">=3.11"
+dependencies = ["mcp[cli]>=2.0,<3", "httpx>=0.27,<1", "pyyaml>=6,<7"]
+
+[project.scripts]
+casper-network-mcp = "casper_network_mcp.server:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11"]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/casper_network_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
