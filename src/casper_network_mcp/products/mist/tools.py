@@ -288,7 +288,7 @@ async def mist_list_user_macs(org_id: str, limit: int = 100, page: int = 1) -> d
 
 
 @mcp.tool()
-async def mist_upsert_user_mac(
+async def mist_upsert_nac_mac(
     org_id: str,
     mac_address: str,
     labels: list[str] | None = None,
@@ -299,6 +299,8 @@ async def mist_upsert_user_mac(
 ) -> Any:
     """Add one known-client MAC entry for NAC rules (``POST /api/v1/orgs/{org_id}/usermacs``).
 
+    Mist calls these "User MACs" (formerly ``mist_upsert_user_mac``); the
+    entry only maps a MAC to labels or a VLAN, it is no user account.
     ``vlan`` is text in Mist's ``user_mac`` schema. With ``dry_run=True`` it
     returns the request it would send and sends nothing.
     """

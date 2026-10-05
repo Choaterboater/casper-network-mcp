@@ -342,8 +342,8 @@ async def atroubleshoot_async(
 ) -> dict[str, Any]:
     """Start a troubleshooting task and poll it.
 
-    ``diagnostic=True`` declares a hand-checked check (ping, show ...) that
-    changes nothing; a disruptive action (PoE or port bounce, reboot) leaves
+    ``diagnostic=True`` declares a hand-checked check (ping, show, cable
+    test ...) on ``TROUBLESHOOT_OPS``; a disruptive action (PoE or port bounce, reboot) leaves
     it false, so the read-only pin refuses it.
     """
     candidates = [endpoint] if isinstance(endpoint, str) else list(endpoint)

@@ -2105,11 +2105,14 @@ def plan_device_troubleshooting(
         )
     if any(token in evidence for token in ("cable", "tdr", "interface", "link")):
         _extend_unique(
-            recommended_destructive,
+            recommended_diagnostics,
             _plan_action(
                 "cable_test",
-                "destructive",
-                "Interface/cable symptoms were present. A TDR test takes the port's link down; ask for the ports first.",
+                "diagnostic",
+                (
+                    "Interface/cable symptoms were present. A TDR test briefly takes the tested port's link down;"
+                    " ask for the ports first."
+                ),
                 {"serial_number": serial},
             ),
         )

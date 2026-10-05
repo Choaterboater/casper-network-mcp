@@ -227,9 +227,9 @@ async def test_ack_alarm_preview_then_send(recording_transport, mist_backend):
     assert recording_transport.calls[0].method == "POST"
 
 
-async def test_user_mac_normalises_and_previews(recording_transport, mist_backend):
+async def test_nac_mac_normalises_and_previews(recording_transport, mist_backend):
     out = await mist_backend.call(
-        "mist_upsert_user_mac", {"org_id": "o1", "mac_address": "AA:BB:CC:00:11:22", "vlan": "30", "dry_run": True}
+        "mist_upsert_nac_mac", {"org_id": "o1", "mac_address": "AA:BB:CC:00:11:22", "vlan": "30", "dry_run": True}
     )
     assert out["would_send"]["body"] == {"mac": "aabbcc001122", "vlan": "30"}
     assert recording_transport.calls == []
