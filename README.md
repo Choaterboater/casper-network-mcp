@@ -11,7 +11,7 @@ You normally never install this yourself: Casper sets it up, pins the exact vers
 | Tool | What it is for |
 | --- | --- |
 | `find_tool` | Finds the right tool for what you asked ("bounce port 7 on the closet switch") and says what kind of change it makes: read, troubleshoot, config, disruptive, firmware, delete or admin. |
-| `invoke_read_tool` | Runs a tool that only reads, or a check that changes nothing. Anything else is refused. |
+| `invoke_read_tool` | Runs a tool that only reads, or a troubleshooting check (ping, show, cable test; a cable test briefly takes the tested port's link down). Anything else is refused. |
 | `invoke_tool` | Runs any tool, including ones that change your network. Casper asks you first. |
 | `access_check` | Says, for each product, whether a login is set and where that login can change things. |
 

@@ -40,7 +40,7 @@ def _unknown(name: str) -> dict[str, Any]:
 
 
 def is_read_tool(entry: Entry) -> bool:
-    """True when ``entry`` only reads (or runs a check that changes nothing).
+    """True when ``entry`` only reads, or runs a troubleshooting check (a cable test briefly takes a port's link down).
 
     A tool of kind ``read``, or ``troubleshoot`` without a destructive label.
     A generated tool must also be a GET, a reviewed read-only POST

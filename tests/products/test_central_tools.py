@@ -365,7 +365,7 @@ def test_no_tool_text_cites_the_tech_docs_or_skips_the_approval_box(central_back
         assert "requires_confirmation" not in doc, tool.name
 
 
-def test_troubleshooting_plan_files_cable_test_as_disruptive_and_has_no_confirm_step(monkeypatch):
+def test_troubleshooting_plan_files_cable_test_as_a_check_and_has_no_confirm_step(monkeypatch):
     from casper_network_mcp.products.central import monitoring
 
     monkeypatch.setattr(
@@ -382,8 +382,10 @@ def test_troubleshooting_plan_files_cable_test_as_disruptive_and_has_no_confirm_
 
     plan = monitoring.plan_device_troubleshooting("SN1")
     names = lambda bucket: [a["name"] for a in plan[bucket]]
-    assert "cable_test" not in names("recommended_diagnostics")
-    assert "cable_test" in names("recommended_destructive")
+    assert "cable_test" in names("recommended_diagnostics")
+    assert "cable_test" not in names("recommended_destructive")
+    cable = next(a for a in plan["recommended_diagnostics"] if a["name"] == "cable_test")
+    assert "briefly takes the tested port's link down" in str(cable)
     assert "execute_config_health_remediation" in names("recommended_writes")
     text = str(plan)
     assert "requires_confirmation" not in text

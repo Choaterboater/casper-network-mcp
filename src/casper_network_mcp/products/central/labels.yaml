@@ -181,7 +181,7 @@ gateway_show: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: 
 aos_s_arp: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../getArpTable only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 poe_bounce: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../poeBounce cuts PoE power to the port, the powered device restarts"}
 port_bounce: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../portBounce takes the port down and up"}
-cable_test: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../cableTest; a TDR test takes the tested port's link down while it runs"}
+cable_test: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../cableTest only (on TROUBLESHOOT_OPS); a TDR check like ping or show, but it briefly takes the tested port's link down"}
 reboot_device: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../reboot reloads the device"}
 disconnect_client: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../disconnectUserByMacAddress drops the client"}
 get_lldp_neighbors: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
