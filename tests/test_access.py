@@ -321,3 +321,38 @@ async def test_mist_login_missing_after_all(server_with_replies):
         "mist": "missing",
         "clearpass": "missing",
     }
+
+
+async def test_mist_401_reports_login_expired(server_with_replies):
+    out = await server_with_replies({SELF: 401}).call("access_check", {})
+    mist = _mist(out)
+    assert mist["access"] == "unknown" and mist["login"] == "expired"
+
+
+async def test_clearpass_401_reports_login_expired(server_with_replies):
+    s = server_with_replies(
+        {("GET", "/api/oauth/me"): 401, ("GET", "/api/oauth/privileges"): 401},
+        environ={"CLEARPASS_BASE_URL": "https://198.51.100.20", "CLEARPASS_API_TOKEN": "t"},
+    )
+    cp = next(p for p in (await s.call("access_check", {}))["products"] if p["product"] == "clearpass")
+    assert cp["access"] == "unknown" and cp["login"] == "expired"
+
+
+async def test_other_failures_do_not_say_expired(server_with_replies):
+    mist = _mist(await server_with_replies({SELF: 403}).call("access_check", {}))
+    assert mist["access"] == "unknown" and "login" not in mist
+
+
+async def test_tool_call_on_401_says_the_login_expired(server_with_replies):
+    s = server_with_replies({("GET", "/api/v1/orgs/o1/sites"): 401})
+    out = await s.call("invoke_read_tool", {"name": "mist_list_sites", "arguments": {"org_id": "o1"}})
+    assert out == {"error": "login_expired", "product": "mist"}
+
+
+async def test_clearpass_tool_call_on_401_says_the_login_expired(server_with_replies):
+    s = server_with_replies(
+        {("GET", "/api/oauth/me"): 401},
+        environ={"CLEARPASS_BASE_URL": "https://198.51.100.20", "CLEARPASS_API_TOKEN": "t"},
+    )
+    out = await s.call("invoke_read_tool", {"name": "clearpass_get", "arguments": {"path": "/api/oauth/me"}})
+    assert out == {"error": "login_expired", "product": "clearpass"}
