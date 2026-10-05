@@ -50,7 +50,8 @@ def test_ci_runs_lint_types_tests_build_and_scrub():
     assert {"push", "pull_request"} <= set(ci["on"])
     job = ci["jobs"]["test"]
     matrix = job["strategy"]["matrix"]
-    assert set(matrix["os"]) == {"ubuntu-latest", "macos-latest"}
+    assert set(matrix["os"]) == {"ubuntu-latest", "macos-latest", "windows-latest"}
+    assert job["defaults"]["run"]["shell"] == "bash"
     assert set(matrix["python"]) == {"3.11", "3.13"}
     text = _steps_text(job)
     for needed in ("uv sync", "ruff check", "mypy src/casper_network_mcp/core", "pytest -q", "uv build",
@@ -69,11 +70,13 @@ def test_release_builds_locks_checks_then_publishes_the_same_files():
     text = _steps_text(build)
     assert "uv build" in text and "scripts/make_lock.py" in text
     check = rel["jobs"]["check-lock"]
-    assert set(check["strategy"]["matrix"]["os"]) == {"ubuntu-latest", "macos-latest"}
+    assert set(check["strategy"]["matrix"]["os"]) == {"ubuntu-latest", "macos-latest", "windows-latest"}
     assert set(check["strategy"]["matrix"]["python"]) == {"3.11", "3.13"}
     check_text = _steps_text(check)
     assert CASPER_INSTALL in check_text and "--find-links dist" in check_text
-    assert '/venv/bin/casper-network-mcp" --help' in check_text
+    assert '/venv/bin"' in check_text and '/venv/Scripts"' in check_text
+    assert '/casper-network-mcp$exe" >> "$GITHUB_ENV"' in check_text
+    assert check_text.count('"$SERVER" --help') == 2
     publish = rel["jobs"]["publish"]
     assert publish["needs"] == ["build", "check-lock"]
     assert publish["permissions"] == {"id-token": "write"}
