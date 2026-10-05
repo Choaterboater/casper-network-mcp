@@ -27,8 +27,8 @@ clearpass_get_server_version: {kind: read, vendor_category: "Platform Certificat
 clearpass_list_cluster_servers: {kind: read, vendor_category: "Local Server Configuration > Cluster", checked: "GET /api/cluster/server"}
 clearpass_update_endpoint_attributes: {kind: config, vendor_category: "Identities > Endpoint", checked: "PATCH /api/endpoint/mac-address/{mac_address} with attributes; no CoA on this operation"}
 clearpass_delete_endpoint: {kind: delete, vendor_category: "Identities > Endpoint", checked: "DELETE /api/endpoint/mac-address/{mac_address}"}
-clearpass_set_guest_enabled: {kind: disruptive, vendor_category: "Guest Manager > Guest", checked: "PATCH /api/guest/...; turning a guest off with change_of_authorization drops their sessions"}
+clearpass_set_guest_enabled: {kind: config, vendor_category: "Guest Manager > Guest", checked: "PATCH /api/guest/... turns one guest account on or off, a normal config change; with change_of_authorization their live sessions are re-authorised and may drop"}
 clearpass_delete_guest: {kind: delete, vendor_category: "Guest Manager > Guest", checked: "DELETE /api/guest/username/{username} or /{guest_id}"}
 clearpass_create_guest: {kind: config, vendor_category: "Guest Manager > Guest", checked: "POST /api/guest adds one guest account"}
 clearpass_disconnect_session: {kind: disruptive, vendor_category: "Session Control > Active Session", checked: "POST /api/session/{id}/disconnect ends a live session (CoA)"}
-clearpass_set_service_enabled: {kind: disruptive, vendor_category: "Policy Elements > Services", checked: "PATCH .../enable or /disable; a disabled service stops matching, so its authentications fail over or fail"}
+clearpass_set_service_enabled: {kind: config, vendor_category: "Policy Elements > Services", checked: "PATCH .../enable or /disable turns one service on or off, a normal config change; a disabled service stops matching, so its authentications fall to other services or fail"}
