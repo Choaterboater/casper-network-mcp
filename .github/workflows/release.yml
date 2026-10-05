@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -60,13 +60,23 @@ jobs:
       - name: Install with Casper's command into an empty environment
         shell: bash
         run: |
+          # A Windows venv keeps its programs in Scripts, not bin, and they end in .exe.
+          bin="$RUNNER_TEMP/venv/bin" exe=""
+          if [ "$RUNNER_OS" = Windows ]; then bin="$RUNNER_TEMP/venv/Scripts" exe=".exe"; fi
+          echo "SERVER=$bin/casper-network-mcp$exe" >> "$GITHUB_ENV"
           uv venv --python "${{ matrix.python }}" "$RUNNER_TEMP/venv"
           uv pip install --require-hashes --no-deps --only-binary :all: --find-links dist \
-            --python "$RUNNER_TEMP/venv/bin/python" -r casper-network-mcp.lock.txt
+            --python "$bin/python$exe" -r casper-network-mcp.lock.txt
       - name: Runs with no logins
         shell: bash
         working-directory: ${{ runner.temp }}
-        run: env -i PATH=/usr/bin:/bin HOME="$RUNNER_TEMP" "$RUNNER_TEMP/venv/bin/casper-network-mcp" --help
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            # Windows needs SYSTEMROOT to start Python's socket layer; it holds no login.
+            env -i PATH=/usr/bin:/bin SYSTEMROOT="$SYSTEMROOT" USERPROFILE="$RUNNER_TEMP" "$SERVER" --help
+          else
+            env -i PATH=/usr/bin:/bin HOME="$RUNNER_TEMP" "$SERVER" --help
+          fi
 
   publish:
     needs: [build, check-lock]

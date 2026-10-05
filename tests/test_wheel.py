@@ -23,6 +23,7 @@ from casper_network_mcp import __version__
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CASPER_INSTALL = ["--require-hashes", "--no-deps", "--only-binary", ":all:"]
+WINDOWS = sys.platform == "win32"
 
 
 def _uv() -> str:
@@ -50,12 +51,18 @@ def _wheel(dist: pathlib.Path) -> pathlib.Path:
 
 
 def _empty_env(home: pathlib.Path) -> dict[str, str]:
-    """No login variables, nothing from this machine but a bare PATH."""
+    """No login variables, nothing from this machine but a bare PATH (and SYSTEMROOT, which Windows needs)."""
+    if WINDOWS:
+        return {"PATH": os.defpath, "USERPROFILE": str(home), "SYSTEMROOT": os.environ["SYSTEMROOT"]}
     return {"PATH": os.defpath, "HOME": str(home)}
 
 
+def _venv_exe(venv: pathlib.Path, name: str) -> pathlib.Path:
+    return venv / "Scripts" / f"{name}.exe" if WINDOWS else venv / "bin" / name
+
+
 def _help_runs(venv: pathlib.Path, home: pathlib.Path) -> None:
-    out = _run([str(venv / "bin" / "casper-network-mcp"), "--help"], cwd=home, env=_empty_env(home))
+    out = _run([str(_venv_exe(venv, "casper-network-mcp")), "--help"], cwd=home, env=_empty_env(home))
     assert out.returncode == 0, out.stderr
     assert "--read-only" in out.stdout
 
@@ -101,7 +108,7 @@ def test_wheel_runs_with_no_logins(built, tmp_path):
     out = _run([*export, "--hashes", "--no-emit-project", "-o", str(pins)], cwd=ROOT)
     assert out.returncode == 0, out.stderr
     venv = _venv(tmp_path / "venv")
-    install = [_uv(), "pip", "install", "--python", str(venv / "bin" / "python"), "--no-deps"]
+    install = [_uv(), "pip", "install", "--python", str(_venv_exe(venv, "python")), "--no-deps"]
     out = _run([*install, "--only-binary", ":all:", "-r", str(pins)])
     assert out.returncode == 0, out.stderr
     out = _run([*install, str(_wheel(built))])
@@ -124,7 +131,7 @@ def test_release_lock_installs_with_caspers_command(built, tmp_path):
     assert re.fullmatch(r"[0-9a-f]{64}", digest)
 
     venv = _venv(tmp_path / "venv")
-    install = [_uv(), "pip", "install", "--python", str(venv / "bin" / "python")]
+    install = [_uv(), "pip", "install", "--python", str(_venv_exe(venv, "python"))]
     out = _run([*install, *CASPER_INSTALL, "--find-links", str(built), "-r", str(lock)])
     assert out.returncode == 0, out.stderr
     _help_runs(venv, tmp_path)

@@ -168,7 +168,11 @@ def test_no_pipeline_imports():
     import casper_network_mcp.products.central as pkg
 
     for p in pathlib.Path(pkg.__file__).parent.glob("*.py"):
-        mods = {n.module for n in ast.walk(ast.parse(p.read_text())) if isinstance(n, ast.ImportFrom) and n.module}
+        mods = {
+            n.module
+            for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
+            if isinstance(n, ast.ImportFrom) and n.module
+        }
         assert not any(
             m and ("pipeline" in m or "stages" in m or "vlan_loader" in m or "state_store" in m) for m in mods
         ), p.name
