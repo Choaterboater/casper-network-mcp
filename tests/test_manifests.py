@@ -63,7 +63,9 @@ def test_committed_manifest_matches_a_fresh_build(product):
 def test_manifests_name_only_bundled_files():
     bundled = {
         d["path"]
-        for d in json.loads((files("casper_network_mcp") / "specs" / "MANIFEST.json").read_text())["documents"]
+        for d in json.loads((files("casper_network_mcp") / "specs" / "MANIFEST.json").read_text(encoding="utf-8"))[
+            "documents"
+        ]
     }
     for product in PRODUCTS:
         for source in load_manifest(product).source["files"]:

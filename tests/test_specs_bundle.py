@@ -38,7 +38,7 @@ def _folded(text: str) -> str:
 
 
 def _manifest():
-    return json.loads((ROOT / "MANIFEST.json").read_text())
+    return json.loads((ROOT / "MANIFEST.json").read_text(encoding="utf-8"))
 
 
 def test_every_bundled_spec_matches_its_manifest_hash():
@@ -72,7 +72,7 @@ def test_every_bundled_spec_matches_its_manifest_hash():
 
 
 def test_notice_keeps_hpe_licence_wording_and_no_ingestion_paths():
-    text = (ROOT / "NOTICE.md").read_text()
+    text = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
     assert "proprietary" in text.lower() and "ingestion" not in text and "scrape" not in text.lower()
     folded = _folded(text)
     for sentence in HPE_LICENCE_SENTENCES:
@@ -83,7 +83,7 @@ def test_notice_keeps_hpe_licence_wording_and_no_ingestion_paths():
 
 
 def test_notice_has_the_mist_licence_at_the_pinned_commit():
-    text = (ROOT / "NOTICE.md").read_text()
+    text = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
     mist = next(d for d in _manifest()["documents"] if d["path"] == "mist.openapi.json")
     assert mist["upstream_commit"] in text
     assert "Permission is hereby granted, free of charge" in text
@@ -123,7 +123,9 @@ def test_product_for():
 
 
 def test_spec_pins_match_the_manifest():
-    pins = json.loads((pathlib.Path(__file__).resolve().parents[1] / "scripts" / "spec_pins.json").read_text())
+    pins = json.loads(
+        (pathlib.Path(__file__).resolve().parents[1] / "scripts" / "spec_pins.json").read_text(encoding="utf-8")
+    )
     by_path = {d["path"]: d for d in _manifest()["documents"]}
     for pin in pins["central"]:
         if pin["path"] in by_path:
@@ -132,7 +134,7 @@ def test_spec_pins_match_the_manifest():
 
 
 def test_refresh_script_is_honest():
-    text = (pathlib.Path(__file__).resolve().parents[1] / "scripts" / "refresh_specs.py").read_text()
+    text = (pathlib.Path(__file__).resolve().parents[1] / "scripts" / "refresh_specs.py").read_text(encoding="utf-8")
     assert "casper-network-mcp-refresh/" in text
     for word in ("Mozilla", "Safari", "Chrome/", "Cookie", "cookies=", "ingestion"):
         assert word not in text, word
@@ -164,7 +166,7 @@ def test_clearpass_documents_are_bundled_with_their_own_notice():
         assert doc["source_url"].startswith("https://dash.readme.com/api/v1/api-registry/")
         assert "ClearPass" in doc["license"]
     assert len(specs_bundle.operations("clearpass")) > 300
-    text = (ROOT / "NOTICE.md").read_text()
+    text = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
     folded = _folded(text)
     for sentence in _clearpass_sentences(len(clearpass)):
         assert sentence in folded, sentence
@@ -173,7 +175,9 @@ def test_clearpass_documents_are_bundled_with_their_own_notice():
 
 
 def test_clearpass_pins_match_the_manifest():
-    pins = json.loads((pathlib.Path(__file__).resolve().parents[1] / "scripts" / "spec_pins.json").read_text())
+    pins = json.loads(
+        (pathlib.Path(__file__).resolve().parents[1] / "scripts" / "spec_pins.json").read_text(encoding="utf-8")
+    )
     by_path = {d["path"]: d for d in _manifest()["documents"]}
     assert pins["clearpass"]
     for pin in pins["clearpass"]:

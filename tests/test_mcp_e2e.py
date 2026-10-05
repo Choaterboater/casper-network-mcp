@@ -6,12 +6,18 @@ The harness idea comes from hpe-networking-mcp ``tests/unit/test_mcp_protocol_e2
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 
 from mcp.client import Client
 
 from casper_network_mcp.server import build_server
+
+
+def _no_logins_env() -> dict[str, str]:
+    """An empty environment. Windows also needs SYSTEMROOT to start Python's socket layer; it holds no login."""
+    return {"SYSTEMROOT": os.environ["SYSTEMROOT"]} if sys.platform == "win32" else {}
 
 
 def _payload(result):
@@ -61,7 +67,7 @@ def test_help_runs_without_logins():
         capture_output=True,
         text=True,
         timeout=60,
-        env={},
+        env=_no_logins_env(),
         check=False,
     )
     assert proc.returncode == 0, proc.stderr
@@ -75,7 +81,9 @@ def test_building_the_server_loads_no_backend():
         "build_server(read_only=True)\n"
         "print(index._cached.cache_info().currsize)\n"
     )
-    proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60, env={}, check=False)
+    proc = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=60, env=_no_logins_env(), check=False
+    )
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "0"
 
