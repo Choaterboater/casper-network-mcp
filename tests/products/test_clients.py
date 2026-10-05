@@ -36,7 +36,8 @@ def test_only_the_login_module_reads_the_environment():
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and node.attr in ("environ", "getenv"):
                 readers.add(path.relative_to(SRC).as_posix())
-    assert readers <= {"core/logins.py"}, readers
+    # specs_index.py reads only LOCALAPPDATA, in cache_dir; test_boundary.py holds it to exactly that.
+    assert readers <= {"core/logins.py", "specs_index.py"}, readers
 
 
 def test_login_module_reads_only_login_variables():
