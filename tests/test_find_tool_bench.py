@@ -39,3 +39,17 @@ def test_review_focus_questions_are_in_the_top_three_and_fast():
         names = [h["name"] for h in find_tool(question, top_k=3, product=product)]
         assert (time.perf_counter() - start) * 1000 <= 50
         assert expected in names, (question, names)
+
+
+def test_plain_variants_outside_the_question_set_are_in_the_top_three():
+    # Held out from the 60-question set: the same intents in other plain words.
+    from casper_network_mcp.router.find import find_tool
+
+    for question, product, expected in (
+        ("reboot the access point", "mist", "mist_restart_site_device"),
+        ("restart the access point", "mist", "mist_restart_site_device"),
+        ("upgrade firmware on a switch", "central", "trigger_device_upgrade"),
+        ("ping from a mist switch", "mist", "mist_ping_from_device"),
+    ):
+        names = [h["name"] for h in find_tool(question, top_k=3, product=product)]
+        assert expected in names, (question, names)

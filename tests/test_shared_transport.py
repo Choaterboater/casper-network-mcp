@@ -46,7 +46,9 @@ class _DummyMCP:
 def test_http_threads_host_and_port():
     server = _DummyMCP()
     run_server(server, transport="http", host="127.0.0.1", port=9000)
-    assert server.run_calls == [{"transport": "http", "host": "127.0.0.1", "port": 9000, "transport_security": None}]
+    call = server.run_calls[0]
+    assert (call["host"], call["port"]) == ("127.0.0.1", 9000)
+    assert call["transport_security"].enable_dns_rebinding_protection is True
 
 
 def test_http_defaults_to_8010_on_loopback():
@@ -184,3 +186,33 @@ def test_real_mcp_round_trip_over_local_http():
             await task
 
     asyncio.run(_run())
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "127.0.0.2", "[::1]", "::1", "LOCALHOST", "localhost.localdomain"])
+def test_every_loopback_host_turns_on_host_checks(host):
+    from mcp.server.mcpserver import MCPServer
+    from starlette.testclient import TestClient
+
+    from casper_network_mcp.core.serve import loopback_transport_security
+
+    settings = loopback_transport_security(host)
+    assert settings.enable_dns_rebinding_protection is True
+    app = MCPServer("rebind").streamable_http_app(host=host, transport_security=settings)
+    bare = host.strip("[]").lower()
+    own = f"[{bare}]:8010" if ":" in bare else f"{bare}:8010"
+    with TestClient(app) as client:
+
+        def post(host_header):
+            headers = {"host": host_header, "content-type": "application/json", "accept": "application/json"}
+            return client.post("/mcp", headers=headers, content="{}").status_code
+
+        assert post("evil.example:8010") == 421
+        assert post(own) != 421
+
+
+def test_run_server_checks_hosts_for_a_loopback_the_sdk_does_not_list():
+    server = _DummyMCP()
+    run_server(server, transport="http", host="127.0.0.2", port=9000)
+    settings = server.run_calls[0]["transport_security"]
+    assert settings.enable_dns_rebinding_protection is True
+    assert "127.0.0.2:*" in settings.allowed_hosts

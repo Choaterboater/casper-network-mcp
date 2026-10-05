@@ -10,7 +10,9 @@ use, so a missing index means "rebuild it", not "run a build command".
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import time
 
 import pytest
 
@@ -169,6 +171,47 @@ def test_missing_marker_rebuilds(cache_dir):
     finally:
         conn.close()
     assert specs_index.marker_path().exists()
+
+
+def _age(path, days):
+    when = time.time() - days * 86400
+    os.utime(path, (when, when))
+
+
+def test_a_new_build_removes_old_bundle_indexes(cache_dir):
+    cache_dir.mkdir(parents=True)
+    stale = cache_dir / "specs-0000000000000000.sqlite"
+    stale.write_bytes(b"old index")
+    stale.with_name(stale.name + ".ok").write_text("ok\n")
+    unmarked = cache_dir / "specs-1111111111111111.sqlite"
+    unmarked.write_bytes(b"old index, no marker")
+    for old in (stale, stale.with_name(stale.name + ".ok"), unmarked):
+        _age(old, 40)
+    keep = cache_dir / "notes.txt"
+    keep.write_text("not ours")
+    specs_index.connect().close()
+    assert not stale.exists() and not stale.with_name(stale.name + ".ok").exists()
+    assert not unmarked.exists()
+    assert keep.exists() and specs_index.index_path().exists() and specs_index.marker_path().exists()
+
+
+def test_an_index_another_version_used_lately_is_kept(cache_dir):
+    # Two installed versions share the cache; neither may delete the other's index.
+    cache_dir.mkdir(parents=True)
+    other = cache_dir / "specs-0000000000000000.sqlite"
+    other.write_bytes(b"other version's index")
+    other.with_name(other.name + ".ok").write_text("ok\n")
+    _age(other, 40)
+    _age(other.with_name(other.name + ".ok"), 2)  # its marker was touched two days ago
+    specs_index.connect().close()
+    assert other.exists() and other.with_name(other.name + ".ok").exists()
+
+
+def test_using_the_index_marks_it_as_recently_used(cache_dir):
+    specs_index.connect().close()
+    _age(specs_index.marker_path(), 40)
+    specs_index.connect().close()
+    assert time.time() - specs_index.marker_path().stat().st_mtime < 3600
 
 
 def test_corrupt_cache_with_marker_rebuilds(cache_dir):

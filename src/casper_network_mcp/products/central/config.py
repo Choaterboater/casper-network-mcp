@@ -2906,9 +2906,6 @@ def get_config_rollback_status() -> dict[str, Any]:
     - developer.arubanetworks.com/new-central-config/reference/config-checkpoint
       (profile schema is limited to name/description/post-checkpoint/
       post-checkpoint-delay — no snapshot list or restore operation).
-    - New Central tech-docs FAQ "Do access points and switches typically
-      support Rollback feature?" — confirms rollback is automatic
-      device-side behavior, not an operator-triggered action.
 
     Use list_devices_config_health / get_device_config_issues (central-monitoring)
     plus GLP audit logs to confirm whether an automatic rollback already
@@ -2920,7 +2917,6 @@ def get_config_rollback_status() -> dict[str, Any]:
         "checkpoint_profile_tool": "build_config_checkpoint_policy",
         "citation": [
             "developer.arubanetworks.com/new-central-config/reference/config-checkpoint",
-            "New Central tech-docs FAQ: 'Do access points and switches typically support Rollback feature?'",
         ],
         "guidance": (
             "There is no endpoint to list checkpoints, trigger a rollback, or choose which "

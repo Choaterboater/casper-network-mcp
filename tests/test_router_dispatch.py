@@ -158,3 +158,11 @@ async def test_find_tool_needs_a_name_word(fake_catalog):
     names = [h["name"] for h in find.find_tool("echo", top_k=10)]
     assert set(names) == {"sync_echo", "async_echo", "write_echo"}
     assert find.find_tool("zzz unrelated words") == []
+
+
+async def test_bad_arguments_name_the_fields_in_plain_words(fake_catalog):
+    missing = await dispatch.invoke_tool("sync_echo", {})
+    assert missing["error"] == "sync_echo needs: value"
+    wrong = await dispatch.invoke_tool("sync_echo", {"value": "not-a-number-secret"})
+    assert wrong["error"] == "sync_echo has a wrong value for: value"
+    assert "not-a-number-secret" not in repr(wrong) and "pydantic" not in repr(wrong)

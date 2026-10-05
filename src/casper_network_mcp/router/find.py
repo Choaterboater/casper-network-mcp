@@ -15,8 +15,8 @@ server has no vector store. Measured on a fixed 60-question set
   operation) rank a point below hand-written ones unless the query names
   their operation or path;
 * the question's first word gives its intent (what/show -> a read,
-  create/delete/change -> that kind of change), and tools that match it rank
-  higher;
+  create/delete/change -> that kind of change, reboot/upgrade -> an action,
+  ping/traceroute -> a check), and tools that match it rank higher;
 * answers come from ``router/index.json`` (see ``router.index``), so the
   first question does not load any backend.
 """
@@ -136,6 +136,8 @@ _INTENT_WORDS = {
     "update": frozenset(
         {"change", "update", "set", "edit", "rename", "modify", "move", "assign", "disable", "enable", "turn", "tag"}
     ),
+    "act": frozenset({"reboot", "restart", "reload", "upgrade", "downgrade"}),
+    "check": frozenset({"ping", "traceroute", "trace"}),
 }
 
 #: Name words that say which of those a tool does.
@@ -160,20 +162,27 @@ def intent(query: str) -> str | None:
 
 
 def _action(entry: IndexEntry) -> str:
-    if entry.kind in ("read", "troubleshoot"):
+    if entry.kind == "read":
         return "read"
+    if entry.kind == "troubleshoot":
+        return "check"
     if entry.kind == "delete":
         return "delete"
     for name, cues in _ACTION_WORDS.items():
         if entry.name_tokens & cues:
             return name
+    if entry.kind in ("disruptive", "firmware"):
+        return "act"
     return "other"
 
 
 def _intent_bonus(entry: IndexEntry, wanted: str | None) -> float:
     if wanted is None:
         return 0.0
-    return _INTENT_MATCH if _action(entry) == wanted else -_INTENT_MISMATCH
+    action = _action(entry)
+    # A check (ping, show commands) answers a question as a read does.
+    matched = action == wanted or (wanted == "read" and action == "check")
+    return _INTENT_MATCH if matched else -_INTENT_MISMATCH
 
 
 @functools.cache
