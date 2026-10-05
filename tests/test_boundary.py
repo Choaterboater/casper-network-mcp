@@ -23,7 +23,7 @@ def test_no_rag_or_scraper_imports():
 
 
 def test_no_forbidden_dependencies():
-    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     deps = project["dependencies"] + [d for extra in project.get("optional-dependencies", {}).values() for d in extra]
     assert not [d for d in deps if d.lower().startswith(FORBIDDEN_DEPS)]
 
