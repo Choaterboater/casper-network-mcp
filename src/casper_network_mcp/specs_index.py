@@ -4,8 +4,8 @@ Adapted from hpe-networking-mcp ``pipeline/clients/specs_index.py``. Kept: build
 get_endpoint, get_exact_endpoint, get_endpoint_by_operation_id, get_schema,
 get_enum, get_response_description and the natural-language ranking. Changed:
 the index is built from this package's own ``specs/`` on first use into the
-user cache folder (``~/.cache/casper-network-mcp/specs-<hash>.sqlite``), with
-a marker written last; a missing file, a missing marker (a run killed mid
+user cache folder (``~/.cache/casper-network-mcp/specs-<hash>.sqlite``,
+under ``AppData/Local`` on Windows), with a marker written last; a missing file, a missing marker (a run killed mid
 build) or an unreadable file is simply rebuilt. Rows carry the product
 (``central``/``mist``/``clearpass``) instead of source families and versions.
 """
@@ -17,6 +17,7 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import time
 from collections import OrderedDict
 from collections.abc import Iterator
@@ -79,7 +80,9 @@ CREATE INDEX idx_responses_product_code ON responses(product, status_code);
 
 
 def cache_dir() -> Path:
-    """The user cache folder for this package."""
+    """The user cache folder for this package (under ``AppData/Local`` on Windows)."""
+    if sys.platform == "win32":
+        return Path.home() / "AppData" / "Local" / "casper-network-mcp" / "Cache"
     return Path.home() / ".cache" / "casper-network-mcp"
 
 

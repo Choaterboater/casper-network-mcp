@@ -174,7 +174,7 @@ def test_no_lab_constants_in_central_code():
     import casper_network_mcp.products.central as pkg
 
     for p in pathlib.Path(pkg.__file__).parent.glob("*.py"):
-        text = p.read_text()
+        text = p.read_text(encoding="utf-8")
         assert "_CENTRAL_ORG_NAME" not in text, p.name
         assert "_MAC_ADDRESS_STORE_ID" not in text, p.name
         assert "credentials.yaml" not in text, p.name
