@@ -1,9 +1,9 @@
 """Logins, read once from the process environment when the server starts.
 
 Casper sets these when it starts the server. They are inputs (who to log in
-as), never switches: nothing here turns writes on or off. This is the only
-module in the package that reads the environment, and it reads only these
-names. No env files are read.
+as), never switches: nothing here turns writes on or off. This module reads
+only these names. The one other environment read in the package is
+``LOCALAPPDATA`` (the cache folder on Windows). No env files are read.
 """
 
 from __future__ import annotations
