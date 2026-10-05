@@ -220,6 +220,23 @@ def test_corrupt_cache_with_marker_rebuilds(cache_dir):
     assert specs_index.lookup("GET /api/v1/self", product="mist")
 
 
+# ── Where the cache folder is ──────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_cache_folder_on_mac_and_linux(platform, monkeypatch):
+    monkeypatch.setattr(specs_index.sys, "platform", platform)
+    assert specs_index.cache_dir() == specs_index.Path.home() / ".cache" / "casper-network-mcp"
+
+
+def test_cache_folder_on_windows_is_local_app_data(monkeypatch):
+    # The fixed AppData\Local place under the user's home: only the login module reads the environment.
+    monkeypatch.setattr(specs_index.sys, "platform", "win32")
+    monkeypatch.setenv("LOCALAPPDATA", "not read")
+    expected = specs_index.Path.home() / "AppData" / "Local" / "casper-network-mcp" / "Cache"
+    assert specs_index.cache_dir() == expected
+
+
 # ── Query groups ────────────────────────────────────────────────────────────
 
 
