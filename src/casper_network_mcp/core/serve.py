@@ -15,7 +15,14 @@ from typing import Any
 from casper_network_mcp.core.http import aclose_pooled_clients
 from casper_network_mcp.core.url_validation import is_loopback_host
 
-__all__ = ["DEFAULT_HTTP_PORT", "TRANSPORTS", "UnsafeHttpBindingError", "register_health_routes", "run_server"]
+__all__ = [
+    "DEFAULT_HTTP_PORT",
+    "TRANSPORTS",
+    "UnsafeHttpBindingError",
+    "loopback_transport_security",
+    "register_health_routes",
+    "run_server",
+]
 
 DEFAULT_HTTP_PORT = 8010
 TRANSPORTS = ("stdio", "http")
@@ -40,6 +47,25 @@ def register_health_routes(mcp_instance: Any) -> None:
     mcp_instance.custom_route("/livez", methods=["GET"], include_in_schema=False)(ok)
     mcp_instance.custom_route("/healthz", methods=["GET"], include_in_schema=False)(ok)
     setattr(mcp_instance, _HEALTH_ROUTES_ATTR, True)
+
+
+def loopback_transport_security(host: str) -> Any:
+    """Host/Origin checks (DNS-rebinding protection) for a loopback ``host``.
+
+    The SDK turns these on by itself only for exactly ``127.0.0.1``,
+    ``localhost`` and ``::1``; any other loopback spelling (``127.0.0.2``,
+    ``[::1]``, ``LOCALHOST``) would serve with no checks, so they are always
+    set here.
+    """
+    from mcp.server.transport_security import TransportSecuritySettings
+
+    bare = host.strip().strip("[]").lower()
+    names = {"127.0.0.1", "localhost", "[::1]", f"[{bare}]" if ":" in bare else bare}
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=sorted(f"{n}:*" for n in names),
+        allowed_origins=sorted(f"http://{n}:*" for n in names),
+    )
 
 
 async def serve_with_pool_cleanup(serve: Callable[[], Awaitable[None]]) -> None:
@@ -73,10 +99,9 @@ def run_server(
             f"HTTP can only listen on this machine (127.0.0.1, ::1 or localhost), not {host!r}."
         )
     register_health_routes(mcp_instance)
+    security = loopback_transport_security(host)
 
     async def _serve_http() -> None:
-        # transport_security=None lets the SDK apply its own loopback-only
-        # Host/Origin allow-list, which is right because host is loopback.
-        await mcp_instance.run_streamable_http_async(host=host, port=port, transport_security=None)
+        await mcp_instance.run_streamable_http_async(host=host, port=port, transport_security=security)
 
     anyio.run(serve_with_pool_cleanup, _serve_http)

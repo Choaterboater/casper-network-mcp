@@ -1006,25 +1006,19 @@ async def _locate_device(segment: str, serial_number: str) -> dict[str, Any]:
 
 @mcp.tool()
 async def locate_ap(serial_number: str) -> dict[str, Any]:
-    """Blink an AP's locate LED (POST .../locate). Non-disruptive — no confirmation required."""
+    """Blink an AP's locate LED (POST .../locate)."""
     return await _locate_device("aps", serial_number)
 
 
 @mcp.tool()
 async def locate_cx_switch(serial_number: str) -> dict[str, Any]:
-    """Blink a CX switch's locate LED (POST .../locate).
-
-    Non-disruptive — no confirmation required.
-    """
+    """Blink a CX switch's locate LED (POST .../locate)."""
     return await _locate_device("cx", serial_number)
 
 
 @mcp.tool()
 async def locate_aos_s_switch(serial_number: str) -> dict[str, Any]:
-    """Blink an AOS-S switch's locate LED (POST .../locate).
-
-    Non-disruptive — no confirmation required.
-    """
+    """Blink an AOS-S switch's locate LED (POST .../locate)."""
     return await _locate_device("aos-s", serial_number)
 
 

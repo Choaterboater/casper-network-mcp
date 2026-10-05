@@ -220,7 +220,17 @@ TROUBLESHOOT_OPS: frozenset[tuple[str, str]] = frozenset(TROUBLESHOOT_REASONS)
 
 _TDR = "a cable (TDR) test takes the tested port's link down while it runs"
 _COA = "a change of authorisation can make the client re-authenticate or drop"
+_SECRET_TEXT = (
+    "returns CSV or receipt text that can hold passwords, which redaction cannot read; not run as a plain read"
+)
 KIND_OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {
+    ("GET", "/network-config/v1alpha1/cnac-named-mpsk-reg/export"): ("config", f"Named MPSK export {_SECRET_TEXT}"),
+    ("GET", "/network-config/v1alpha1/cnac-visitor/export"): ("config", f"visitor export {_SECRET_TEXT}"),
+    ("GET", "/api/guest/{guest_id}/receipt/{id}"): ("config", f"guest receipt {_SECRET_TEXT}"),
+    # An export or import job's files come back as the same CSV.
+    ("GET", "/network-config/v1alpha1/cnac-job/{job-id}"): ("config", f"export job result {_SECRET_TEXT}"),
+    ("GET", "/network-config/v1alpha1/cnac-job/{job-id}/input"): ("config", f"import job input {_SECRET_TEXT}"),
+    ("GET", "/network-config/v1alpha1/cnac-job/{job-id}/error"): ("config", f"import job errors {_SECRET_TEXT}"),
     ("GET", "/api/v1/installer/sites/{site_name}/optimize"): (
         "config",
         "a GET that starts RF optimisation for the site; the source server also treated it as a write",
