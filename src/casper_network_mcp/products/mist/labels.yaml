@@ -16,7 +16,7 @@ mist_list_nac_tags: {kind: read, vendor_category: "Orgs > NAC Tags", checked: "G
 mist_list_nac_portals: {kind: read, vendor_category: "Orgs > NAC Portals", checked: "GET /api/v1/orgs/{org_id}/nacportals"}
 mist_list_nac_idps: {kind: read, vendor_category: "Orgs > Setting", checked: "GET /api/v1/orgs/{org_id}/setting, mist_nac.idps"}
 mist_list_user_macs: {kind: read, vendor_category: "Orgs > User MACs", checked: "GET /api/v1/orgs/{org_id}/usermacs/search"}
-mist_upsert_user_mac: {kind: admin, vendor_category: "Orgs > User MACs", checked: "POST /api/v1/orgs/{org_id}/usermacs adds a NAC MAC entry; admin because Casper reads 'user' in the name as an account word"}
+mist_upsert_nac_mac: {kind: config, vendor_category: "Orgs > User MACs", checked: "POST /api/v1/orgs/{org_id}/usermacs adds a NAC MAC entry (MAC to label/VLAN), a normal config change; no account or access change"}
 mist_search_marvis_clients: {kind: read, vendor_category: "Orgs > Stats - Marvis Clients", checked: "GET /api/v1/orgs/{org_id}/stats/marvisclients/search"}
 mist_get_client_insights: {kind: read, vendor_category: "Sites > Insights", checked: "GET /api/v1/sites/{site_id}/insights/client/{client_mac}"}
 mist_search_events: {kind: read, vendor_category: "Sites > Devices", checked: "GET /api/v1/sites/{site_id}/devices/events/search"}

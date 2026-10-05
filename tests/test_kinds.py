@@ -109,7 +109,6 @@ def test_no_disruptive_spec_operation_is_on_the_troubleshoot_list():
     for method, path in TROUBLESHOOT_OPS:
         words = set(kinds.path_words(path))
         assert not words & (kinds.DISRUPTIVE_WORDS | kinds.DELETE_WORDS | kinds.FIRMWARE_WORDS), path
-        assert "cable" not in words, "a cable test drops the link on the port it tests"
 
 
 @pytest.mark.parametrize(

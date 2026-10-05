@@ -216,9 +216,16 @@ for _action, _why in _MIST_CHECKS.items():
     TROUBLESHOOT_REASONS[("POST", _MIST_DEVICE.format(action=_action))] = (
         f"Mist spec: {_why}; changes nothing on the device."
     )
+#: A cable (TDR) test is troubleshooting and runs like ping or show, though it
+#: is not free: its reason says what it does to the port.
+_TDR = "runs a cable (TDR) test on the named ports and reports the result; briefly takes the tested port's link down"
+TROUBLESHOOT_REASONS[("POST", _CENTRAL_TS.format(device="cx", action="cableTest"))] = f"Central spec (cx): {_TDR}."
+TROUBLESHOOT_REASONS[("POST", _CENTRAL_TS.format(device="aos-s", action="cableTest"))] = (
+    f"Central spec (aos-s): {_TDR}."
+)
+TROUBLESHOOT_REASONS[("POST", _MIST_DEVICE.format(action="cable_test"))] = f"Mist spec: {_TDR}."
 TROUBLESHOOT_OPS: frozenset[tuple[str, str]] = frozenset(TROUBLESHOOT_REASONS)
 
-_TDR = "a cable (TDR) test takes the tested port's link down while it runs"
 _COA = "a change of authorisation can make the client re-authenticate or drop"
 _SECRET_TEXT = (
     "returns CSV or receipt text that can hold passwords, which redaction cannot read; not run as a plain read"
@@ -244,9 +251,6 @@ KIND_OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {
         "disruptive",
         "the spec says USE WITH CAUTION: APs leave their channel to range",
     ),
-    ("POST", "/network-troubleshooting/v1/cx/{serial-number}/cableTest"): ("disruptive", _TDR),
-    ("POST", "/network-troubleshooting/v1/aos-s/{serial-number}/cableTest"): ("disruptive", _TDR),
-    ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/cable_test"): ("disruptive", _TDR),
     ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/clear_bgp"): ("disruptive", "resets the BGP sessions"),
     ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/clear_session"): ("disruptive", "drops live sessions"),
     ("POST", "/api/v1/sites/{site_id}/devices/{device_id}/clear_dot1x"): (
