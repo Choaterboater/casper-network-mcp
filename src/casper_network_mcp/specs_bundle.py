@@ -13,7 +13,7 @@ from importlib.resources import files
 from importlib.resources.abc import Traversable
 from typing import Any
 
-__all__ = ["PRODUCTS", "Operation", "documents", "load_document", "manifest", "operations", "product_for", "specs_dir"]
+__all__ = ["PRODUCTS", "Operation", "documents", "load_document", "manifest", "operations", "product_for", "request_body_properties", "specs_dir"]
 
 PRODUCTS = ("central", "mist", "clearpass")
 _METHODS = ("get", "post", "put", "patch", "delete")
@@ -150,3 +150,28 @@ def operations(product: str) -> list[Operation]:
     if product not in PRODUCTS:
         return []
     return list(_operations(product))
+
+
+def request_body_properties(product: str, method: str, path: str) -> frozenset[str] | None:
+    """Top-level property names the bundled spec declares for an operation's JSON body.
+
+    ``None`` means the bundled documents do not describe the path, the method, or a
+    request body for it, so a caller cannot tell a good payload from an unknown
+    endpoint and should not reject anything.
+    """
+    wanted = method.lower()
+    for document in documents(product):
+        spec = load_document(document["path"])
+        item = (spec.get("paths") or {}).get(path)
+        if not isinstance(item, dict):
+            continue
+        op = _resolve(spec, item).get(wanted)
+        if not isinstance(op, dict):
+            continue
+        body = _resolve(spec, op.get("requestBody"))
+        schema = _resolve(spec, ((body.get("content") or {}).get("application/json") or {}).get("schema"))
+        properties = schema.get("properties") if isinstance(schema, dict) else None
+        if isinstance(properties, dict):
+            return frozenset(str(key) for key in properties)
+        return None
+    return None

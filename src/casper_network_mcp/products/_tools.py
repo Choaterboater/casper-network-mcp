@@ -31,7 +31,7 @@ from casper_network_mcp.core.gate import PRODUCT_NAMES, Gate
 from casper_network_mcp.core.kinds import tool_labels
 from casper_network_mcp.core.redact import redact_sensitive, redact_tool_error_text
 
-__all__ = ["ClientGetter", "ToolSet", "client", "guarded", "use_client", "would_send"]
+__all__ = ["ClientGetter", "ToolSet", "client", "guarded", "unknown_body_nodes", "use_client", "would_send"]
 
 ClientGetter = Callable[[], Any]
 
@@ -112,6 +112,24 @@ def would_send(method: str, path: str, body: Any = None, params: dict[str, Any] 
     if clean:
         preview["params"] = redact_sensitive(clean)
     return {"would_send": preview}
+
+
+def unknown_body_nodes(product: str, method: str, path: str, body: Any) -> list[str]:
+    """Top-level body keys the bundled spec does not declare for that operation.
+
+    A dry run calls this so a payload Central would reject is named before anything
+    is sent — for instance ``version-chart`` on ``POST /network-config/v1alpha1/device-firmware``,
+    whose schema declares only ``issu`` and ``site-distribution``. Empty when the
+    bundled documents describe no request body for the operation.
+    """
+    if not isinstance(body, dict) or not body:
+        return []
+    from casper_network_mcp import specs_bundle
+
+    declared = specs_bundle.request_body_properties(product, method, path)
+    if declared is None:
+        return []
+    return sorted(str(key) for key in body if key not in declared)
 
 
 class ToolSet:

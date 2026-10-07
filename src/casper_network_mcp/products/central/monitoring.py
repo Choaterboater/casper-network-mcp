@@ -309,6 +309,7 @@ def list_clients(
     limit: int = 100,
     offset: int = 0,
     next_cursor: str | None = None,
+    full: bool = False,
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """List connected clients. ALWAYS filter — unfiltered returns all clients.
 
@@ -321,6 +322,9 @@ def list_clients(
     to page forward; offset is accepted for backward compatibility and
     translated to an approximate starting cursor when next_cursor is omitted.
     Cursor pagination is applied before client-side substring filters.
+
+    Each client is a compact projection (identity and how it is attached). Pass
+    ``full=True`` for the raw client records.
     """
     off = max(0, offset)
     cursor = next_cursor or (str(off + 1) if off > 0 else None)
@@ -357,6 +361,9 @@ def list_clients(
 
     if filters and isinstance(clients, list):
         clients = [c for c in clients if all(_match(c, needle, fields) for needle, fields in filters)]
+
+    if not full and isinstance(clients, list):
+        clients = [_compact_client(c) for c in clients]
 
     wrapped = maybe_bound(clients, limit=limit, offset=0)
     if isinstance(wrapped, dict) and "_pagination" in wrapped:
@@ -453,6 +460,100 @@ def _items_from_collection(data: Any) -> list[dict[str, Any]]:
         if isinstance(value, list):
             return [item for item in value if isinstance(item, dict)]
     return []
+
+
+_ALERT_SUMMARY_FIELDS = (
+    "id",
+    "name",
+    "severity",
+    "priority",
+    "status",
+    "deviceType",
+    "deviceName",
+    "siteName",
+    "category",
+    "createdAt",
+    "updatedAt",
+    "summary",
+)
+
+
+def _compact_alert(alert: dict[str, Any]) -> dict[str, Any]:
+    """Identity and severity only: drop the action/root-cause essays an alert carries.
+
+    Central alerts embed ``action[].solution[]`` lists and ``rootCause`` entries that are
+    JSON-encoded strings; together they dominate the payload without adding per-alert signal.
+    Pass ``full_alerts=True`` elsewhere for the raw alert objects.
+    """
+    out = {key: alert[key] for key in _ALERT_SUMMARY_FIELDS if key in alert}
+    if "summary" not in out and isinstance(alert.get("notes"), str) and alert["notes"]:
+        out["summary"] = alert["notes"][:200]
+    return out
+
+
+_CLIENT_SUMMARY_FIELDS = (
+    "macAddress",
+    "mac",
+    "hostName",
+    "hostname",
+    "clientName",
+    "name",
+    "ipv4",
+    "ipAddress",
+    "clientConnectionType",
+    "connectionType",
+    "wirelessBand",
+    "band",
+    "wirelessChannel",
+    "channel",
+    "connectedTo",
+    "connectedDeviceSerial",
+    "connectedDeviceType",
+    "vlanId",
+    "vlan",
+    "wlanName",
+    "ssid",
+    "network",
+    "snr",
+    "status",
+    "clientOperatingSystem",
+    "osType",
+    "clientVendor",
+    "clientManufacturer",
+    "clientFunction",
+    "clientCategory",
+    "connectedAt",
+    "siteName",
+)
+
+
+def _compact_client(client: dict[str, Any]) -> dict[str, Any]:
+    """One client's identity and how it is attached, without the null-heavy vendor record.
+
+    Keeps both Central v1 and v1alpha1 spellings. Pass ``full=True`` for the raw records.
+    """
+    return {key: client[key] for key in _CLIENT_SUMMARY_FIELDS if key in client}
+
+
+_EVENT_SUMMARY_FIELDS = (
+    "timeAt",
+    "eventName",
+    "severity",
+    "category",
+    "reason",
+    "serialNumber",
+    "deviceMacAddress",
+    "clientMacAddress",
+    "description",
+)
+
+
+def _compact_event(event: dict[str, Any]) -> dict[str, Any]:
+    """One event line: what happened, to whom and when, with a trimmed description."""
+    out = {key: event[key] for key in _EVENT_SUMMARY_FIELDS if key in event}
+    if isinstance(out.get("description"), str) and len(out["description"]) > 200:
+        out["description"] = out["description"][:200]
+    return out
 
 
 def _alert_action(action: str, body: dict[str, Any], submitted_message: str) -> dict[str, Any]:
@@ -679,9 +780,16 @@ def list_events(
     limit: int = 50,
     offset: int = 0,
     full_list: bool = False,
+    full: bool = False,
 ) -> dict[str, Any]:
-    """List bounded device events and auto-resolve the device type and site."""
+    """List bounded device events and auto-resolve the device type and site.
+
+    Each event is compact (time, name, severity, category, description). Pass
+    ``full=True`` for the raw event objects.
+    """
     events = get_mcp_client().get_events(serial_number, hours=hours)
+    if not full:
+        events = [_compact_event(e) for e in events]
     if full_list:
         return {
             "items": events,
@@ -872,6 +980,7 @@ def central_site_overview(
     site_id: str | None = None,
     site_name: str | None = None,
     top_alerts: int = 5,
+    full_alerts: bool = False,
 ) -> dict[str, Any]:
     """How a site is doing, in one call: its health, devices by type and status, and the top active alerts.
 
@@ -880,6 +989,10 @@ def central_site_overview(
     ``/network-notifications/v1/alerts`` (active, most severe first), each
     filtered to the site. Give ``site_id`` or ``site_name``. A part that
     fails carries its own ``error`` and ``degraded`` is true.
+
+    ``top_alerts`` are compact (id, name, severity, device, site, summary). Pass
+    ``full_alerts=True`` for the raw alert objects, including their action/rootCause
+    text.
     """
     if not site_id and not site_name:
         return {"error": "Give site_id or site_name."}
@@ -931,7 +1044,8 @@ def central_site_overview(
             by_severity[sev] = by_severity.get(sev, 0) + 1
         alerts.sort(key=lambda a: _ALERT_SEVERITY_RANK.get(str(a.get("severity") or "").upper(), 9))
         out["alerts_by_severity"] = by_severity
-        out["top_alerts"] = alerts[:top]
+        chosen = alerts[:top]
+        out["top_alerts"] = chosen if full_alerts else [_compact_alert(a) for a in chosen]
     except Exception as exc:
         out["top_alerts"], failed = {"error": str(exc)}, True
 
@@ -1178,8 +1292,13 @@ def find_scope(
     query: str,
     scope_type: str | None = None,
     limit: int = 20,
+    full: bool = False,
 ) -> dict[str, Any]:
-    """Find scopes by name or ID substring, optionally narrowed by scope_type."""
+    """Find scopes by name or ID substring, optionally narrowed by scope_type.
+
+    Each match is scope_id / scope_name / scope_type; pass ``full=True`` to add the
+    raw scope object under ``raw``.
+    """
     needle = query.strip().lower()
     if not needle:
         raise ValueError("query must be a non-empty string")
@@ -1198,14 +1317,14 @@ def find_scope(
         if wanted_type and kind.upper() != wanted_type:
             continue
         if needle in sid.lower() or needle in name.lower():
-            matches.append(
-                {
-                    "scope_id": sid,
-                    "scope_name": name,
-                    "scope_type": kind,
-                    "raw": scope,
-                }
-            )
+            match: dict[str, Any] = {
+                "scope_id": sid,
+                "scope_name": name,
+                "scope_type": kind,
+            }
+            if full:
+                match["raw"] = scope
+            matches.append(match)
     result = bound_collection_response(matches, limit=limit, offset=0)
     if isinstance(result, dict) and isinstance(scope_result, dict) and isinstance(scope_result.get("warnings"), list):
         result["warnings"] = scope_result["warnings"]
@@ -2802,12 +2921,15 @@ def get_switch_stacking_info(serial_number: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def get_channel_utilization(serial_number: str) -> dict[str, Any]:
+def get_channel_utilization(serial_number: str, full: bool = False) -> dict[str, Any]:
     """Get per-radio channel utilization and noise floor for an AP.
 
     Returns busy percentage, noise floor (dBm), channel number, and
     interference score for each radio. The first metric to check when
     clients are slow but signal is good.
+
+    Returns a per-radio summary; pass ``full=True`` to add the raw radios payload
+    under ``raw``.
     """
     client = get_client()
     errors: list[str] = []
@@ -2836,13 +2958,15 @@ def get_channel_utilization(serial_number: str) -> dict[str, Any]:
                         "client_count": r.get("clientCount") or r.get("client_count"),
                     }
                 )
-            return {
+            result: dict[str, Any] = {
                 "serial_number": serial_number,
                 "endpoint_used": endpoint,
                 "radios": summary,
-                "raw": data,
                 "errors": errors,
             }
+            if full:
+                result["raw"] = data
+            return result
         except Exception as exc:
             errors.append(f"{endpoint}: {exc}")
     return {"serial_number": serial_number, "radios": None, "errors": errors}
