@@ -26,7 +26,7 @@ import uuid
 from typing import Any
 from urllib.parse import quote
 
-from casper_network_mcp.products._tools import ToolSet, would_send
+from casper_network_mcp.products._tools import ToolSet, unknown_body_nodes, would_send
 from casper_network_mcp.products.central.compat import (
     MAC_ADDRESS_STORE_NAME,
     bound_collection_response,
@@ -72,6 +72,12 @@ mcp = ToolSet("central")
 BACKEND_NAME = "central-config"
 
 _WEBHOOKS_BASE = "/network-services/v1/webhooks"
+
+#: A firmware write is accepted but only queued: the device applies it when it checks in.
+_FIRMWARE_QUEUED_NOTE = (
+    "queued, not applied yet: the device applies the upgrade when it next checks in. "
+    "Confirm with get_firmware or list_firmware_upgrades before reporting it done."
+)
 _DEVICE_GROUPS_BASE = "/network-config/v1/device-groups"
 
 
@@ -292,7 +298,8 @@ def set_firmware_compliance(
 ) -> dict[str, Any]:
     """Create or update a firmware compliance policy (triggers upgrade).
 
-    firmware_version e.g. "10.16.1030". upgrade_mode: REGULAR or LIVE.
+    firmware_version e.g. "10.16.1030". upgrade_mode: REGULAR or LIVE. An accepted
+    write only queues the upgrade, so the result says queued, not applied yet.
     """
     client = get_client()
     errors: list[str] = []
@@ -349,6 +356,9 @@ def set_firmware_compliance(
             "scope_id": scope_id,
             "device_function": device_function,
             "firmware_version": firmware_version,
+            "status": "queued",
+            "applied": False,
+            "note": _FIRMWARE_QUEUED_NOTE,
             "response": resp_body,
             "errors": errors,
         }
@@ -416,10 +426,17 @@ def trigger_device_upgrade(
 ) -> dict[str, Any]:
     """Trigger a per-device firmware upgrade at the device's local scope.
 
-    POSTs the version-chart body to /network-config/v1alpha1/device-firmware with
-    object-type=LOCAL plus the device's scope-id and device-function (the per-device
-    local-object equivalent of set_firmware_compliance). The scope-id and persona are
-    resolved from device inventory; device_function is auto-detected if omitted.
+    Writes a firmware-compliance policy (name, enable, version-chart, upgrade-mode,
+    enforcement-schedule) at the device's own scope through
+    /network-config/v1alpha1/firmware-compliance — the only endpoint whose schema takes a
+    version-chart. (device-firmware declares only issu and site-distribution, so a
+    version-chart body is rejected there with HTTP 400.) The scope-id and persona come
+    from device inventory; device_function is auto-detected if omitted.
+
+    An accepted write only queues the upgrade: the device applies it when it checks in,
+    so the result says queued, not applied yet, and points at get_firmware and
+    list_firmware_upgrades to confirm. dry_run=True previews without sending and names
+    any body node the endpoint's bundled schema does not declare.
     """
     client = get_client()
     errors: list[str] = []
@@ -456,13 +473,13 @@ def trigger_device_upgrade(
             "errors": errors,
         }
 
-    endpoint = "/network-config/v1alpha1/device-firmware"
+    endpoint = "/network-config/v1alpha1/firmware-compliance"
     params = {"object-type": "LOCAL", "scope-id": scope_id, "device-function": device_function}
-    # Version-chart body mirrors set_firmware_compliance (see CFG note below): the
-    # device-firmware spec schema only formally declares issu/site-distribution, but the
-    # firmware version is driven through the version-chart enforcement payload.
     payload: dict[str, Any] = {
+        "name": f"compliance-{device_function.lower()}",
+        "enable": True,
         "version-chart": {"version": firmware_version},
+        "upgrade-mode": "REGULAR",
         "enforcement-schedule": {
             "upgrade-schedule": {"upgrade-schedule-mode": "IMMEDIATE"},
             "reboot-schedule": {"reboot-schedule-mode": reboot_schedule_mode},
@@ -470,6 +487,7 @@ def trigger_device_upgrade(
     }
 
     if dry_run:
+        unknown = unknown_body_nodes("central", "POST", endpoint, payload)
         return {
             "dry_run": True,
             "serial_number": serial_number,
@@ -479,7 +497,8 @@ def trigger_device_upgrade(
             "endpoint": endpoint,
             "params": params,
             "payload": payload,
-            "errors": [],
+            "unknown_body_nodes": unknown,
+            "errors": [f"{endpoint} does not declare body node {node!r}." for node in unknown],
         }
 
     try:
@@ -506,6 +525,9 @@ def trigger_device_upgrade(
             "device_function": device_function,
             "scope_id": scope_id,
             "endpoint_used": endpoint,
+            "status": "queued",
+            "applied": False,
+            "note": _FIRMWARE_QUEUED_NOTE,
             "response": resp_body,
             "errors": errors,
         }
