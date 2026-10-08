@@ -19,6 +19,7 @@ The error shape ``{status, detail, request_id, url}`` follows mist-mcp's
 from __future__ import annotations
 
 import json as jsonlib
+import re
 from typing import Any
 
 import httpx
@@ -36,12 +37,22 @@ __all__ = ["ApiError", "BaseClient", "LoginMissing", "Refused", "Reply"]
 _REQUEST_ID_HEADERS = ("x-request-id", "x-mist-request-id", "x-correlation-id")
 
 
+def _summarize_non_json(text: str) -> str:
+    """A short, useful line for a body that is not JSON (often an HTML error page)."""
+    head = text.lstrip()[:200].lower()
+    if head.startswith(("<!doctype", "<html")) or "<html" in head:
+        title = re.search(r"<title[^>]*>(.*?)</title>", text, re.IGNORECASE | re.DOTALL)
+        label = " ".join(title.group(1).split()) if title else "HTML error page"
+        return f"{label} (HTML body, {len(text.encode('utf-8', 'replace'))} bytes)"
+    return text[:2000]
+
+
 def _extract_detail(payload: bytes) -> Any:
     """The useful part of an error body (from mist-mcp's ``_extract_detail``)."""
     try:
         data = jsonlib.loads(payload)
     except (ValueError, UnicodeDecodeError):
-        return payload.decode("utf-8", "replace")[:2000]
+        return _summarize_non_json(payload.decode("utf-8", "replace"))
     if isinstance(data, dict):
         detail = data.get("detail")
         if detail is None:

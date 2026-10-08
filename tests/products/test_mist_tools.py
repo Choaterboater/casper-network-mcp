@@ -123,6 +123,24 @@ async def test_mist_get_bounds_lists(recording_transport, mist_backend):
 # ── curated reads ───────────────────────────────────────────────────────────
 
 
+async def test_whoami_reports_orgs_and_sites(recording_transport, mist_backend):
+    recording_transport.reply(
+        {
+            "email": "casper@example.test",
+            "privileges": [
+                {"scope": "org", "role": "admin", "org_id": "o1", "name": "Example Org"},
+                {"scope": "site", "role": "admin", "site_id": "s1", "name": "SkyPark", "org_id": "o1"},
+            ],
+        },
+        "GET",
+        "/api/v1/self",
+    )
+    out = await mist_backend.call("mist_whoami", {})
+    assert out["identity"] == "casper@example.test"
+    assert out["orgs"] == [{"id": "o1", "name": "Example Org", "role": "admin"}]
+    assert out["sites"] == [{"id": "s1", "name": "SkyPark", "org_id": "o1"}]
+
+
 async def test_list_sites_compacts_and_pages(recording_transport, mist_backend):
     recording_transport.reply(
         [{"id": "s1", "name": "Branch-12", "timezone": "UTC", "secret_thing": "x", "address": ""}],

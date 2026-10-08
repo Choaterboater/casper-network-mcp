@@ -4,6 +4,7 @@
 
 # tools.py (adapted from hpe-networking-mcp mist.py)
 mist_get: {kind: read, vendor_category: "Any (GET only)", checked: "GET only; refuses a GET whose kind is not read (installer optimize)"}
+mist_whoami: {kind: read, vendor_category: "Self", checked: "GET /api/v1/self reads the login's identity, orgs and sites"}
 mist_list_sites: {kind: read, vendor_category: "Orgs > Sites", checked: "GET /api/v1/orgs/{org_id}/sites"}
 mist_get_client: {kind: read, vendor_category: "Sites > Stats - Clients", checked: "GET /api/v1/sites/{site_id}/stats/clients/{client_mac}"}
 mist_list_wlans: {kind: read, vendor_category: "Sites > WLANs", checked: "GET /api/v1/sites/{site_id}/wlans; passphrases hidden"}

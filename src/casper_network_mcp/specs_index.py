@@ -714,6 +714,8 @@ def _hit(row: dict[str, Any], *, kind: str, ref: str, text: str, score: int) -> 
     if kind == "endpoint":
         method, _, path = ref.partition(" ")
         hit["method"], hit["path"] = method, path
+    if kind == "schema" and row.get("fields"):
+        hit["fields"] = row["fields"]
     return hit
 
 
@@ -884,15 +886,29 @@ def _lookup(query: str, top_k: int, db_path: Path, product: str | None) -> list[
                     "SELECT field_name, path, type, description, enums FROM fields WHERE schema_identity = ? LIMIT 400",
                     (r["identity"],),
                 ).fetchall()
-                parts = []
+                schema_row = conn.execute(
+                    "SELECT description FROM schemas WHERE identity = ? LIMIT 1", (r["identity"],)
+                ).fetchone()
+                parts: list[str] = []
+                declared: list[dict[str, Any]] = []
                 for f in fields:
                     enums = json.loads(f["enums"]) if f["enums"] else []
-                    if matched(f"{f['field_name']} {f['description'] or ''} {' '.join(map(str, enums))}"):
+                    entry: dict[str, Any] = {"path": f["path"], "type": f["type"]}
+                    if enums:
+                        entry["enums"] = [str(e) for e in enums[:32]]
+                    declared.append(entry)
+                    if len(parts) < 8 and matched(
+                        f"{f['field_name']} {f['description'] or ''} {' '.join(map(str, enums))}"
+                    ):
                         sfx = f" enum: {', '.join(map(str, enums[:24]))}" if enums else ""
                         parts.append(f"{f['path']} ({f['type']}){sfx}")
-                    if len(parts) >= 8:
-                        break
-                text = f"Schema {r['ref']} [{r['spec_file']}]: " + "; ".join(parts)
+                desc = ((schema_row["description"] if schema_row else "") or "")[:400]
+                text = f"Schema {r['ref']} [{r['spec_file']}]: {desc}".rstrip()
+                if parts:
+                    text += " | matching fields: " + "; ".join(parts)
+                elif declared:
+                    text += " | fields: " + "; ".join(f"{d['path']} ({d['type']})" for d in declared[:12])
+                row["fields"] = declared[:24]
                 key = str(r["identity"])
             add(row, kind=r["kind"], ref=r["ref"], text=text, score=score, exact=False, key=key)
             if r["kind"] == "endpoint":
