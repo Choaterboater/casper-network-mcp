@@ -212,8 +212,8 @@ def list_sites(
 
 
 @mcp.tool()
-def get_site(name: str) -> dict[str, Any] | None:
-    """Find a site by name (case-insensitive). Returns None if not found."""
+def get_site(name: str) -> dict[str, Any]:
+    """Find a site by name (case-insensitive). Returns ``{"found": False}`` when there is no such site."""
     name_lower = name.lower()
     page_size = 100
     offset = 0
@@ -228,7 +228,7 @@ def get_site(name: str) -> dict[str, Any] | None:
         if len(sites) < page_size:
             break
         offset += page_size
-    return None
+    return {"found": False, "name": name, "hint": "No site matched; check the name or the account's sites."}
 
 
 # ── Devices ──────────────────────────────────────────────────────────────────

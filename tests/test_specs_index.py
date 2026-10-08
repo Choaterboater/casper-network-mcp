@@ -137,6 +137,21 @@ def test_exact_mist_endpoint(built_cache):
     assert hits[0]["product"] == "mist"
 
 
+def test_schema_hit_is_not_a_bare_stub(built_cache):
+    # An enum-only schema declares no fields; its values live in the description.
+    hits = specs_index.lookup("dot11_bandwidth5", product="mist")
+    schemas = [h for h in hits if h.get("kind") == "schema"]
+    assert schemas
+    assert any("80" in h["text"] and "enum" in h["text"] for h in schemas), schemas
+
+
+def test_schema_hit_carries_its_declared_fields(built_cache):
+    hits = specs_index.lookup("rf_template band_5 radio settings", product="mist")
+    with_fields = [h for h in hits if h.get("kind") == "schema" and h.get("fields")]
+    assert with_fields
+    assert any(field["path"] for field in with_fields[0]["fields"])
+
+
 def test_both_products_are_indexed(built_cache):
     conn = specs_index.connect()
     try:

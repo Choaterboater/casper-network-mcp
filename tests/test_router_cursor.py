@@ -182,3 +182,26 @@ def test_round_trip_and_length():
         decode_cursor("", name="t", arguments={})
     with pytest.raises(CursorError):
         decode_cursor("nodothere", name="t", arguments={})
+
+
+def test_a_byte_only_cut_is_resumable_with_a_cursor():
+    data = {"items": [{"blob": "y" * 3000} for _ in range(12)]}
+    out = bound_router_response(data, enable_cursor=True, tool_name="t", tool_arguments={})
+    assert out["_response_bounds"]["truncated"] is True
+    assert out["_response_bounds"]["resumable"] is True
+    assert "next_cursor" in out
+
+
+def test_byte_sliced_pages_walk_without_gaps_or_overlap():
+    data = {"items": [{"n": i, "blob": "y" * 3000} for i in range(12)]}
+    collected = []
+    out = bound_router_response(data, enable_cursor=True, tool_name="t", tool_arguments={})
+    collected.extend(out["items"])
+    pages = 1
+    while "next_cursor" in out:
+        offset = decode_cursor(out["next_cursor"], name="t", arguments={})
+        out = bound_router_response(data, offset=offset, enable_cursor=True, tool_name="t", tool_arguments={})
+        collected.extend(out["items"])
+        pages += 1
+        assert pages < 20
+    assert [item["n"] for item in collected] == list(range(12))

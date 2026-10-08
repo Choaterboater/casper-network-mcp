@@ -45,6 +45,41 @@ def _shaped(data: Any) -> dict[str, Any]:
     return bounded if isinstance(bounded, dict) else {"result": bounded}
 
 
+def _project_fields(data: Any, fields: str) -> Any:
+    """Keep only the named top-level keys, so ``fields`` actually shrinks the reply.
+
+    Some Mist endpoints declare ``fields`` but still answer with the whole
+    record. Passing the parameter through is harmless, so the reply is
+    projected here as well. A dotted name (``radio_stat.channel``) selects its
+    top-level key. Records in the reply's main list are projected too.
+    """
+    names = [token.strip().split(".", 1)[0] for token in fields.split(",") if token.strip()]
+    if not names:
+        return data
+
+    def project(record: Any) -> Any:
+        if not isinstance(record, dict):
+            return record
+        return {key: record[key] for key in names if key in record}
+
+    if isinstance(data, list):
+        return [project(record) for record in data]
+    if isinstance(data, dict):
+        primary = max(
+            (
+                key
+                for key, value in data.items()
+                if isinstance(value, list) and value and all(isinstance(item, dict) for item in value)
+            ),
+            key=lambda key: len(data[key]),
+            default=None,
+        )
+        if primary is not None:
+            return {**data, primary: [project(record) for record in data[primary]]}
+        return project(data)
+    return data
+
+
 async def send(
     client: Callable[[], ProductClient],
     *,
@@ -76,4 +111,7 @@ async def send(
         return {"error": redact_tool_error_text(f"Could not reach {product}: {exc}")}
     except ValueError as exc:  # an unsafe path or a body that does not fit its type
         return {"error": str(exc)}
+    fields = query.get("fields") if isinstance(query, dict) else None
+    if isinstance(fields, str) and fields.strip():
+        data = _project_fields(data, fields)
     return _shaped(data)

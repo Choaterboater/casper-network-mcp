@@ -187,7 +187,10 @@ def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
 # budget is returned unchanged (same object, no new keys).
 
 RESPONSE_BUDGET_ITEMS = MAX_LIST_LIMIT
-RESPONSE_BUDGET_BYTES = 200_000
+#: Byte ceiling for one routed result. It matches the consumer's view (16 KiB): a
+#: result this size or larger is sliced here and gets a ``next_cursor``, instead of
+#: passing through whole and being cut blind downstream with no way to resume.
+RESPONSE_BUDGET_BYTES = 16_384
 _RESPONSE_BUDGET_MIN_ITEMS = 1
 _RESPONSE_BUDGET_SHRINK_STEPS = 6
 
@@ -435,7 +438,7 @@ def bound_router_response(
     upstream_cursor = _upstream_cursor_key(page)
     can_emit_cursor = (
         enable_cursor
-        and truncated_by_items
+        and (truncated_by_items or byte_shrunk)
         and tool_name is not None
         and tool_arguments is not None
         and upstream_cursor is None

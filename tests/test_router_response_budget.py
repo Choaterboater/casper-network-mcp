@@ -83,3 +83,17 @@ def test_huge_single_item_falls_back_to_preview_when_slicing_cannot_help():
 def test_within_item_budget_but_not_byte_budget_reports_byte_reason():
     out = bound_router_response({"items": [{"blob": "y" * 500} for _ in range(3)]}, max_items=500, max_bytes=600)
     assert out["_response_bounds"]["reason"] in {"byte_budget", "item_budget+byte_budget"}
+
+
+def test_small_result_passes_through_under_the_default_budgets():
+    result = {"a": 1, "b": [1, 2, 3]}
+    assert bound_router_response(result) is result
+
+
+def test_fat_records_under_the_item_budget_are_sliced_by_bytes():
+    # 12 records is under the 200-item budget, but ~30 KB is over the 16 KiB byte budget.
+    data = {"items": [{"blob": "y" * 2500} for _ in range(12)]}
+    out = bound_router_response(data)
+    assert out["_response_bounds"]["truncated"] is True
+    assert "byte_budget" in out["_response_bounds"]["reason"]
+    assert 0 < len(out["items"]) < 12
