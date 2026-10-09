@@ -6,7 +6,7 @@ import subprocess
 import sys
 from importlib.resources import files
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from casper_network_mcp.router import find, index
 

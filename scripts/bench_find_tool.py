@@ -20,7 +20,7 @@ import sys
 import time
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 QUESTIONS = ROOT / "tests" / "bench" / "find_tool_questions.yaml"

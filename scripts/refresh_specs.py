@@ -191,7 +191,8 @@ def print_diff(old: dict[str, dict[str, Any]], got: list[tuple[dict[str, Any], b
     for name in sorted(set(old) | set(new)):
         before, after = old.get(name), new.get(name)
         if before is None:
-            print(f"added    {name} ({after['path_count']} paths)")
+            count = after["path_count"] if after is not None else 0
+            print(f"added    {name} ({count} paths)")
         elif after is None:
             print(f"removed  {name}")
         elif before["sha256"] != after["sha256"]:
