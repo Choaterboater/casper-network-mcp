@@ -86,6 +86,18 @@ def test_org_name_is_a_required_argument(central_backends):
         assert "organization_name" in sdk_compat.get_tool(schema, name).parameters["required"], name
 
 
+async def test_get_site_says_when_no_site_matched(central_backends, monkeypatch):
+    from casper_network_mcp.products.central import monitoring
+
+    class _NoSites:
+        def get_sites(self, limit=100, offset=0):
+            return []
+
+    monkeypatch.setattr(monitoring, "get_mcp_client", lambda: _NoSites())
+    out = await central_backends.call("get_site", {"name": "No Such"})
+    assert out["found"] is False and out["name"] == "No Such"
+
+
 async def test_mac_store_is_looked_up_by_name(central_backend, recording_transport):
     store_id = "00000000-0000-0000-0000-000000000005"
     recording_transport.reply(

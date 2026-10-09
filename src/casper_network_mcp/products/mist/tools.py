@@ -122,6 +122,49 @@ async def mist_get(
     return bound_collection_response(data, limit=clamp_limit(limit), offset=max(0, offset))
 
 
+@mcp.tool()
+async def mist_whoami() -> dict[str, Any]:
+    """Who this Mist login is, and which orgs and sites it can reach.
+
+    Uses ``GET /api/v1/self``. Call it first when another tool wants an
+    ``org_id`` (or ``site_id``) you have not been given yet. Returns
+    ``identity``, ``orgs`` (id, name, role) and ``sites`` (id, name, org_id).
+    """
+    data = await get("/api/v1/self")
+    if not isinstance(data, dict):
+        return {"identity": None, "orgs": [], "sites": []}
+    orgs: list[dict[str, Any]] = []
+    sites: list[dict[str, Any]] = []
+    seen_org: set[str] = set()
+    seen_site: set[str] = set()
+
+    def add_org(org_id: Any, name: Any, role: Any) -> None:
+        if isinstance(org_id, str) and org_id not in seen_org:
+            seen_org.add(org_id)
+            orgs.append({"id": org_id, "name": name, "role": role})
+
+    def add_site(site_id: Any, name: Any, org_id: Any) -> None:
+        if isinstance(site_id, str) and site_id not in seen_site:
+            seen_site.add(site_id)
+            sites.append({"id": site_id, "name": name, "org_id": org_id})
+
+    for privilege in data.get("privileges") or []:
+        if not isinstance(privilege, dict):
+            continue
+        role = privilege.get("role")
+        for org in privilege.get("orgs") or []:
+            if isinstance(org, dict):
+                add_org(org.get("org_id"), org.get("name"), role)
+        for site in privilege.get("sites") or []:
+            if isinstance(site, dict):
+                add_site(site.get("site_id"), site.get("name"), site.get("org_id"))
+        if privilege.get("scope") == "org":
+            add_org(privilege.get("org_id"), privilege.get("name"), role)
+        elif privilege.get("scope") == "site":
+            add_site(privilege.get("site_id"), privilege.get("name"), privilege.get("org_id"))
+    return {"identity": data.get("email") or data.get("name"), "orgs": orgs, "sites": sites}
+
+
 # ── sites, clients, WLANs, alarms ───────────────────────────────────────────
 
 

@@ -113,6 +113,21 @@ async def test_api_error_shape(recording_transport, mist_client_factory):
     assert "404" in err["error"] and "Mist" in err["error"]
 
 
+async def test_html_error_body_is_summarized(recording_transport, mist_client_factory):
+    html = b"<!doctype html>\n<html><head><title>Not Found</title></head><body>nope</body></html>"
+    recording_transport.reply(
+        httpx.Response(404, content=html, headers={"content-type": "text/html"}),
+        "GET",
+        "/api/v1/sites/s9/stats/devices/abc",
+    )
+    client = mist_client_factory(gate=Gate(False), transport=recording_transport)
+    with pytest.raises(ApiError) as info:
+        await client.request("GET", "/api/v1/sites/s9/stats/devices/abc")
+    err = info.value.as_error()
+    assert err["detail"] == f"Not Found (HTML body, {len(html)} bytes)"
+    assert "<html" not in str(err["error"])
+
+
 async def test_error_detail_hides_secrets(recording_transport, mist_client_factory):
     recording_transport.reply((400, {"detail": {"psk": "s3cret", "why": "too short"}}))
     client = mist_client_factory(gate=Gate(False), transport=recording_transport)
