@@ -21,7 +21,7 @@ def test_project_nested_primary_list_keeps_metadata():
 
 
 def test_dotted_name_selects_its_top_level_key():
-    data = {"radio_stat": {"channel": 1}, "ip": "10.0.0.1"}
+    data = {"radio_stat": {"channel": 1}, "ip": "192.0.2.1"}
     assert _project_fields(data, "radio_stat.channel") == {"radio_stat": {"channel": 1}}
 
 
