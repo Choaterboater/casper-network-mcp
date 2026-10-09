@@ -10,8 +10,8 @@ from casper_network_mcp import __version__
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def test_version_is_0_1_2():
-    assert __version__ == "0.1.2"
+def test_version_is_0_1_3():
+    assert __version__ == "0.1.3"
 
 
 def test_pyproject_and_package_agree():

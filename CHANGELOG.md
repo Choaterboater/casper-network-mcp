@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.3
+
+Read replies stay under 16 KiB and can be resumed, and two Mist tools diagnose NAC.
+
+- A routed read reply is now capped at 16 KiB (was 200 KB), the size the consumer
+  shows. A reply cut for size alone now gets a `next_cursor`, so a large stats read is
+  sliced here and can be resumed instead of being cut blind downstream.
+- A generated read that asks for `fields` returns only those top-level keys: in each
+  record for a list reply or a reply with a main list of records, otherwise in the
+  record itself. Some Mist endpoints declare `fields` but answer with the whole record.
+  A dotted name such as `radio_stat.channel` keeps its top-level key.
+- An HTML error body, such as a 404 page, is summarised as its title and size instead
+  of being inlined; other non-JSON bodies are still cut to 2000 characters.
+- Central `get_site` returns `{"found": false, "name": ..., "hint": ...}` when no site
+  matches, instead of an empty result.
+- Spec lookup schema hits carry the schema's description (which holds enum text), its
+  declared fields and their enums.
+- New Mist tools, all read-only:
+  - `mist_whoami` (`GET /api/v1/self`): the login's identity, orgs and sites, for
+    finding an `org_id` or `site_id`.
+  - `mist_wlan_security_summary`: one WLAN's security in a few fields, the cloud PSKs
+    bound to its SSID, and whether it is doing MPSK, with a verdict for allow-all MAB.
+  - `mist_nac_troubleshoot`: joins a site's NAC clients, recent NAC events and the
+    org's NAC rules; reports `event_counts`, `rules_with_unknown_auth_type` and a plain
+    verdict (multi-PSK lookup intercepting, no rule matched, or a rule permitted).
+- `uv run mypy .` passes: `scripts` is a package, the remaining `import yaml` sites
+  carry the same type-ignore as the rest of the tree, and `refresh_specs` guards a
+  missing entry before indexing it.
+- Added Mist labels for the new tools and regenerated `router/index.json`.
+
 ## 0.1.2
 
 Trimmed the largest Central replies, and fixed the per-device firmware upgrade path.
