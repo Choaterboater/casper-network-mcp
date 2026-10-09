@@ -5,7 +5,7 @@ from __future__ import annotations
 import pathlib
 import re
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CASPER_INSTALL = "uv pip install --require-hashes --no-deps --only-binary :all:"

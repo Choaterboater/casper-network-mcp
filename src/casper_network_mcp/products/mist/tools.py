@@ -696,6 +696,171 @@ async def mist_list_site_clients(
     return out
 
 
+# ── NAC diagnosis ──────────────────────────────────────────────────────────
+
+#: Spec ``psk``: the fields that say whether a cloud PSK is bound to an SSID.
+_BOUND_PSK_FIELDS = ("id", "name", "usage", "vlan_id", "ssid")
+#: Spec ``nac_client``: the decision, without the full record.
+_NAC_CLIENT_SUMMARY_FIELDS = (
+    "mac", "username", "ssid", "auth_type", "type", "random_mac", "vlan", "last_status",
+    "nacrule_matched", "nacrule_name", "group", "resp_attrs",
+)  # fmt: skip
+#: Spec ``nac_event``: the decision, without the whole event.
+_NAC_EVENT_SUMMARY_FIELDS = (
+    "type", "mac", "ssid", "auth_type", "nacrule_name", "nacrule_matched", "group", "resp_attrs", "text",
+)  # fmt: skip
+#: Spec ``nac_rule``: what decides whether the rule can match at all.
+_NAC_RULE_SUMMARY_FIELDS = ("id", "name", "action", "enabled", "order", "matching")
+#: Spec ``nac_auth_type``. A rule whose ``matching.auth_type`` is not one of
+#: these (for example ``psk`` or ``psk-mab``) can never match a request.
+_NAC_RULE_AUTH_TYPES = frozenset({"cert", "device-auth", "eap-teap", "eap-tls", "eap-ttls", "idp", "mab", "eap-peap"})
+
+
+@mcp.tool()
+async def mist_wlan_security_summary(org_id: str, wlan_id: str) -> dict[str, Any]:
+    """One WLAN's security in a few fields, and whether it is doing MPSK.
+
+    Reads ``GET /api/v1/orgs/{org_id}/wlans/{wlan_id}`` and the org's PSKs.
+    ``cloud_psks_bound`` is the decisive switch that makes Mist NAC run the
+    multi-PSK lookup, where an unknown MAC gets
+    ``NAC_CLIENT_PPSK_KEY_NOT_FOUND`` ("Un-registered client and use default
+    passphrase to get access") instead of being authorised by a NAC rule.
+    ``dynamic_psk_present`` says the WLAN has a dynamic-PSK block, but its
+    value is redacted before a tool sees it, so ``dynamic_psk.enabled`` cannot
+    be read here. ``verdict`` says what that means for allow-all MAB.
+    """
+    data = await get(f"/api/v1/orgs/{seg(org_id)}/wlans/{seg(wlan_id)}", org_id=org_id)
+    if not isinstance(data, dict):
+        return {"error": "WLAN not found or not readable."}
+    auth_raw = data.get("auth")
+    auth: dict[str, Any] = auth_raw if isinstance(auth_raw, dict) else {}
+    nac_raw = data.get("mist_nac")
+    nac: dict[str, Any] = nac_raw if isinstance(nac_raw, dict) else {}
+    dynamic_present = "dynamic_psk" in data and data.get("dynamic_psk") is not None
+    ssid = data.get("ssid")
+    psks = await get(f"/api/v1/orgs/{seg(org_id)}/psks", {"limit": 1000}, org_id=org_id)
+    bound = [
+        pick(item, _BOUND_PSK_FIELDS)
+        for item in extract_items(psks)
+        if isinstance(item, dict) and item.get("ssid") == ssid
+    ]
+    if bound:
+        verdict = (
+            "MPSK active: cloud PSKs are bound to this SSID, so unknown MACs hit the multi-PSK lookup and "
+            "NAC policy rules are not consulted. Detach them for MAB allow-all."
+        )
+    elif dynamic_present:
+        verdict = (
+            "No cloud PSKs bound, but this WLAN has a dynamic_psk block (its value is hidden from tools). "
+            "If it is enabled it also drives MPSK; check the Mist UI."
+        )
+    elif nac.get("enabled"):
+        verdict = "Mist NAC MAB: unknown MACs fall through to the org's NAC rules."
+    else:
+        verdict = "Mist NAC is off; RADIUS uses auth_servers (or the WLAN is open)."
+    return {
+        "org_id": org_id,
+        "wlan_id": wlan_id,
+        "ssid": ssid,
+        "enabled": data.get("enabled"),
+        "auth_type": auth.get("type"),
+        "enable_mac_auth": auth.get("enable_mac_auth"),
+        "mist_nac_enabled": nac.get("enabled"),
+        "dynamic_psk_present": dynamic_present,
+        "cloud_psks_bound": bound,
+        "mpsk_active": bool(bound),
+        "vlan_id": data.get("vlan_id"),
+        "template_id": data.get("template_id"),
+        "verdict": verdict,
+    }
+
+
+@mcp.tool()
+async def mist_nac_troubleshoot(
+    org_id: str,
+    site_id: str,
+    mac: str | None = None,
+    ssid: str | None = None,
+    duration: str = "1d",
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Why a wireless client did, or did not, get through Mist Access Assurance.
+
+    Joins the site's NAC clients (``.../nac_clients/search``), their recent NAC
+    events (``.../nac_clients/events/search``) and the org's NAC rules
+    (``GET /api/v1/orgs/{org_id}/nacrules``), then answers in ``verdict``: the
+    multi-PSK lookup intercepting (``NAC_CLIENT_PPSK_KEY_NOT_FOUND``), no rule
+    matching (``NAC_CLIENT_DENY`` with ``Match Not Found``), or a rule allowing
+    the client (``NAC_CLIENT_PERMIT``). ``rules_with_unknown_auth_type`` lists
+    rules whose ``matching.auth_type`` Mist will never match.
+    """
+    safe_limit = clamp_limit(limit, default=100)
+    org = seg(org_id)
+    site = seg(site_id)
+    norm = normalize_mac(mac) if mac else None
+    clients_data, events_data, rules_data = await asyncio.gather(
+        _section(get(f"/api/v1/sites/{site}/nac_clients/search", {"limit": safe_limit, "ssid": ssid}, site_id=site_id)),
+        _section(
+            get(
+                f"/api/v1/sites/{site}/nac_clients/events/search",
+                {"duration": duration, "limit": safe_limit, "mac": norm, "ssid": ssid},
+                site_id=site_id,
+            )
+        ),
+        _section(get(f"/api/v1/orgs/{org}/nacrules", org_id=org_id)),
+    )
+    out: dict[str, Any] = {"org_id": org_id, "site_id": site_id}
+    if _failed(clients_data):
+        out["clients"] = clients_data
+    else:
+        clients = [c for c in extract_items(clients_data) if isinstance(c, dict)]
+        if norm:
+            clients = [c for c in clients if str(c.get("mac") or "").lower() == norm]
+        out["clients"] = _bounded(clients, _NAC_CLIENT_SUMMARY_FIELDS, safe_limit)
+    counts: dict[str, int] = {}
+    if _failed(events_data):
+        out["events"] = events_data
+    else:
+        events = [e for e in extract_items(events_data) if isinstance(e, dict)]
+        if norm:
+            events = [e for e in events if str(e.get("mac") or "").lower() == norm]
+        for event in events:
+            key = str(event.get("type") or "unknown")
+            counts[key] = counts.get(key, 0) + 1
+        out["event_counts"] = counts
+        out["recent_events"] = [pick(e, _NAC_EVENT_SUMMARY_FIELDS) for e in events[:20]]
+    if not _failed(rules_data):
+        rules = [r for r in extract_items(rules_data) if isinstance(r, dict)]
+        out["rules"] = [pick(r, _NAC_RULE_SUMMARY_FIELDS) for r in rules]
+        unknown = []
+        for rule in rules:
+            matching_raw = rule.get("matching")
+            matching: dict[str, Any] = matching_raw if isinstance(matching_raw, dict) else {}
+            auth_type = matching.get("auth_type")
+            if isinstance(auth_type, str) and auth_type not in _NAC_RULE_AUTH_TYPES:
+                unknown.append(rule.get("name"))
+        if unknown:
+            out["rules_with_unknown_auth_type"] = unknown
+    verdicts = []
+    if "NAC_CLIENT_PPSK_KEY_NOT_FOUND" in counts:
+        verdicts.append(
+            "MPSK lookup intercepting: an unknown MAC got the multi-PSK reply; see "
+            "mist_wlan_security_summary and detach the SSID's cloud PSKs."
+        )
+    if "NAC_CLIENT_DENY" in counts:
+        verdicts.append(
+            "A deny was seen; if its resp_attrs is 'Match Not Found', no auth-policy rule matched "
+            "(check rules_with_unknown_auth_type and rule order)."
+        )
+    if "NAC_CLIENT_PERMIT" in counts:
+        verdicts.append("A permit was seen: an auth-policy rule allowed the client.")
+    if not counts and not _failed(events_data):
+        verdicts.append("No NAC events in the window.")
+    out["verdict"] = " ".join(verdicts) or None
+    out["degraded"] = any(_failed(part) for part in (clients_data, events_data, rules_data))
+    return out
+
+
 # ── SLE convenience reads ───────────────────────────────────────────────────
 
 

@@ -32,6 +32,8 @@ mist_site_overview: {kind: read, vendor_category: "Sites > Stats, Stats - Device
 mist_list_site_clients: {kind: read, vendor_category: "Sites > Clients - Wireless", checked: "GET /api/v1/sites/{site_id}/clients/search"}
 mist_get_gateway: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "GET /api/v1/sites/{site_id}/stats/devices/{device_id}"}
 mist_get_site_assurance_snapshot: {kind: read, vendor_category: "Sites > Stats - Devices", checked: "runs the switch, gateway and alarm reads above; GETs only"}
+mist_wlan_security_summary: {kind: read, vendor_category: "Orgs > WLANs, Orgs > PSKs", checked: "GET /api/v1/orgs/{org_id}/wlans/{wlan_id} and /psks; reads the security mode and which PSKs are bound"}
+mist_nac_troubleshoot: {kind: read, vendor_category: "Sites > NAC Clients, Orgs > NAC Rules", checked: "three GETs: /sites/{site_id}/nac_clients/search, /nac_clients/events/search and /orgs/{org_id}/nacrules"}
 mist_get_org_sle_overview: {kind: read, vendor_category: "Orgs > Insights", checked: "GET /api/v1/orgs/{org_id}/insights/{metric}"}
 mist_get_site_sle_metric_summary: {kind: read, vendor_category: "Sites > SLEs", checked: "GET /api/v1/sites/{site_id}/sle/{scope}/{scope_id}/metric/{metric}/summary"}
 
