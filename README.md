@@ -28,7 +28,7 @@ Behind them:
 ## Running it
 
 ```
-uvx --from casper-network-mcp==0.1.0 casper-network-mcp --read-only
+uvx --from casper-network-mcp==0.1.3 casper-network-mcp --read-only
 ```
 
 | Option | Meaning |
