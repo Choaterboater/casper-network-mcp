@@ -7,6 +7,8 @@ import re
 
 import yaml  # type: ignore[import-untyped]
 
+from casper_network_mcp import __version__
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CASPER_INSTALL = "uv pip install --require-hashes --no-deps --only-binary :all:"
 
@@ -30,7 +32,7 @@ def test_top_notice_carries_the_specs_notice_word_for_word():
 
 def test_readme_says_what_it_reads_and_what_it_ships():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "uvx --from casper-network-mcp==0.1.0 casper-network-mcp --read-only" in readme
+    assert f"uvx --from casper-network-mcp=={__version__} casper-network-mcp --read-only" in readme
     for name in ("MIST_API_TOKEN", "MIST_HOST", "CENTRAL_BASE_URL", "CENTRAL_CLIENT_ID", "CENTRAL_CLIENT_SECRET",
                  "CLEARPASS_BASE_URL", "CLEARPASS_API_TOKEN"):  # fmt: skip
         assert name in readme, name
