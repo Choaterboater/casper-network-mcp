@@ -410,7 +410,7 @@ async def clearpass_why_denied(
     limit: Annotated[int, Field(description="Latest sessions to summarize; clamped to 1..200.")] = 5,
     offset: Annotated[int, Field(description="Server offset; use next_server_offset to continue scanning.")] = 0,
 ) -> dict[str, Any]:
-    """Why was this client denied on ClearPass? Recent sessions, endpoint profile, NAD and applied roles.
+    """Why was this client (MAC or username) denied on ClearPass? Failure reason when reported, recent sessions, endpoint profile, NAD and roles.
 
     Provide exactly one of mac or username. Reads GET /api/session and
     GET /api/endpoint/mac-address/{mac_address}. The bundled 6.12.7 API has
