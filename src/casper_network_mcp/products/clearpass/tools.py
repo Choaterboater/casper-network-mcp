@@ -12,12 +12,14 @@ ClearPass documents (served under ``/api``). What changed:
   return ``{"would_send": {method, path, body}}`` and send nothing;
 * the generic ``clearpass_write`` passthrough is gone (each endpoint has its
   own generated tool with an honest change kind); ``clearpass_get`` stays,
-  for reads only; ``clearpass_status`` is gone (``access_check`` reports the
+  for plain reads only (a GET listed in ``KIND_OVERRIDES``, such as a guest
+  receipt, is refused); ``clearpass_status`` is gone (``access_check`` reports the
   login);
 * spec fixes: the endpoint attribute PATCH sends no ``change_of_authorization``
   (the spec has none on that operation), the cluster server list sends no
-  paging (the spec has none; it is bounded here), and list replies are read
-  from ``_embedded.items``;
+  paging (the spec has none; it is bounded here), list replies are read
+  from ``_embedded.items``, a new guest gets the ``role_id`` and password the
+  spec requires, and a disconnect sends ``id`` and ``confirm_disconnect``;
 * new: ``clearpass_who_am_i`` (``GET /api/oauth/me``), the login's own
   identity, which ``access_check`` builds on.
 """
@@ -35,6 +37,7 @@ from pydantic import Field
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.budget import bound_collection_response, clamp_limit
+from casper_network_mcp.core.kinds import KIND_OVERRIDES, kind_for_operation, listed_template
 from casper_network_mcp.core.paths import path_segment, safe_api_path
 from casper_network_mcp.products._tools import ClientGetter, ToolSet, client, use_client, would_send
 
@@ -264,10 +267,18 @@ async def clearpass_get(
 ) -> Any:
     """Read any ClearPass API path with GET (for endpoints no other tool covers).
 
-    Only ``/api/...`` paths. Lists are bounded with ``limit`` and ``offset``;
-    secret values are hidden.
+    Only ``/api/...`` paths, and only GETs that are plain reads (a guest
+    receipt can hold a password, so it is refused here). Lists are bounded
+    with ``limit`` and ``offset``; secret values are hidden.
     """
-    safe_api_path(path, ("/api/",))
+    safe = safe_api_path(path, ("/api/",))
+    if kind_for_operation("GET", safe) != "read":
+        template = listed_template("GET", safe) or safe
+        why = KIND_OVERRIDES.get(("GET", template), ("", "it is not a plain read"))[1]
+        return {
+            "error": f"Not sent: GET {safe} is not a plain read ({why}), so clearpass_get does not run it. "
+            f"Find its own tool with find_tool('GET {template}') and run that with invoke_tool."
+        }
     data = await _cp().request("GET", path, params=params or None, kind="read")
     items = _items(data) if isinstance(data, dict) and "_embedded" in data else None
     if items is not None and isinstance(data, dict):
@@ -705,23 +716,49 @@ async def clearpass_delete_guest(
     return await _change("DELETE", _guest_path(username, guest_id), dry_run=dry_run)
 
 
+async def _role_id(role_name: str) -> int:
+    """The id of the role named exactly ``role_name`` (``GET /api/role`` with a name filter)."""
+    params = {"filter": json.dumps({"name": role_name}, separators=(",", ":")), "limit": 25, "offset": 0}
+    found = [
+        row["id"]
+        for row in _items(await _get("/api/role", params))
+        if isinstance(row, dict) and row.get("name") == role_name and isinstance(row.get("id"), int)
+    ]
+    if not found:
+        raise ValueError(f"No ClearPass role is named {role_name!r}; see clearpass_list_roles, or pass role_id.")
+    if len(found) > 1:
+        raise ValueError(f"More than one ClearPass role is named {role_name!r} (ids {found}); pass role_id.")
+    return found[0]
+
+
 @mcp.tool()
 async def clearpass_create_guest(
-    username: str, password: str | None = None, role_name: str | None = None, dry_run: bool = False
+    username: str,
+    password: str,
+    role_id: Annotated[int | None, Field(description="Numeric id of the guest's role.")] = None,
+    role_name: Annotated[
+        str | None, Field(description="Exact role name, looked up to its id (GET /api/role) instead of role_id.")
+    ] = None,
+    dry_run: bool = False,
 ) -> Any:
-    """Create a guest account (``POST /api/guest``). The password is hidden in previews and replies."""
-    body: dict[str, Any] = {"username": username}
-    if password is not None:
-        body["password"] = password
-    if role_name is not None:
-        body["role_name"] = role_name
+    """Create a guest account (``POST /api/guest``) with a username, password and role.
+
+    Give exactly one of ``role_id`` or ``role_name``. The password is hidden
+    in previews and replies.
+    """
+    if (role_id is None) == (role_name is None):
+        raise ValueError("Provide exactly one of role_id or role_name.")
+    if role_id is None:
+        role_id = await _role_id(role_name or "")
+    body: dict[str, Any] = {"username": username, "password": password, "role_id": role_id}
     return await _change("POST", "/api/guest", body=body, dry_run=dry_run)
 
 
 @mcp.tool()
 async def clearpass_disconnect_session(session_id: str, dry_run: bool = False) -> Any:
     """Disconnect a live session with a change of authorisation (``POST /api/session/{id}/disconnect``)."""
-    return await _change("POST", f"/api/session/{_seg(session_id)}/disconnect", dry_run=dry_run)
+    body = {"id": session_id, "confirm_disconnect": True}
+    return await _change("POST", f"/api/session/{_seg(session_id)}/disconnect", body=body, dry_run=dry_run)
 
 
 @mcp.tool()

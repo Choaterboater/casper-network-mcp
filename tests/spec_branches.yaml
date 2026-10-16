@@ -44,6 +44,7 @@ defaults:
   clearpass_set_guest_enabled: {username: x1}
   clearpass_get_network_device: {name: x1}
   clearpass_why_denied: {mac: "02:00:00:00:00:01", username: null}
+  clearpass_create_guest: {role_id: 2, role_name: null}
   marvis_troubleshoot: {site_id: x1}
   mist_update_wlan: {changes: {vlan_id: 30}}
   gateway_join_cluster: {gateways: [{ip: 192.0.2.10, mac: "00:00:5e:00:53:01", priority: 128}]}
@@ -81,6 +82,8 @@ branches:
     - {username: null, guest_id: x1}
   clearpass_get_network_device:
     - {name: null, device_id: x1}
+  clearpass_create_guest:
+    - {role_id: null, role_name: x1}
   clearpass_why_denied:
     - {mac: null, username: user1}
     - {mac: "02:00:00:00:00:01", nad: "192.0.2.1", service: Login-User, start: "2025-01-01T00:00:00Z", end: "2025-01-02T00:00:00Z"}
@@ -96,6 +99,13 @@ branches:
     - {site_id: null, site_name: Branch-12}
 
 replies:
+  clearpass_create_guest:
+    - method: GET
+      path: /api/role
+      reply:
+        _embedded:
+          items:
+            - {id: 2, name: x1}
   clearpass_why_denied:
     - method: GET
       path: /api/session
