@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- ClearPass can log in by itself with an API client: set `CLEARPASS_CLIENT_ID` and `CLEARPASS_CLIENT_SECRET`
+  and the server gets a token at `POST /api/oauth` (client credentials), keeps it in memory, renews it a minute
+  before it expires and, after a 401, gets a new one and sends again once. A set `CLEARPASS_API_TOKEN` still
+  wins and works as before.
 - Added read-only `clearpass_why_denied`: recent session summaries, endpoint status/profile, NAD and applied
   roles for one MAC or username. Uses only the bundled 6.12.7 session and endpoint APIs; explicitly reports
   that active accounting sessions cannot establish missing Access Tracker reject reasons or enforcement profiles.
