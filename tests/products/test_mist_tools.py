@@ -44,20 +44,60 @@ def test_no_generic_write_passthrough_and_no_status_tool():
     assert {"mist_get", "mist_list_sites", "mist_update_wlan", "sle_summary", "marvis_troubleshoot"} <= names
 
 
-async def test_wlan_update_dry_run_sends_nothing(recording_transport, mist_backend):
+WLAN = "/api/v1/sites/s1/wlans/w1"
+CURRENT = {
+    "id": "w1",
+    "ssid": "Example",
+    "enabled": True,
+    "vlan_id": 10,
+    "auth": {"type": "psk", "psk": "synthetic-passphrase"},
+    "auth_servers": [{"host": "192.0.2.5", "secret": "synthetic-secret"}],
+}
+
+
+async def test_wlan_update_dry_run_shows_the_merged_body_with_secrets_hidden(recording_transport, mist_backend):
+    recording_transport.reply(CURRENT, "GET", WLAN)
     out = await mist_backend.call(
         "mist_update_wlan", {"site_id": "s1", "wlan_id": "w1", "changes": {"vlan_id": 30}, "dry_run": True}
     )
-    assert out["would_send"]["method"] == "PUT" and recording_transport.calls == []
-    assert out["would_send"]["path"] == "/api/v1/sites/s1/wlans/w1"
-    assert out["would_send"]["body"] == {"vlan_id": 30}
+    assert out["would_send"]["method"] == "PUT" and out["would_send"]["path"] == WLAN
+    body = out["would_send"]["body"]
+    assert body["vlan_id"] == 30 and body["ssid"] == "Example"
+    assert body["auth"] == {"type": "psk", "psk": "[hidden]"}
+    assert "synthetic" not in str(out)
+    assert [c.method for c in recording_transport.calls] == ["GET"]
 
 
-async def test_wlan_update_sends_the_changes(recording_transport, mist_backend):
-    recording_transport.reply({"id": "w1", "vlan_id": 30}, "PUT", "/api/v1/sites/s1/wlans/w1")
+async def test_wlan_update_puts_the_whole_wlan_with_its_secrets_unchanged(recording_transport, mist_backend):
+    recording_transport.reply(CURRENT, "GET", WLAN)
+    recording_transport.reply({**CURRENT, "vlan_id": 30}, "PUT", WLAN)
     out = await mist_backend.call("mist_update_wlan", {"site_id": "s1", "wlan_id": "w1", "changes": {"vlan_id": 30}})
-    assert out["wlan"]["vlan_id"] == 30
-    assert body_of(recording_transport.calls[0]) == {"vlan_id": 30}
+    get, put = recording_transport.calls
+    assert (get.method, put.method) == ("GET", "PUT")
+    assert body_of(put) == {**CURRENT, "vlan_id": 30}  # the PSK on the device is sent back as it is
+    assert out["wlan"]["vlan_id"] == 30 and out["wlan"]["auth"]["psk"] == "[hidden]"
+    assert "synthetic" not in str(out)
+
+
+async def test_wlan_update_sends_a_new_secret_it_is_given(recording_transport, mist_backend):
+    recording_transport.reply(CURRENT, "GET", WLAN)
+    auth = {"type": "psk", "psk": "synthetic-new-passphrase"}
+    await mist_backend.call("mist_update_wlan", {"site_id": "s1", "wlan_id": "w1", "changes": {"auth": auth}})
+    assert body_of(recording_transport.calls[1])["auth"] == auth
+
+
+async def test_wlan_update_refuses_a_wlan_too_large_to_read_whole(recording_transport, mist_backend):
+    recording_transport.reply({**CURRENT, "portal_template": "x" * 200_000}, "GET", WLAN)
+    out = await mist_backend.call("mist_update_wlan", {"site_id": "s1", "wlan_id": "w1", "changes": {"vlan_id": 30}})
+    assert "Not sent" in out["error"]
+    assert [c.method for c in recording_transport.calls] == ["GET"]
+
+
+async def test_wlan_update_refuses_when_the_wlan_cannot_be_read_whole(recording_transport, mist_backend):
+    recording_transport.reply({"id": "w1"}, "GET", WLAN)
+    out = await mist_backend.call("mist_update_wlan", {"site_id": "s1", "wlan_id": "w1", "changes": {"vlan_id": 30}})
+    assert "Not sent" in out["error"]
+    assert [c.method for c in recording_transport.calls] == ["GET"]
 
 
 async def test_sle_scope_enum_matches_spec(mist_backend):

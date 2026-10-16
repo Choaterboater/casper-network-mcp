@@ -15,6 +15,13 @@ SELF = ("GET", "/api/v1/self")
 UPDATE = {"site_id": "s2", "wlan_id": "w1", "changes": {"vlan_id": 30}}
 
 
+@pytest.fixture(autouse=True)
+def _wlans(recording_transport):
+    """mist_update_wlan reads the WLAN before its PUT."""
+    for site in ("s2", "s9"):
+        recording_transport.reply({"id": "w1", "ssid": "Example"}, "GET", f"/api/v1/sites/{site}/wlans/w1")
+
+
 def _mist(out):
     return next(p for p in out["products"] if p["product"] == "mist")
 
