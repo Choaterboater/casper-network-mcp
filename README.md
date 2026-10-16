@@ -104,6 +104,50 @@ What changed, in order:
 
 Times are on a laptop with the router already loaded, except the last column.
 
+### First-pick follow-up
+
+A later offline comparison uses merged PR #12 (`72e41ce`) as its baseline. The original
+75-question held-out dataset was unavailable; these are **36 new synthetic evaluation questions**
+(12 per product), frozen before router edits. Only aggregate evaluation baseline scores were inspected
+before tuning; evaluation misses were not used. This small sample is not evidence of equivalent gains
+on real requests or on the original 75 questions.
+
+The additional 30-question development set exposed a general parsing error: a leading product name
+or alias hid the following action verb. `find_tool` now skips those prefixes when reading intent.
+Scoring weights, candidate retrieval, tool summaries, the shipped index and dependencies are unchanged.
+
+| Product | First, filtered | Top 3, filtered | First, unfiltered | Top 3, unfiltered | MRR, filtered |
+| --- | --- | --- | --- | --- | --- |
+| Central | 10/12 → 12/12 | 11/12 → 12/12 | 10/12 → 12/12 | 11/12 → 12/12 | 0.8869 → 1.0000 |
+| Mist | 10/12 → 11/12 | 12/12 → 12/12 | 9/12 → 10/12 | 12/12 → 12/12 | 0.9167 → 0.9583 |
+| ClearPass | 10/12 → 11/12 | 12/12 → 12/12 | 10/12 → 11/12 | 12/12 → 12/12 | 0.9028 → 0.9583 |
+
+Top-ten accuracy remains 12/12 for every product in both modes. Warm filtered top-three p50/p95
+was 0.72/5.37 ms before and 0.80/5.95 ms after in this local measurement, below the unchanged 50 ms
+p95 limit. The original 60-question benchmark's per-product accuracy is unchanged in both modes;
+its p50/p95 was 0.51/2.27 ms before and 0.53/2.29 ms after. Timings are descriptive, not portable
+speed guarantees.
+
+Two filtered evaluation first-pick failures remain: `"show WLAN security for one WLAN"` and
+`"show every authentication service"`; each acceptable answer is second. Unfiltered evaluation also
+prefers Central's overview for `"show the site health overview"`. No further tuning used these misses.
+The new development set also exposes a limitation: without a product filter, `"mist restart an access point"`
+drops out of the top three (Mist unfiltered development top-three: 11/11 → 10/11). Use the known product
+filter; product-name hints are not hard filters.
+
+The benchmark now reports every wrong-first result with its expected rank, separately from top-three
+misses, plus per-product filtered/unfiltered top-one, top-three, top-ten and MRR:
+
+```
+uv run python scripts/bench_find_tool.py --questions tests/bench/find_tool_evaluation.yaml
+uv run python scripts/bench_find_tool.py --questions tests/bench/find_tool_evaluation.yaml --json
+```
+
+Dataset provenance, development failure categories and frozen baseline hashes are in
+[`tests/bench/README.md`](tests/bench/README.md). This evaluation set is now regression data; another
+tuning cycle needs a fresh evaluation set. Tests guard each product's first/top-three scores independently,
+so improvements elsewhere cannot conceal regressions.
+
 ## What is in the package
 
 The package includes HPE's proprietary API documents (not MIT; see specs/NOTICE.md) and Juniper Mist's MIT

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
+
 from casper_network_mcp.router.index import catalog
 from scripts.bench_find_tool import bench, load_questions
 
@@ -39,6 +43,57 @@ def test_review_focus_questions_are_in_the_top_three_and_fast():
         names = [h["name"] for h in find_tool(question, top_k=3, product=product)]
         assert (time.perf_counter() - start) * 1000 <= 50
         assert expected in names, (question, names)
+
+
+BENCH_DIR = Path(__file__).parent / "bench"
+
+
+def _baseline(filename):
+    saved = json.loads((BENCH_DIR / "find_tool_baseline.json").read_text(encoding="utf-8"))["sets"][filename]
+    # Windows checks text out with CRLF line endings: hash the text with LF so the same data has one hash.
+    data = (BENCH_DIR / filename).read_bytes().replace(b"\r\n", b"\n")
+    assert hashlib.sha256(data).hexdigest() == saved["sha256"], "Frozen data changed"
+    return saved
+
+
+def test_fresh_evaluation_improves_mist_or_clearpass_without_any_product_regression():
+    filename = "find_tool_evaluation.yaml"
+    before = _baseline(filename)["by_product"]
+    after = bench(load_questions(BENCH_DIR / filename))["by_product"]
+    assert set(after) == set(before)
+    for product in before:
+        for mode in ("filtered", "unfiltered"):
+            assert after[product][mode]["questions"] == before[product][mode]["questions"]
+            for metric in ("top1", "top3"):
+                assert after[product][mode][metric] >= before[product][mode][metric], (product, mode, metric, after)
+    assert any(after[p]["filtered"]["top1"] > before[p]["filtered"]["top1"] for p in ("mist", "clearpass")), after
+
+
+def test_original_benchmark_cannot_hide_one_products_regression_behind_another():
+    before = _baseline("find_tool_questions.yaml")["by_product"]
+    after = bench(load_questions())["by_product"]
+    for product in before:
+        for mode in ("filtered", "unfiltered"):
+            for metric in ("top1", "top3"):
+                assert after[product][mode][metric] >= before[product][mode][metric], (product, mode, metric, after)
+
+
+def test_new_datasets_are_disjoint_and_have_only_existing_correct_product_labels():
+    original = {q["q"] for q in load_questions()}
+    development = load_questions(BENCH_DIR / "find_tool_development.yaml")
+    evaluation = load_questions(BENCH_DIR / "find_tool_evaluation.yaml")
+    dev_queries = {q["q"] for q in development}
+    eval_queries = {q["q"] for q in evaluation}
+    assert len(dev_queries) == len(development) == 30
+    assert len(eval_queries) == len(evaluation) == 36
+    assert not (dev_queries & eval_queries or original & eval_queries or original & dev_queries)
+    entries = catalog().entries
+    for question in development + evaluation:
+        assert question["expect"]
+        assert all(name in entries and entries[name].product == question["product"] for name in question["expect"])
+    assert {p: sum(q["product"] == p for q in evaluation) for p in ("central", "mist", "clearpass")} == {
+        "central": 12, "mist": 12, "clearpass": 12,
+    }
 
 
 def test_plain_variants_outside_the_question_set_are_in_the_top_three():

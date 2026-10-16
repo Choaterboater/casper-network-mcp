@@ -1,0 +1,44 @@
+{
+  "router_commit": "72e41cea43530a896aa43e256291b827cadaf46d",
+  "notes": "Offline synthetic evaluation frozen before router edits. Only aggregate evaluation scores inspected before tuning; no evaluation misses used. Latency is product-filtered top_k=3, three rounds after warm-up, milliseconds; descriptive, not a relative timing gate.",
+  "sets": {
+    "find_tool_evaluation.yaml": {
+      "sha256": "5ec31455fa6e303142da1c2499c06d10f5fef424abbe835fcdaa7823b5209a23",
+      "p50_ms": 0.72,
+      "p95_ms": 5.37,
+      "by_product": {
+        "central": {
+          "filtered": {"questions": 12, "top1": 0.833, "top3": 0.917, "top10": 1.0, "mrr": 0.8869},
+          "unfiltered": {"questions": 12, "top1": 0.833, "top3": 0.917, "top10": 1.0, "mrr": 0.8869}
+        },
+        "clearpass": {
+          "filtered": {"questions": 12, "top1": 0.833, "top3": 1.0, "top10": 1.0, "mrr": 0.9028},
+          "unfiltered": {"questions": 12, "top1": 0.833, "top3": 1.0, "top10": 1.0, "mrr": 0.9028}
+        },
+        "mist": {
+          "filtered": {"questions": 12, "top1": 0.833, "top3": 1.0, "top10": 1.0, "mrr": 0.9167},
+          "unfiltered": {"questions": 12, "top1": 0.75, "top3": 1.0, "top10": 1.0, "mrr": 0.875}
+        }
+      }
+    },
+    "find_tool_questions.yaml": {
+      "sha256": "af14ee32e0ab030a3b39dc45ac1a845d4f322fdbde1562948d36c12b7eca67ea",
+      "p50_ms": 0.51,
+      "p95_ms": 2.27,
+      "by_product": {
+        "central": {
+          "filtered": {"questions": 20, "top1": 0.85, "top3": 1.0, "top10": 1.0, "mrr": 0.9167},
+          "unfiltered": {"questions": 20, "top1": 0.85, "top3": 1.0, "top10": 1.0, "mrr": 0.9083}
+        },
+        "clearpass": {
+          "filtered": {"questions": 20, "top1": 0.95, "top3": 1.0, "top10": 1.0, "mrr": 0.975},
+          "unfiltered": {"questions": 20, "top1": 0.85, "top3": 0.9, "top10": 1.0, "mrr": 0.9}
+        },
+        "mist": {
+          "filtered": {"questions": 20, "top1": 0.8, "top3": 1.0, "top10": 1.0, "mrr": 0.8833},
+          "unfiltered": {"questions": 20, "top1": 0.65, "top3": 0.75, "top10": 0.9, "mrr": 0.7325}
+        }
+      }
+    }
+  }
+}
