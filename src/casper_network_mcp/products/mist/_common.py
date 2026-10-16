@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
+from casper_network_mcp.core.budget import bound_collection_response
 from casper_network_mcp.core.paths import path_segment
 from casper_network_mcp.products._tools import ToolSet, client, would_send
 
@@ -15,8 +17,10 @@ __all__ = [
     "extract_items",
     "get",
     "mist_client",
+    "next_search_after",
     "normalize_mac",
     "pick",
+    "search_page",
     "seg",
     "window",
 ]
@@ -92,6 +96,33 @@ def extract_items(data: Any) -> list[Any]:
         if isinstance(value, list):
             return value
     return []
+
+
+def next_search_after(data: Any) -> str | None:
+    """The ``search_after`` cursor in a Mist search reply's ``next`` link, if any."""
+    link = data.get("next") if isinstance(data, dict) else None
+    if not isinstance(link, str) or not link:
+        return None
+    values = parse_qs(urlsplit(link).query).get("search_after")
+    return values[0] if values else None
+
+
+def search_page(data: Any, items: list[Any], limit: int) -> dict[str, Any]:
+    """One page of a Mist ``.../search`` reply with the API's own total and cursor.
+
+    ``total`` counts every page. ``truncated`` is true while Mist has more:
+    pass ``_pagination.search_after`` back as ``search_after`` for the next page.
+    """
+    page: dict[str, Any] = bound_collection_response(items, limit=limit)
+    pagination = page["_pagination"]
+    total = data.get("total") if isinstance(data, dict) else None
+    if isinstance(total, int) and total > pagination["total"]:
+        pagination["total"] = total
+    cursor = next_search_after(data)
+    if cursor is not None:
+        pagination["search_after"] = cursor
+        pagination["truncated"] = True
+    return page
 
 
 def pick(data: Any, fields: tuple[str, ...]) -> Any:

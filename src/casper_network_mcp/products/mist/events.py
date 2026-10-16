@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from casper_network_mcp.products.mist._common import MIST, get, seg
+from casper_network_mcp.sdk_compat import OptionalText
 
 mcp = MIST
 
@@ -59,7 +60,7 @@ async def site_events(
     start: int | None = None,
     end: int | None = None,
     limit: int = 100,
-    search_after: str | None = None,
+    search_after: OptionalText = None,
 ) -> Any:
     """Search a site's events.
 
@@ -82,7 +83,7 @@ async def org_events(
     start: int | None = None,
     end: int | None = None,
     limit: int = 100,
-    search_after: str | None = None,
+    search_after: OptionalText = None,
 ) -> Any:
     """Search the org's events. ``kind``: system (default), devices or clients.
 
