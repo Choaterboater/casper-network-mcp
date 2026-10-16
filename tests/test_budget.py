@@ -1,4 +1,11 @@
-from casper_network_mcp.core.budget import MAX_LIST_LIMIT, bound_collection_response, clamp_limit
+import json
+
+from casper_network_mcp.core.budget import (
+    MAX_LIST_LIMIT,
+    bound_collection_response,
+    bounded_response_payload,
+    clamp_limit,
+)
 
 
 def test_list_is_wrapped_and_sliced():
@@ -34,3 +41,25 @@ def test_clamp_limit():
     assert clamp_limit(None) == 50
     assert clamp_limit(0) == 1
     assert clamp_limit(10_000) == MAX_LIST_LIMIT
+
+
+class _Reply:
+    def __init__(self, body: bytes, content_type: str) -> None:
+        self.content = body
+        self.headers = {"content-type": content_type}
+
+    def json(self):
+        return json.loads(self.content)
+
+
+def test_a_reply_too_big_to_return_whole_is_redacted_before_it_is_cut():
+    item = {"name": "Test Site", "auth": {"type": "psk", "psk": "psk-value-0001"}, "pad": "x" * 4000}
+    out = bounded_response_payload(_Reply(json.dumps({"wlans": [item] * 100}).encode(), "application/json"))
+    assert out["truncated"] is True and "[hidden]" in out["text"]
+    assert "psk-value-0001" not in out["text"]
+
+
+def test_text_that_is_not_one_json_value_is_redacted():
+    body = b'{"name": "Test Site", "secret": "radius-value-0001"}\n{"name": "Test Site 2"}\n'
+    out = bounded_response_payload(_Reply(body, "application/json"))
+    assert "radius-value-0001" not in out["text"] and "Test Site 2" in out["text"]
