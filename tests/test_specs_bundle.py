@@ -183,3 +183,12 @@ def test_clearpass_pins_match_the_manifest():
     for pin in pins["clearpass"]:
         assert pin["path"].startswith("clearpass-")
         assert by_path[pin["path"]]["source_url"].endswith("/" + pin["registry_id"])
+
+
+def test_dry_run_body_check_counts_allof_properties():
+    # layer2-vlan's body is an allOf; `enable` is declared inside a member, not at the top level.
+    from casper_network_mcp.products._tools import unknown_body_nodes
+
+    path = "/network-config/v1alpha1/layer2-vlan/{vlan}"
+    assert unknown_body_nodes("central", "POST", path, {"enable": True}) == []
+    assert unknown_body_nodes("central", "POST", path, {"enable": True, "made-up-key": 1}) == ["made-up-key"]

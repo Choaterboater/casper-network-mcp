@@ -10,7 +10,7 @@ import pytest
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.openapi_gen.manifest import build_product_manifest, dumps, load_manifest
-from casper_network_mcp.openapi_gen.runtime import generated_backend
+from casper_network_mcp.openapi_gen.runtime import _param_specs, generated_backend
 from casper_network_mcp.specs_bundle import operations
 
 PRODUCTS = ("central", "mist", "clearpass")
@@ -157,3 +157,14 @@ def test_no_generated_tool_takes_a_login_argument():
         for tool in generated_tools(product):
             props = set(tool.parameters.get("properties") or {})
             assert not props & {"authorization", "cookie", "x_auth_token", "x_api_key", "x_csrftoken"}, tool.name
+
+
+def test_no_generated_tool_takes_the_same_parameter_twice():
+    # A path-level parameter and its operation-level override are one argument, not site_id and site_id_2.
+    for product in PRODUCTS:
+        for op in load_manifest(product).operations:
+            keys = [(p["name"], p["in"]) for p in op.get("parameters", [])]
+            assert len(keys) == len(set(keys)), (product, op["name"], keys)
+            # A suffixed argument such as scope_id_2 is fine only for a different location (path vs query).
+            args = [(spec.api, spec.location) for spec in _param_specs(op)]
+            assert len(args) == len(set(args)), (product, op["name"], args)
