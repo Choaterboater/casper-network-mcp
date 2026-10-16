@@ -1,0 +1,95 @@
+# Synthetic development examples, not real network data or independent evaluation.
+# Labels were chosen from the tool catalog before measuring this set.
+# --- Central ---
+- q: "central create a webhook"
+  product: central
+  expect: [create_webhook]
+- q: "central delete the saved report"
+  product: central
+  expect: [delete_report]
+- q: "central show configured webhooks"
+  product: central
+  expect: [list_webhooks]
+- q: "show webhook by id"
+  product: central
+  expect: [get_webhook]
+- q: "show the switch interface counters"
+  product: central
+  expect: [get_switch_interface_counters]
+- q: "port keeps flapping on the switch"
+  product: central
+  expect: [detect_client_flapping, get_switch_port_errors]
+- q: "list reports"
+  product: central
+  expect: [list_reports]
+- q: "get report by id"
+  product: central
+  expect: [get_report]
+- q: "central update a webhook"
+  product: central
+  expect: [update_webhook]
+- q: "aruba remove a report"
+  product: central
+  expect: [delete_report]
+# --- Mist ---
+- q: "mist delete the wlan"
+  product: mist
+  expect: [mist_delete_wlan]
+- q: "mist change the wlan vlan"
+  product: mist
+  expect: [mist_update_wlan]
+- q: "mist list site alarms"
+  product: mist
+  expect: [mist_list_alarms]
+- q: "mist list org alarms"
+  product: mist
+  expect: [alarms_list, mist_search_org_alarms]
+- q: "show events for the org"
+  product: mist
+  expect: [org_events, mist_search_org_events]
+- q: "show events for the site"
+  product: mist
+  expect: [site_events, mist_search_events]
+- q: "list wireless clients at the site"
+  product: mist
+  expect: [mist_list_site_clients, mist_list_site_wireless_clients_stats]
+- q: "get wireless client by mac"
+  product: mist
+  expect: [mist_get_client, mist_get_site_wireless_client_stats]
+- q: "mist create a wlan"
+  product: mist
+  expect: [mist_create_site_wlan, mist_create_org_wlan]
+- q: "mist remove a wlan"
+  product: mist
+  expect: [mist_delete_wlan, mist_delete_site_wlan]
+- q: "mist restart an access point"
+  product: mist
+  expect: [mist_restart_site_device]
+# --- ClearPass ---
+- q: "clearpass create a guest account"
+  product: clearpass
+  expect: [clearpass_create_guest]
+- q: "clearpass delete a guest account"
+  product: clearpass
+  expect: [clearpass_delete_guest]
+- q: "clearpass disable a guest account"
+  product: clearpass
+  expect: [clearpass_set_guest_enabled]
+- q: "clearpass list enforcement policies"
+  product: clearpass
+  expect: [clearpass_list_enforcement_policies]
+- q: "get enforcement policy by name"
+  product: clearpass
+  expect: [clearpass_get_enforcement_policy]
+- q: "list authentication services"
+  product: clearpass
+  expect: [clearpass_list_services]
+- q: "get authentication service by name"
+  product: clearpass
+  expect: [clearpass_get_service]
+- q: "clearpass remove a guest"
+  product: clearpass
+  expect: [clearpass_delete_guest]
+- q: "show recent authentication failures on clearpass"
+  product: clearpass
+  expect: [clearpass_list_auth_failures]

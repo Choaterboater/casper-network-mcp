@@ -14,7 +14,8 @@ server has no vector store. Measured on a fixed 60-question set
   prefix in a name does not dilute it; generated tools (one per API
   operation) rank a point below hand-written ones unless the query names
   their operation or path;
-* the question's first word gives its intent (what/show -> a read,
+* the question's first word after conversational filler and product names gives
+  its intent (what/show -> a read,
   create/delete/change -> that kind of change, reboot/upgrade -> an action,
   ping/traceroute -> a check), and tools that match it rank higher;
 * answers come from ``router/index.json`` (see ``router.index``), so the
@@ -156,9 +157,9 @@ _INTENT_MISMATCH = 0.75
 
 
 def intent(query: str) -> str | None:
-    """read, create, delete or update, from the first real word of the question; None when it is unclear."""
+    """Intent from the first word after filler/product names; None when unclear."""
     for word in re.findall(r"\bre-enable\b|[a-z0-9']+", query.lower()):
-        if word in _FILLER:
+        if word in _FILLER or word in _PRODUCT_WORDS:
             continue
         return next((name for name, cues in _INTENT_WORDS.items() if word in cues), None)
     return None
