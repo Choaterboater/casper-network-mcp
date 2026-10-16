@@ -294,7 +294,11 @@ def _build_signature(
         if spec.required:
             annotation, default = param_type, inspect.Parameter.empty
         else:
-            annotation, default = (param_type | None if param_type is not Any else Any), None
+            if param_type is str:
+                annotation = sdk_compat.OptionalText
+            else:
+                annotation = param_type | None if param_type is not Any else Any
+            default = None
         annotations[spec.arg] = annotation
         parameters.append(
             inspect.Parameter(spec.arg, inspect.Parameter.KEYWORD_ONLY, default=default, annotation=annotation)

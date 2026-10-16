@@ -32,13 +32,16 @@ reaches its backends) never pass through it.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Awaitable, Callable, Mapping
-from typing import Any
+from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.tools.base import Tool
+from pydantic import BeforeValidator
 
 __all__ = [
+    "OptionalText",
     "call_tool_raw",
     "claim_dispatcher",
     "get_tool",
@@ -50,6 +53,19 @@ __all__ = [
 ]
 
 _SORTED_LISTING_ATTR = "_casper_sorted_list_tools_applied"
+
+
+def _keep_text(value: Any) -> Any:
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+
+#: An optional string argument that may hold JSON text. The SDK parses any
+#: string that looks like JSON before validation unless the argument is exactly
+#: ``str``, so a Mist ``search_after`` cursor such as ``[1700000000000, "a1"]``
+#: arrived as a list and was refused. This turns it back into the text.
+OptionalText = Annotated[str | None, BeforeValidator(_keep_text)]
 
 
 def tool_registry(server: MCPServer) -> Mapping[str, Tool]:

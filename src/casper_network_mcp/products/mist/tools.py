@@ -42,10 +42,13 @@ from casper_network_mcp.products.mist._common import (
     extract_items,
     get,
     mist_client,
+    next_search_after,
     normalize_mac,
     pick,
+    search_page,
     seg,
 )
+from casper_network_mcp.sdk_compat import OptionalText
 
 __all__ = ["backend", "backend_tools"]
 
@@ -244,7 +247,7 @@ async def mist_list_alarms(
     limit: int = 100,
     start: str | None = None,
     end: str | None = None,
-    search_after: str | None = None,
+    search_after: OptionalText = None,
 ) -> dict[str, Any]:
     """List a site's recent alarms, newest first.
 
@@ -517,19 +520,22 @@ async def mist_list_switches(
 
 
 @mcp.tool()
-async def mist_list_switch_ports(site_id: str, switch_mac: str, limit: int = 100, offset: int = 0) -> dict[str, Any]:
+async def mist_list_switch_ports(
+    site_id: str, switch_mac: str, limit: int = 100, search_after: OptionalText = None
+) -> dict[str, Any]:
     """Port status for one switch: link, speed, PoE, STP and LLDP neighbour.
 
     Uses ``GET /api/v1/sites/{site_id}/stats/ports/search`` filtered by the
-    switch MAC (the spec pages this search with ``search_after``, not pages).
+    switch MAC. Mist pages this search with a cursor: while
+    ``ports._pagination.truncated`` is true, pass its ``search_after`` back to
+    read the next page.
     """
     normalized = normalize_mac(switch_mac)
-    params = {"mac": normalized, "device_type": "switch", "limit": clamp_limit(limit, default=100)}
+    safe_limit = clamp_limit(limit, default=100)
+    params = {"mac": normalized, "device_type": "switch", "limit": safe_limit, "search_after": search_after}
     data = await get(f"/api/v1/sites/{seg(site_id)}/stats/ports/search", params, site_id=site_id)
-    return {
-        "normalized_mac": normalized,
-        "ports": _bounded(extract_items(data), _PORT_FIELDS, clamp_limit(limit, default=100), max(0, offset)),
-    }
+    ports = [pick(item, _PORT_FIELDS) for item in extract_items(data)]
+    return {"normalized_mac": normalized, "ports": search_page(data, ports, safe_limit)}
 
 
 @mcp.tool()
@@ -668,7 +674,7 @@ async def mist_list_site_clients(
     text: str | None = None,
     duration: str = "1d",
     limit: int = 100,
-    search_after: str | None = None,
+    search_after: OptionalText = None,
 ) -> dict[str, Any]:
     """List the wireless clients a site has seen, optionally on one SSID.
 
@@ -775,6 +781,27 @@ async def mist_wlan_security_summary(org_id: str, wlan_id: str) -> dict[str, Any
     }
 
 
+#: Pages of NAC clients read while looking for one MAC.
+_NAC_CLIENT_PAGES = 5
+
+
+async def _nac_clients(site_id: str, params: dict[str, Any], norm: str | None) -> tuple[Any, list[dict[str, Any]]]:
+    """Search a site's NAC clients; with a MAC, follow Mist's cursor until it shows up."""
+    path = f"/api/v1/sites/{seg(site_id)}/nac_clients/search"
+    data = await get(path, params, site_id=site_id)
+    clients = [c for c in extract_items(data) if isinstance(c, dict)]
+    if not norm:
+        return data, clients
+    for _ in range(_NAC_CLIENT_PAGES - 1):
+        matched = [c for c in clients if str(c.get("mac") or "").lower() == norm]
+        cursor = next_search_after(data)
+        if matched or cursor is None:
+            return data, matched
+        data = await get(path, {**params, "search_after": cursor}, site_id=site_id)
+        clients = [c for c in extract_items(data) if isinstance(c, dict)]
+    return data, [c for c in clients if str(c.get("mac") or "").lower() == norm]
+
+
 @mcp.tool()
 async def mist_nac_troubleshoot(
     org_id: str,
@@ -798,8 +825,8 @@ async def mist_nac_troubleshoot(
     org = seg(org_id)
     site = seg(site_id)
     norm = normalize_mac(mac) if mac else None
-    clients_data, events_data, rules_data = await asyncio.gather(
-        _section(get(f"/api/v1/sites/{site}/nac_clients/search", {"limit": safe_limit, "ssid": ssid}, site_id=site_id)),
+    clients_found, events_data, rules_data = await asyncio.gather(
+        _section(_nac_clients(site_id, {"limit": safe_limit, "ssid": ssid, "mac": norm, "duration": duration}, norm)),
         _section(
             get(
                 f"/api/v1/sites/{site}/nac_clients/events/search",
@@ -810,13 +837,17 @@ async def mist_nac_troubleshoot(
         _section(get(f"/api/v1/orgs/{org}/nacrules", org_id=org_id)),
     )
     out: dict[str, Any] = {"org_id": org_id, "site_id": site_id}
-    if _failed(clients_data):
-        out["clients"] = clients_data
+    clients_data: Any = clients_found
+    if _failed(clients_found):
+        out["clients"] = clients_found
     else:
-        clients = [c for c in extract_items(clients_data) if isinstance(c, dict)]
-        if norm:
-            clients = [c for c in clients if str(c.get("mac") or "").lower() == norm]
-        out["clients"] = _bounded(clients, _NAC_CLIENT_SUMMARY_FIELDS, safe_limit)
+        clients_data, clients = clients_found
+        summaries = [pick(c, _NAC_CLIENT_SUMMARY_FIELDS) for c in clients]
+        out["clients"] = (
+            _bounded(clients, _NAC_CLIENT_SUMMARY_FIELDS, safe_limit)
+            if norm
+            else search_page(clients_data, summaries, safe_limit)
+        )
     counts: dict[str, int] = {}
     if _failed(events_data):
         out["events"] = events_data
