@@ -81,7 +81,7 @@ def test_question_intent():
     assert find.intent("please create VLAN 30") == "create"
     assert find.intent("remove an endpoint") == "delete"
     assert find.intent("change the vlan on the ssid") == "update"
-    assert find.intent("bounce port 7") is None
+    assert find.intent("bounce port 7") == "act"
 
 
 def test_plurals_fold_to_one_word():
