@@ -120,6 +120,40 @@ async def test_mist_get_bounds_lists(recording_transport, mist_backend):
     assert len(out["items"]) == 5 and out["_pagination"]["truncated"] is True
 
 
+async def test_mist_get_hides_secrets_in_a_reply_too_big_to_return_whole(recording_transport, mist_backend):
+    # Each WLAN is padded so even a 50-item page is over the reply budget and
+    # the reply comes back as cut-short text: the secrets must be gone first.
+    wlan = {
+        "ssid": "Test Site Guest",
+        "auth": {"type": "psk", "psk": "psk-value-0001"},
+        "auth_servers": [{"host": "192.0.2.10", "secret": "radius-value-0001"}],
+        "notes": "x" * 4000,
+    }
+    recording_transport.reply({"wlans": [wlan] * 60}, "GET", "/api/v1/sites/s1/wlans")
+    out = await mist_backend.call("mist_get", {"path": "/api/v1/sites/s1/wlans"})
+    text = str(out)
+    assert out["truncated"] is True
+    assert "psk-value-0001" not in text and "radius-value-0001" not in text
+    assert "Test Site Guest" in text and "[hidden]" in text
+
+
+async def test_mist_get_hides_claim_codes(recording_transport, mist_backend):
+    recording_transport.reply(
+        [{"mac": "020000000001", "magic": "CLAIMCODE0001", "serial": "S1"}], "GET", "/api/v1/orgs/o1/inventory"
+    )
+    out = await mist_backend.call("mist_get", {"path": "/api/v1/orgs/o1/inventory"})
+    assert out["items"] == [{"mac": "020000000001", "magic": "[hidden]", "serial": "S1"}]
+
+
+async def test_generated_inventory_read_hides_claim_codes(recording_transport, generated_backend_factory):
+    recording_transport.reply(
+        [{"mac": "020000000001", "magic": "CLAIMCODE0001", "serial": "S1"}], "GET", "/api/v1/orgs/o1/inventory"
+    )
+    backend = generated_backend_factory("mist", gate=Gate(read_only=False), transport=recording_transport)
+    out = await backend.call("mist_get_org_inventory", {"org_id": "o1"})
+    assert "CLAIMCODE0001" not in str(out) and "[hidden]" in str(out)
+
+
 # ── curated reads ───────────────────────────────────────────────────────────
 
 
