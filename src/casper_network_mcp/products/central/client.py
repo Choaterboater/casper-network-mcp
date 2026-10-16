@@ -24,10 +24,10 @@ from typing import Any
 
 import httpx
 
-from casper_network_mcp.core.gate import Gate
+from casper_network_mcp.core.gate import Gate, is_write
 from casper_network_mcp.core.http import RETRYABLE_STATUSES, Http, body_kwargs, parse_retry_after
 from casper_network_mcp.core.logins import read_logins
-from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused, Reply
+from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused, Reply, TransportFailure
 
 __all__ = ["CENTRAL_PREFIXES", "TOKEN_URL", "ApiError", "CentralClient", "LoginMissing", "Refused", "Reply"]
 
@@ -143,12 +143,13 @@ class CentralClient(BaseClient):
         resp = await self._http.request(
             method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
         )
-        if resp.status_code == 401:  # not accepted, so sending again is safe
+        if resp.status_code == 401:
             self._forget_token(token)
-            token = await self._access_token()
-            resp = await self._http.request(
-                method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
-            )
+            if method == "GET" and not body and not is_write(method, url.removeprefix(self.base_url)):
+                token = await self._access_token()
+                resp = await self._http.request(
+                    method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
+                )
         return resp
 
     # ── sync front door (same gate, same checks) ───────────────────────────
@@ -173,10 +174,11 @@ class CentralClient(BaseClient):
         )
         if resp.status_code == 401:
             self._forget_token(token)
-            token = self._access_token_sync()
-            resp = self._sync().request(
-                method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
-            )
+            if method == "GET" and not body and not is_write(method, url.removeprefix(self.base_url)):
+                token = self._access_token_sync()
+                resp = self._sync().request(
+                    method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
+                )
         return resp
 
     def _roundtrip_sync(
@@ -198,7 +200,10 @@ class CentralClient(BaseClient):
         retries = _SYNC_RETRIES if method == "GET" and not body else 0
         delay = 0.5
         for attempt in range(retries + 1):
-            resp = self._send_sync_once(method, url, sent_headers, params, body)
+            try:
+                resp = self._send_sync_once(method, url, sent_headers, params, body)
+            except httpx.TransportError as exc:
+                raise TransportFailure(self.product, exc, url=url, change=is_write(method, path, kind)) from None
             if resp.status_code not in RETRYABLE_STATUSES or attempt == retries:
                 break
             hint = parse_retry_after(resp.headers.get("Retry-After", ""))

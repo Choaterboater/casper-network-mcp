@@ -32,7 +32,7 @@ from typing import Any
 from urllib.parse import quote
 
 from casper_network_mcp.core.budget import DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, bound_collection_response, clamp_limit
-from casper_network_mcp.core.http import compact_http_error
+from casper_network_mcp.core.http import compact_http_error, parse_retry_after
 from casper_network_mcp.core.paths import path_segment, safe_api_path
 from casper_network_mcp.products._base import ApiError, Reply
 from casper_network_mcp.products._tools import client
@@ -73,7 +73,11 @@ class CentralHTTPError(ApiError):
 
     def __init__(self, response: Reply, method: str = "") -> None:
         self.response = response
-        super().__init__("central", response.status_code, response.data, url=response.url, method=method)
+        super().__init__(
+            "central", response.status_code, response.data, url=response.url, method=method,
+            request_id=response.headers.get("x-request-id") or response.headers.get("x-correlation-id"),
+            retry_after_seconds=parse_retry_after(response.headers.get("Retry-After", "")),
+        )
 
 
 _SENT_KWARGS = ("params", "json", "headers", "content_type")
@@ -342,9 +346,9 @@ async def atroubleshoot_async(
 ) -> dict[str, Any]:
     """Start a troubleshooting task and poll it.
 
-    ``diagnostic=True`` declares a hand-checked check (ping, show, cable
-    test ...) on ``TROUBLESHOOT_OPS``; a disruptive action (PoE or port bounce, reboot) leaves
-    it false, so the read-only pin refuses it.
+    ``diagnostic=True`` declares a hand-checked check (ping, show ...) on
+    ``TROUBLESHOOT_OPS``; a disruptive action (cable test, PoE or port bounce,
+    reboot) leaves it false, so the read-only pin refuses it.
     """
     candidates = [endpoint] if isinstance(endpoint, str) else list(endpoint)
     if not candidates:

@@ -19,7 +19,7 @@ from typing import Any
 
 import httpx
 
-from casper_network_mcp.core.gate import Gate
+from casper_network_mcp.core.gate import Gate, is_write
 from casper_network_mcp.core.http import Http
 from casper_network_mcp.core.logins import read_logins
 from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused
@@ -130,12 +130,13 @@ class ClearPassClient(BaseClient):
         resp = await self._http.request(
             method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
         )
-        if resp.status_code == 401:  # not accepted, so sending again is safe
+        if resp.status_code == 401:
             self._forget_token(token)
-            token = await self._access_token()
-            resp = await self._http.request(
-                method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
-            )
+            if method == "GET" and not body and not is_write(method, url.removeprefix(self.base_url)):
+                token = await self._access_token()
+                resp = await self._http.request(
+                    method, url, headers={**headers, "Authorization": f"Bearer {token}"}, params=params, **body
+                )
         return resp
 
     async def aclose(self) -> None:

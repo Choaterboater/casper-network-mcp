@@ -7,8 +7,10 @@ flag read once at start) the gate lets through only:
 * a GET whose change kind is ``read``;
 * a POST on ``READ_POSTS`` (a reviewed POST that only reads);
 * a POST on ``TROUBLESHOOT_OPS`` sent as ``troubleshoot`` (a hand-checked
-  check such as ping or show that changes nothing, or a cable test, which
-  briefly takes the tested port's link down).
+  check such as ping or show that changes nothing).
+
+Cable tests briefly take the tested port's link down and require the change
+route; the read-only pin refuses them.
 
 Everything else is refused before anything is sent. A kind a caller declares
 can only make the gate stricter, never looser: a PUT called ``read`` is still

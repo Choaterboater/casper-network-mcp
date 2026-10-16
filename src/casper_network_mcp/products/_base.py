@@ -26,13 +26,13 @@ import httpx
 
 from casper_network_mcp.core.budget import WHOLE_REPLY_MAX_BYTES, bounded_response_payload
 from casper_network_mcp.core.errors import ToolError
-from casper_network_mcp.core.gate import PRODUCT_NAMES, Gate, LoginMissing, Refused
-from casper_network_mcp.core.http import Http, body_kwargs
+from casper_network_mcp.core.gate import PRODUCT_NAMES, Gate, LoginMissing, Refused, is_write
+from casper_network_mcp.core.http import Http, body_kwargs, parse_retry_after
 from casper_network_mcp.core.paths import safe_api_path, validate_product_base_url
 from casper_network_mcp.core.redact import redact_sensitive, redact_tool_error_text
 from casper_network_mcp.openapi_gen.runtime import is_auth_param, is_transport_header
 
-__all__ = ["ApiError", "BaseClient", "LoginMissing", "Refused", "Reply"]
+__all__ = ["ApiError", "BaseClient", "LoginMissing", "Refused", "Reply", "TransportFailure"]
 
 _REQUEST_ID_HEADERS = ("x-request-id", "x-mist-request-id", "x-correlation-id")
 
@@ -61,6 +61,37 @@ def _extract_detail(payload: bytes) -> Any:
     return data
 
 
+def _retry_guidance(change: bool) -> str:
+    if change:
+        return "The outcome is unknown; check the target's current state before retrying this change."
+    return "Retry this read after checking connectivity and service availability."
+
+
+class TransportFailure(ToolError):
+    """A transport failure with recovery guidance, never an automatic write retry."""
+
+    def __init__(self, product: str, cause: httpx.TransportError, *, url: str, change: bool) -> None:
+        self.product = product
+        self.code = "timeout" if isinstance(cause, httpx.TimeoutException) else "connection_error"
+        self.detail = redact_tool_error_text(str(cause))
+        self.url = url
+        self.guidance = _retry_guidance(change)
+        name = PRODUCT_NAMES.get(product, product)
+        super().__init__(f"Could not reach {name}: {self.detail}")
+
+    def as_error(self) -> dict[str, Any]:
+        return {
+            "error": str(self),
+            "code": self.code,
+            "product": self.product,
+            "status": None,
+            "detail": self.detail,
+            "request_id": None,
+            "url": self.url,
+            "guidance": self.guidance,
+        }
+
+
 class ApiError(ToolError):
     """The product answered with an error status.
 
@@ -78,12 +109,27 @@ class ApiError(ToolError):
         request_id: str | None = None,
         url: str | None = None,
         method: str = "",
+        retry_after_seconds: float | None = None,
     ) -> None:
         self.product = product
         self.status = status
         self.detail = redact_sensitive(detail)
         self.request_id = request_id
         self.url = url
+        self.retry_after_seconds = retry_after_seconds
+        change = is_write(method, httpx.URL(url or "").path) if method else True
+        if status == 403:
+            self.code = "permission_denied"
+            self.guidance = "Check the login's role and access to this target before trying again."
+        elif status == 429:
+            self.code = "rate_limited"
+            self.guidance = "Wait for the rate limit to clear. " + _retry_guidance(change)
+        elif status >= 500:
+            self.code = "upstream_error"
+            self.guidance = _retry_guidance(change)
+        else:
+            self.code = "api_error"
+            self.guidance = "Check the request and target against the API documentation before trying again."
         name = PRODUCT_NAMES.get(product, product)
         where = f" to {method} {url}" if url else ""
         text = self.detail if isinstance(self.detail, str) else jsonlib.dumps(self.detail, default=str)
@@ -108,10 +154,13 @@ class ApiError(ToolError):
             "detail": self.detail,
             "request_id": self.request_id,
             "url": self.url,
+            "code": self.code,
+            "guidance": self.guidance,
+            **({"retry_after_seconds": self.retry_after_seconds} if self.retry_after_seconds is not None else {}),
         }
 
 
-_REPLY_HEADERS = ("location", "content-type", *_REQUEST_ID_HEADERS)
+_REPLY_HEADERS = ("location", "content-type", "retry-after", *_REQUEST_ID_HEADERS)
 
 
 class Reply:
@@ -237,6 +286,7 @@ class BaseClient:
                 request_id=request_id,
                 url=url,
                 method=method,
+                retry_after_seconds=parse_retry_after(resp.headers.get("Retry-After", "")),
             )
         if resp.status_code == 204 or not resp.content:
             return None
@@ -263,6 +313,22 @@ class BaseClient:
             method, url, headers={**headers, **self._login_headers()}, params=params, **body
         )
 
+    async def _send_checked(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str],
+        params: Any,
+        body: dict[str, Any],
+        *,
+        kind: str | None = None,
+    ) -> Any:
+        try:
+            return await self._send(method, url, headers, params, body)
+        except httpx.TransportError as exc:
+            path = url.removeprefix(self.base_url)
+            raise TransportFailure(self.product, exc, url=url, change=is_write(method, path, kind)) from None
+
     async def preflight(self, method: str, path: str, *, path_args: dict[str, Any] | None = None) -> None:
         """Run the checks :meth:`request` runs first (gate, path, login, scope) and send nothing.
 
@@ -280,7 +346,7 @@ class BaseClient:
         preview). A reply too large to keep whole is refused.
         """
         url = self._prepare("GET", path, kind="read", path_args=path_args)
-        resp = await self._send("GET", url, self._headers(None, {}), None, {})
+        resp = await self._send_checked("GET", url, self._headers(None, {}), None, {})
         if resp.status_code >= 400 or resp.status_code == 204 or not resp.content:
             return self._decode(resp, "GET", url)
         try:
@@ -310,7 +376,7 @@ class BaseClient:
         url = self._prepare(method, path, kind=kind, path_args=path_args)
         await self.gate.check_scope(self.product, self, method, path, dict(path_args or {}), kind)
         body, body_headers = body_kwargs(json, content_type)
-        resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
+        resp = await self._send_checked(method, url, self._headers(headers, body_headers), params, body, kind=kind)
         return self._decode(resp, method, url)
 
     async def exchange(
@@ -330,7 +396,7 @@ class BaseClient:
         url = self._prepare(method, path, kind=kind, path_args=path_args)
         await self.gate.check_scope(self.product, self, method, path, dict(path_args or {}), kind)
         body, body_headers = body_kwargs(json, content_type)
-        resp = await self._send(method, url, self._headers(headers, body_headers), params, body)
+        resp = await self._send_checked(method, url, self._headers(headers, body_headers), params, body, kind=kind)
         return self._reply(resp, url)
 
     async def aclose(self) -> None:

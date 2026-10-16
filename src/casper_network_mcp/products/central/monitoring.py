@@ -2224,10 +2224,10 @@ def plan_device_troubleshooting(
         )
     if any(token in evidence for token in ("cable", "tdr", "interface", "link")):
         _extend_unique(
-            recommended_diagnostics,
+            recommended_destructive,
             _plan_action(
                 "cable_test",
-                "diagnostic",
+                "destructive",
                 (
                     "Interface/cable symptoms were present. A TDR test briefly takes the tested port's link down;"
                     " ask for the ports first."
