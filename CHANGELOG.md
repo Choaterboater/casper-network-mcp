@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Added read-only `clearpass_why_denied`: recent session summaries, endpoint status/profile, NAD and applied
+  roles for one MAC or username. Uses only the bundled 6.12.7 session and endpoint APIs; explicitly reports
+  that active accounting sessions cannot establish missing Access Tracker reject reasons or enforcement profiles.
+- Added validated MAC, username, NAD IP, accounting service type and timezone-aware ISO start/end filters to
+  ClearPass session/auth-failure reads. Time filtering is local (the spec declares no range operators), bounded
+  to ten pages per call with `next_server_offset` for continuation and a count of unusable timestamps.
+- Added offline validation, summary, redaction, pagination and routing tests; regenerated the router index.
+
 ## 0.1.3
 
 Read replies stay under 16 KiB and can be resumed, and two Mist tools diagnose NAC.

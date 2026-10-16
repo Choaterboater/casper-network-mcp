@@ -27,9 +27,11 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-from typing import Any, Literal
+from datetime import datetime
+from typing import Annotated, Any, Literal
 
 from mcp.server.mcpserver import MCPServer
+from pydantic import Field
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.budget import bound_collection_response, clamp_limit
@@ -48,7 +50,8 @@ _ENDPOINT_FIELDS = (
 _SESSION_FIELDS = (
     "id", "session_id", "username", "user_name", "mac_address", "calling_station_id", "endpoint_mac_address",
     "nasipaddress", "nas_ip", "nas_identifier", "nas_port_id", "auth_status", "service_name",
-    "enforcement_profile", "acctstarttime", "timestamp",
+    "enforcement_profile", "acctstarttime", "timestamp", "acctsessionid", "callingstationid", "nas_name",
+    "nasportid", "servicetype", "state", "acctstoptime", "acctterminatecause", "tipsrole", "arubauserrole", "role_name",
 )  # fmt: skip
 _SESSION_REASONS = ("reason", "auth_error", "error_message", "reply_message", "alert_message", "result")
 _NAD_FIELDS = ("id", "name", "ip_address", "vendor_name", "coa_capable", "coa_port", "status", "enabled", "description")
@@ -142,6 +145,113 @@ def _listed(items: list[Any], limit: int, offset: int) -> Any:
     return out
 
 
+MacFilter = Annotated[
+    str | None, Field(description="Client MAC: 12 hex digits, colon/dash octets or dotted groups; e.g. 02:00:00:00:00:01.")
+]
+UsernameFilter = Annotated[str | None, Field(description="Exact session username; must not be blank.")]
+NadFilter = Annotated[str | None, Field(description="Exact NAD IP address (session nasipaddress).")]
+ServiceFilter = Annotated[
+    str | None, Field(description="Exact accounting service type (servicetype), not an Access Tracker policy service name.")
+]
+StartFilter = Annotated[
+    str | None,
+    Field(description="Inclusive session start-time lower bound, ISO 8601 with timezone, e.g. 2025-01-01T00:00:00Z."),
+]
+EndFilter = Annotated[
+    str | None, Field(description="Inclusive session start-time upper bound, ISO 8601 with timezone; must be >= start.")
+]
+
+
+def _session_mac(value: str) -> str:
+    if not re.fullmatch(
+        r"(?:[0-9a-fA-F]{12}|(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}|"
+        r"(?:[0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}|(?:[0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4})",
+        value,
+    ):
+        raise ValueError("mac must be 12 hex digits, colon/dash-separated octets or dotted groups (02:00:00:00:00:01).")
+    return _normalize_mac(value)
+
+
+def _iso_time(value: str | None, name: str) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+        if "T" not in value or parsed.tzinfo is None:
+            raise ValueError
+        return parsed
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be an ISO 8601 date-time with timezone, e.g. 2025-01-01T00:00:00Z.") from None
+
+
+async def _session_list(
+    status: str | None,
+    limit: int,
+    offset: int,
+    mac: str | None,
+    username: str | None,
+    nad: str | None,
+    service: str | None,
+    start: str | None,
+    end: str | None,
+) -> dict[str, Any]:
+    lower, upper = _iso_time(start, "start"), _iso_time(end, "end")
+    if lower is not None and upper is not None and lower > upper:
+        raise ValueError("start must be before or equal to end.")
+    filters = {
+        k: v for k, v in {
+            "auth_status": status,
+            "mac_address": _session_mac(mac) if mac is not None else None,
+            "username": username,
+            "nasipaddress": nad,
+            "servicetype": service,
+        }.items() if v is not None
+    }
+    if any(not v.strip() for v in filters.values()):
+        raise ValueError("Session filters must not be blank.")
+    safe_limit, params = _page(limit, offset)
+    params["sort"] = "-acctstarttime"
+    if filters:
+        params["filter"] = json.dumps(filters, separators=(",", ":"))
+    sessions: list[Any] = []
+    next_offset = max(0, offset)
+    has_more = False
+    missing_times = 0
+    # The spec declares a JSON filter but no range operators: compare times locally.
+    for _ in range(10 if lower is not None or upper is not None else 1):
+        params["offset"] = next_offset
+        rows = _items(await _get("/api/session", params))
+        consumed = 0
+        for row in rows:
+            consumed += 1
+            if not isinstance(row, dict):
+                continue
+            if lower is not None or upper is not None:
+                try:
+                    stamp = _iso_time(row.get("acctstarttime"), "acctstarttime")
+                except ValueError:
+                    stamp = None
+                if stamp is None:
+                    missing_times += 1
+                    continue
+                if (lower is not None and stamp < lower) or (upper is not None and stamp > upper):
+                    continue
+            sessions.append(_session(row))
+            if len(sessions) >= safe_limit:
+                break
+        next_offset += consumed
+        has_more = consumed < len(rows) or len(rows) >= safe_limit
+        if not has_more or len(sessions) >= safe_limit:
+            break
+    out = _listed(sessions, safe_limit, offset)
+    out["filter"] = filters
+    if lower is not None or upper is not None:
+        out["time_window"] = {"start": start, "end": end, "unusable_timestamps": missing_times}
+    if has_more:
+        out["next_server_offset"] = next_offset
+    return out
+
+
 # ── reads ───────────────────────────────────────────────────────────────────
 
 
@@ -184,19 +294,27 @@ async def clearpass_get_endpoint_by_mac(mac_address: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def clearpass_list_auth_failures(limit: int = 25, offset: int = 0, auth_status: str = "FAILED") -> dict[str, Any]:
+async def clearpass_list_auth_failures(
+    limit: Annotated[int, Field(description="Sessions per page; clamped to 1..200.")] = 25,
+    offset: Annotated[int, Field(description="Server offset, or next_server_offset from an earlier scan.")] = 0,
+    auth_status: Annotated[
+        str, Field(description="Exact auth_status filter (default FAILED); not declared by the active-session schema.")
+    ] = "FAILED",
+    mac: MacFilter = None,
+    username: UsernameFilter = None,
+    nad: NadFilter = None,
+    service: ServiceFilter = None,
+    start: StartFilter = None,
+    end: EndFilter = None,
+) -> dict[str, Any]:
     """Recent authentication failures from Access Tracker (``GET /api/session``), newest first.
 
     Filters on ``auth_status`` (default FAILED). Returns username, MAC, NAD,
-    status and the reason.
+    status and the reason when supplied. The bundled active-session schema
+    does not declare auth_status or reject reasons. Time windows scan at most
+    ten pages locally; pass next_server_offset as offset to continue.
     """
-    safe_limit, params = _page(limit, offset)
-    params.update({"filter": json.dumps({"auth_status": auth_status}, separators=(",", ":")), "sort": "-acctstarttime"})
-    data = await _get("/api/session", params)
-    sessions = _listed([_session(item) for item in _items(data)], safe_limit, offset)
-    if isinstance(sessions, dict):
-        sessions["filter"] = {"auth_status": auth_status}
-    return {"sessions": sessions}
+    return {"sessions": await _session_list(auth_status, limit, offset, mac, username, nad, service, start, end)}
 
 
 @mcp.tool()
@@ -259,21 +377,103 @@ async def clearpass_get_onguard_activity_by_mac(mac_address: str) -> dict[str, A
 
 @mcp.tool()
 async def clearpass_list_access_tracker_sessions(
-    status: str | None = None, limit: int = 25, offset: int = 0
+    status: Annotated[
+        str | None, Field(description="Optional auth_status filter; not declared by the active-session schema.")
+    ] = None,
+    limit: Annotated[int, Field(description="Sessions per page; clamped to 1..200.")] = 25,
+    offset: Annotated[int, Field(description="Server offset, or next_server_offset from an earlier scan.")] = 0,
+    mac: MacFilter = None,
+    username: UsernameFilter = None,
+    nad: NadFilter = None,
+    service: ServiceFilter = None,
+    start: StartFilter = None,
+    end: EndFilter = None,
 ) -> dict[str, Any]:
     """Access Tracker sessions, newest first (``GET /api/session``), optionally by ``auth_status``.
 
-    ``status``: for example FAILED, REJECT, ALLOW, DISCONNECT. For failures
-    only, ``clearpass_list_auth_failures`` is simpler.
+    The bundled spec describes active accounting sessions, not full Access
+    Tracker records. Time bounds apply to acctstarttime locally, scanning at
+    most ten pages. If next_server_offset is present, pass it as offset to
+    continue (even if this page has no matches). Invalid timestamps are counted.
     """
-    safe_limit, params = _page(limit, offset)
-    params["sort"] = "-acctstarttime"
-    if status is not None:
-        params["filter"] = json.dumps({"auth_status": status}, separators=(",", ":"))
-    sessions = _listed([_session(item) for item in _items(await _get("/api/session", params))], safe_limit, offset)
-    if isinstance(sessions, dict) and status is not None:
-        sessions["filter"] = {"auth_status": status}
-    return {"sessions": sessions}
+    return {"sessions": await _session_list(status, limit, offset, mac, username, nad, service, start, end)}
+
+
+@mcp.tool()
+async def clearpass_why_denied(
+    mac: MacFilter = None,
+    username: UsernameFilter = None,
+    nad: NadFilter = None,
+    service: ServiceFilter = None,
+    start: StartFilter = None,
+    end: EndFilter = None,
+    limit: Annotated[int, Field(description="Latest sessions to summarize; clamped to 1..200.")] = 5,
+    offset: Annotated[int, Field(description="Server offset; use next_server_offset to continue scanning.")] = 0,
+) -> dict[str, Any]:
+    """Why was this client denied on ClearPass? Recent sessions, endpoint profile, NAD and applied roles.
+
+    Provide exactly one of mac or username. Reads GET /api/session and
+    GET /api/endpoint/mac-address/{mac_address}. The bundled 6.12.7 API has
+    active accounting sessions, not full Access Tracker rejects: missing auth
+    result, failure reason or enforcement profile is unknown, never inferred
+    from accounting state or termination cause. Service is the accounting type.
+    For a username, endpoint details describe only the latest session's MAC.
+    Time windows scan at most ten pages; next_server_offset continues the scan.
+    """
+    if (mac is None) == (username is None):
+        raise ValueError("Provide exactly one of mac or username.")
+    page = await _session_list(None, limit, offset, mac, username, nad, service, start, end)
+    rows = page["items"]
+    normalized = _session_mac(mac) if mac is not None else None
+    if normalized is None and rows:
+        candidate = rows[0].get("mac_address") or rows[0].get("callingstationid") or rows[0].get("calling_station_id")
+        if isinstance(candidate, str):
+            try:
+                normalized = _session_mac(candidate)
+            except ValueError:
+                pass
+    endpoint: Any = None
+    if normalized is not None:
+        endpoint_data = await _part(_get(f"/api/endpoint/mac-address/{normalized}", {"profile_details": "true"}))
+        endpoint = endpoint_data if _failed(endpoint_data) else _pick(_first(endpoint_data), _ENDPOINT_FIELDS)
+    summaries = [
+        {
+            "id": row.get("id") or row.get("session_id"),
+            "time": row.get("acctstarttime") or row.get("timestamp"),
+            "username": row.get("username") or row.get("user_name"),
+            "mac": row.get("mac_address") or row.get("callingstationid") or row.get("calling_station_id"),
+            "service": row.get("service_name") or row.get("servicetype"),
+            "nad": {
+                "ip": row.get("nasipaddress") or row.get("nas_ip"),
+                "name": row.get("nas_name") or row.get("nas_identifier"),
+            },
+            "auth_result": row.get("auth_status"),
+            "reason": row.get("reason"),
+            "enforcement_profile": row.get("enforcement_profile"),
+            "roles": _pick(row, ("tipsrole", "arubauserrole", "role_name")),
+            "accounting_state": row.get("state"),
+            "termination_cause": row.get("acctterminatecause"),
+        }
+        for row in rows if isinstance(row, dict)
+    ]
+    out: dict[str, Any] = {
+        "sessions": summaries,
+        "endpoint_mac": normalized,
+        "endpoint": endpoint,
+        "filter": page["filter"],
+        "server_offset": page["server_offset"],
+        "degraded": _failed(endpoint),
+        "limitation": "The bundled API exposes active accounting sessions, not full Access Tracker rejects. "
+        "Missing auth results, reject reasons and enforcement profiles are unknown; no denial is inferred.",
+    }
+    for key in ("next_server_offset", "time_window"):
+        if key in page:
+            out[key] = page[key]
+    if not summaries:
+        out["message"] = "No matching sessions found in the scanned records."
+        if "next_server_offset" in page:
+            out["message"] += " More records remain; continue with next_server_offset."
+    return out
 
 
 @mcp.tool()

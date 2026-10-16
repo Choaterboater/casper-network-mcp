@@ -22,6 +22,12 @@ Behind them:
 - one generated tool for every operation in the bundled API descriptions;
 - overview tools for broad questions: `central_site_overview`, `mist_site_overview` and `clearpass_overview` give
   health, device counts and the top alarms in one read;
+- `clearpass_why_denied` summarizes recent sessions, endpoint status/profile, NAD and applied roles for exactly
+  one MAC or username. The bundled 6.12.7 API exposes active accounting sessions, not full Access Tracker
+  rejects; missing auth results, reject reasons and enforcement profiles remain unknown;
+- ClearPass session and auth-failure reads accept MAC, username, NAD IP, accounting service type and ISO 8601
+  start/end times (with timezone). Time windows scan at most ten pages locally; `next_server_offset` continues
+  a scan, including an empty page. The service filter is not an Access Tracker policy service name;
 - `lookup_api`, which answers exact questions about the vendors' APIs (endpoints, fields, allowed values) from the
   bundled documents, with no network.
 
