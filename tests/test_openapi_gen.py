@@ -145,6 +145,87 @@ def test_parser_array_body_item_type():
     assert op.request_body.schema_type == "array" and op.request_body.item_type == "string"
 
 
+def test_parser_merges_allof_members_and_sibling_properties():
+    spec = {
+        "openapi": "3.1.0",
+        "components": {
+            "schemas": {
+                "named": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}},
+                "typed": {
+                    "allOf": [{"$ref": "#/components/schemas/named"}],
+                    "required": ["kind"],
+                    "properties": {"kind": {"type": "string"}, "at": {"type": "string", "format": "date-time"}},
+                },
+                "loop": {"allOf": [{"$ref": "#/components/schemas/loop"}], "properties": {"x": {"type": "string"}}},
+            }
+        },
+        "paths": {
+            "/api/v1/x": {
+                "post": {
+                    "operationId": "make",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {"$ref": "#/components/schemas/typed"},
+                                        {
+                                            "type": "object",
+                                            "required": ["id"],
+                                            "properties": {"id": {"type": "string"}},
+                                        },
+                                    ],
+                                    "properties": {"enable": {"type": "boolean"}},
+                                }
+                            }
+                        }
+                    },
+                },
+                "put": {
+                    "operationId": "loop",
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/loop"}}}},
+                },
+            }
+        },
+    }
+    put, post = SpecParser(spec).operations()
+    body = post.request_body
+    assert body.schema_type == "object"
+    assert body.properties == ["at", "enable", "id", "kind", "name"]
+    assert body.required_properties == ["id", "kind", "name"]
+    assert body.property_formats == {"at": "date-time"}
+    assert put.request_body.properties == ["x"]  # a self-referencing allOf stops instead of looping
+
+
+def test_operation_parameter_overrides_path_parameter_with_same_name_and_location():
+    spec = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/api/v1/sites/{site-id}": {
+                "parameters": [
+                    {"name": "site-id", "in": "path", "required": True, "schema": {"type": "string"}},
+                    {"name": "site-id", "in": "query", "schema": {"type": "string"}},
+                ],
+                "delete": {
+                    "operationId": "drop",
+                    "parameters": [
+                        {
+                            "name": "site-id",
+                            "in": "path",
+                            "required": True,
+                            "description": "Site",
+                            "schema": {"type": "integer"},
+                        }
+                    ],
+                },
+            }
+        },
+    }
+    op = SpecParser(spec).operations()[0]
+    assert [(p.name, p.location) for p in op.parameters] == [("site-id", "path"), ("site-id", "query")]
+    assert op.parameters[0].schema_type == "integer" and op.parameters[0].description == "Site"
+
+
 def test_parser_raises_on_unresolved_ref():
     spec = {
         "openapi": "3.1.0",

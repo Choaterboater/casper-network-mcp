@@ -2776,7 +2776,19 @@
      "shared-network",
      "wired",
      "wired-profile"
-    ]
+    ],
+    "required_properties": [
+     "auth-type",
+     "name"
+    ],
+    "property_formats": {
+     "auth-profile-id": "pattern",
+     "auth-type": "enum",
+     "description": "const",
+     "name": "const",
+     "organization-name": "const",
+     "portal-profile": "pattern"
+    }
    }
   },
   {
@@ -2848,7 +2860,19 @@
      "shared-network",
      "wired",
      "wired-profile"
-    ]
+    ],
+    "required_properties": [
+     "auth-type",
+     "name"
+    ],
+    "property_formats": {
+     "auth-profile-id": "pattern",
+     "auth-type": "enum",
+     "description": "const",
+     "name": "const",
+     "organization-name": "const",
+     "portal-profile": "pattern"
+    }
    }
   },
   {
@@ -2964,7 +2988,19 @@
      "shared-network",
      "wired",
      "wired-profile"
-    ]
+    ],
+    "required_properties": [
+     "auth-type",
+     "name"
+    ],
+    "property_formats": {
+     "auth-profile-id": "pattern",
+     "auth-type": "enum",
+     "description": "const",
+     "name": "const",
+     "organization-name": "const",
+     "portal-profile": "pattern"
+    }
    }
   },
   {
@@ -3166,9 +3202,33 @@
     "schema_type": "object",
     "description": "policybody object",
     "properties": [
+     "ci-cache-max-age",
      "conditions",
+     "default-enf-profile",
+     "description",
+     "dpp-network",
+     "enable",
+     "enforce-user-validity",
+     "identity-stores",
+     "name",
+     "policy-id",
+     "policy-type",
+     "position",
      "rule"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "position"
+    ],
+    "property_formats": {
+     "ci-cache-max-age": "int64",
+     "description": "const",
+     "dpp-network": "const",
+     "name": "const",
+     "policy-id": "pattern",
+     "policy-type": "enum",
+     "position": "int32"
+    }
    }
   },
   {
@@ -3220,9 +3280,33 @@
     "schema_type": "object",
     "description": "policybody object",
     "properties": [
+     "ci-cache-max-age",
      "conditions",
+     "default-enf-profile",
+     "description",
+     "dpp-network",
+     "enable",
+     "enforce-user-validity",
+     "identity-stores",
+     "name",
+     "policy-id",
+     "policy-type",
+     "position",
      "rule"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "position"
+    ],
+    "property_formats": {
+     "ci-cache-max-age": "int64",
+     "description": "const",
+     "dpp-network": "const",
+     "name": "const",
+     "policy-id": "pattern",
+     "policy-type": "enum",
+     "position": "int32"
+    }
    }
   },
   {
@@ -3318,9 +3402,33 @@
     "schema_type": "object",
     "description": "policybody object",
     "properties": [
+     "ci-cache-max-age",
      "conditions",
+     "default-enf-profile",
+     "description",
+     "dpp-network",
+     "enable",
+     "enforce-user-validity",
+     "identity-stores",
+     "name",
+     "policy-id",
+     "policy-type",
+     "position",
      "rule"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "position"
+    ],
+    "property_formats": {
+     "ci-cache-max-age": "int64",
+     "description": "const",
+     "dpp-network": "const",
+     "name": "const",
+     "policy-id": "pattern",
+     "policy-type": "enum",
+     "position": "int32"
+    }
    }
   },
   {
@@ -3529,7 +3637,20 @@
      "message-type",
      "name",
      "sms"
-    ]
+    ],
+    "required_properties": [
+     "message-id",
+     "message-purpose",
+     "message-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "message-id": "pattern",
+     "message-purpose": "enum",
+     "message-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -3588,7 +3709,20 @@
      "message-type",
      "name",
      "sms"
-    ]
+    ],
+    "required_properties": [
+     "message-id",
+     "message-purpose",
+     "message-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "message-id": "pattern",
+     "message-purpose": "enum",
+     "message-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -3691,7 +3825,20 @@
      "message-type",
      "name",
      "sms"
-    ]
+    ],
+    "required_properties": [
+     "message-id",
+     "message-purpose",
+     "message-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "message-id": "pattern",
+     "message-purpose": "enum",
+     "message-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -4294,7 +4441,17 @@
      "okta",
      "openid-connect",
      "x"
-    ]
+    ],
+    "required_properties": [
+     "id-store-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "pattern",
+     "id-store-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -4358,7 +4515,17 @@
      "okta",
      "openid-connect",
      "x"
-    ]
+    ],
+    "required_properties": [
+     "id-store-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "pattern",
+     "id-store-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -4466,7 +4633,17 @@
      "okta",
      "openid-connect",
      "x"
-    ]
+    ],
+    "required_properties": [
+     "id-store-type",
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "pattern",
+     "id-store-type": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -4673,7 +4850,18 @@
      "provider-id",
      "provider-type",
      "twilio"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "provider-id",
+     "provider-type"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "provider-id": "pattern",
+     "provider-type": "enum"
+    }
    }
   },
   {
@@ -4730,7 +4918,18 @@
      "provider-id",
      "provider-type",
      "twilio"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "provider-id",
+     "provider-type"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "provider-id": "pattern",
+     "provider-type": "enum"
+    }
    }
   },
   {
@@ -4831,7 +5030,18 @@
      "provider-id",
      "provider-type",
      "twilio"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "provider-id",
+     "provider-type"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "provider-id": "pattern",
+     "provider-type": "enum"
+    }
    }
   },
   {
@@ -5038,7 +5248,17 @@
      "messages",
      "name",
      "override-id"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "override-id"
+    ],
+    "property_formats": {
+     "description": "const",
+     "fallback-language": "enum",
+     "name": "const",
+     "override-id": "pattern"
+    }
    }
   },
   {
@@ -5095,7 +5315,17 @@
      "messages",
      "name",
      "override-id"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "override-id"
+    ],
+    "property_formats": {
+     "description": "const",
+     "fallback-language": "enum",
+     "name": "const",
+     "override-id": "pattern"
+    }
    }
   },
   {
@@ -5196,7 +5426,17 @@
      "messages",
      "name",
      "override-id"
-    ]
+    ],
+    "required_properties": [
+     "name",
+     "override-id"
+    ],
+    "property_formats": {
+     "description": "const",
+     "fallback-language": "enum",
+     "name": "const",
+     "override-id": "pattern"
+    }
    }
   },
   {
@@ -8454,7 +8694,16 @@
      "psm-extension-name",
      "psm-ips",
      "vrf"
-    ]
+    ],
+    "required_properties": [
+     "vrf"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "psm-extension-name": "pattern",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -8511,7 +8760,16 @@
      "psm-extension-name",
      "psm-ips",
      "vrf"
-    ]
+    ],
+    "required_properties": [
+     "vrf"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "psm-extension-name": "pattern",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -8612,7 +8870,16 @@
      "psm-extension-name",
      "psm-ips",
      "vrf"
-    ]
+    ],
+    "required_properties": [
+     "vrf"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "psm-extension-name": "pattern",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -8821,7 +9088,19 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "hec-token": "pattern",
+     "hec-url": "pattern",
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -8880,7 +9159,19 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "hec-token": "pattern",
+     "hec-url": "pattern",
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -8983,7 +9274,19 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "hec-token": "pattern",
+     "hec-url": "pattern",
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -9191,7 +9494,17 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -9249,7 +9562,17 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -9351,7 +9674,17 @@
      "name",
      "type",
      "uuid"
-    ]
+    ],
+    "required_properties": [
+     "enabled",
+     "name",
+     "type"
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "type": "enum",
+     "uuid": "const"
+    }
    }
   },
   {
@@ -10605,7 +10938,20 @@
      "split-policy",
      "stack-id",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "domain-id": "int64",
+     "name": "const",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "split-policy": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -10671,7 +11017,20 @@
      "split-policy",
      "stack-id",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "domain-id": "int64",
+     "name": "const",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "split-policy": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -10781,7 +11140,20 @@
      "split-policy",
      "stack-id",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "domain-id": "int64",
+     "name": "const",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "split-policy": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -10996,7 +11368,20 @@
      "split-detection",
      "split-detection-method",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "number-of-members",
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "number-of-members": "int32",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -11061,7 +11446,20 @@
      "split-detection",
      "split-detection-method",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "number-of-members",
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "number-of-members": "int32",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -11170,7 +11568,20 @@
      "split-detection",
      "split-detection-method",
      "template-name"
-    ]
+    ],
+    "required_properties": [
+     "number-of-members",
+     "platform"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "number-of-members": "int32",
+     "port-speed": "enum",
+     "secondary-member": "int32",
+     "split-detection-method": "enum",
+     "template-name": "const"
+    }
    }
   },
   {
@@ -11765,6 +12176,7 @@
      "ap-mode",
      "assignment-rules",
      "auth-server-group",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "called-station-id",
@@ -11775,10 +12187,13 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "description",
+     "dot1x",
      "dot1x-timer-idrequest-period",
      "dot3az",
      "dot3bz",
+     "download-role",
      "duplex",
      "enable",
      "exclude-uplink",
@@ -11787,21 +12202,60 @@
      "internal-auth-server",
      "l2-auth-failthrough",
      "loop-protect",
+     "mac-auth-only-role",
      "mac-authentication",
+     "machine-auth",
      "out-of-service",
      "poe",
      "port-bond",
      "port-type",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "profile-name",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
+     "server-load-balancing",
      "speed",
      "stp",
      "switchport",
-     "trusted"
-    ]
+     "trusted",
+     "type",
+     "use-ip-for-calling-station-id"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "ap-mode": "enum",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "captive-portal": "const",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot1x-timer-idrequest-period": "int32",
+     "duplex": "enum",
+     "forward-mode": "enum",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "mac-auth-only-role": "const",
+     "out-of-service": "enum",
+     "port-type": "enum",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "profile-name": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "speed": "enum",
+     "type": "enum"
+    }
    }
   },
   {
@@ -11857,6 +12311,7 @@
      "ap-mode",
      "assignment-rules",
      "auth-server-group",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "called-station-id",
@@ -11867,10 +12322,13 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "description",
+     "dot1x",
      "dot1x-timer-idrequest-period",
      "dot3az",
      "dot3bz",
+     "download-role",
      "duplex",
      "enable",
      "exclude-uplink",
@@ -11879,21 +12337,60 @@
      "internal-auth-server",
      "l2-auth-failthrough",
      "loop-protect",
+     "mac-auth-only-role",
      "mac-authentication",
+     "machine-auth",
      "out-of-service",
      "poe",
      "port-bond",
      "port-type",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "profile-name",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
+     "server-load-balancing",
      "speed",
      "stp",
      "switchport",
-     "trusted"
-    ]
+     "trusted",
+     "type",
+     "use-ip-for-calling-station-id"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "ap-mode": "enum",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "captive-portal": "const",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot1x-timer-idrequest-period": "int32",
+     "duplex": "enum",
+     "forward-mode": "enum",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "mac-auth-only-role": "const",
+     "out-of-service": "enum",
+     "port-type": "enum",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "profile-name": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "speed": "enum",
+     "type": "enum"
+    }
    }
   },
   {
@@ -11993,6 +12490,7 @@
      "ap-mode",
      "assignment-rules",
      "auth-server-group",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "called-station-id",
@@ -12003,10 +12501,13 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "description",
+     "dot1x",
      "dot1x-timer-idrequest-period",
      "dot3az",
      "dot3bz",
+     "download-role",
      "duplex",
      "enable",
      "exclude-uplink",
@@ -12015,21 +12516,60 @@
      "internal-auth-server",
      "l2-auth-failthrough",
      "loop-protect",
+     "mac-auth-only-role",
      "mac-authentication",
+     "machine-auth",
      "out-of-service",
      "poe",
      "port-bond",
      "port-type",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "profile-name",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
+     "server-load-balancing",
      "speed",
      "stp",
      "switchport",
-     "trusted"
-    ]
+     "trusted",
+     "type",
+     "use-ip-for-calling-station-id"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "ap-mode": "enum",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "captive-portal": "const",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot1x-timer-idrequest-period": "int32",
+     "duplex": "enum",
+     "forward-mode": "enum",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "mac-auth-only-role": "const",
+     "out-of-service": "enum",
+     "port-type": "enum",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "profile-name": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "speed": "enum",
+     "type": "enum"
+    }
    }
   },
   {
@@ -12241,7 +12781,12 @@
      "name",
      "preemption",
      "wifi-uplink"
-    ]
+    ],
+    "property_formats": {
+     "ap-mode": "enum",
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -12303,7 +12848,12 @@
      "name",
      "preemption",
      "wifi-uplink"
-    ]
+    ],
+    "property_formats": {
+     "ap-mode": "enum",
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -12409,7 +12959,12 @@
      "name",
      "preemption",
      "wifi-uplink"
-    ]
+    ],
+    "property_formats": {
+     "ap-mode": "enum",
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -12994,7 +13549,12 @@
      "mac-group-entries",
      "name",
      "role"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "role": "const"
+    }
    }
   },
   {
@@ -13052,7 +13612,12 @@
      "mac-group-entries",
      "name",
      "role"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "role": "const"
+    }
    }
   },
   {
@@ -13154,7 +13719,12 @@
      "mac-group-entries",
      "name",
      "role"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "role": "const"
+    }
    }
   },
   {
@@ -13359,7 +13929,11 @@
      "description",
      "ip",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -13414,7 +13988,11 @@
      "description",
      "ip",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -13513,7 +14091,11 @@
      "description",
      "ip",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -13724,6 +14306,7 @@
      "arp",
      "boundary-acl",
      "br-profile",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit",
@@ -13732,12 +14315,17 @@
      "description",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "duplex",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
      "exclude-app-cat-contract",
      "exclude-app-contract",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "gw-profile",
@@ -13756,16 +14344,24 @@
      "isolated-vlans",
      "jumbo-mtu",
      "lacp",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "name",
      "nd",
      "nd-snooping",
@@ -13786,13 +14382,18 @@
      "profile-name",
      "ptp",
      "ptp-lag-role",
+     "pvlan-port-mode",
      "qinq",
      "qos",
      "retain-profile-configs",
+     "routing",
      "session-holdtime",
      "sflow",
      "speed",
+     "speed-downshift-enable",
+     "speed-duplex",
      "speed-mode",
+     "speed-override",
      "split-port-count",
      "split-port-enable",
      "split-port-speed",
@@ -13800,14 +14401,53 @@
      "sw-profile",
      "switchport",
      "trusted",
+     "trusted-vlans",
      "tunneled-node-port",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "ap-profile": "const",
+     "boundary-acl": "const",
+     "br-profile": "const",
+     "broadcast-limit": "int32",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "duplex": "enum",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "gw-profile": "const",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "name": "pattern",
+     "port-type": "enum",
+     "portchannel-lag": "pattern",
+     "profile-name": "const",
+     "ptp-lag-role": "enum",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed": "enum",
+     "speed-duplex": "enum",
+     "speed-mode": "enum",
+     "split-port-count": "int32",
+     "split-port-speed": "enum",
+     "sw-profile": "const",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -13868,6 +14508,7 @@
      "arp",
      "boundary-acl",
      "br-profile",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit",
@@ -13876,12 +14517,17 @@
      "description",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "duplex",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
      "exclude-app-cat-contract",
      "exclude-app-contract",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "gw-profile",
@@ -13900,16 +14546,24 @@
      "isolated-vlans",
      "jumbo-mtu",
      "lacp",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "name",
      "nd",
      "nd-snooping",
@@ -13930,13 +14584,18 @@
      "profile-name",
      "ptp",
      "ptp-lag-role",
+     "pvlan-port-mode",
      "qinq",
      "qos",
      "retain-profile-configs",
+     "routing",
      "session-holdtime",
      "sflow",
      "speed",
+     "speed-downshift-enable",
+     "speed-duplex",
      "speed-mode",
+     "speed-override",
      "split-port-count",
      "split-port-enable",
      "split-port-speed",
@@ -13944,14 +14603,53 @@
      "sw-profile",
      "switchport",
      "trusted",
+     "trusted-vlans",
      "tunneled-node-port",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "ap-profile": "const",
+     "boundary-acl": "const",
+     "br-profile": "const",
+     "broadcast-limit": "int32",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "duplex": "enum",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "gw-profile": "const",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "name": "pattern",
+     "port-type": "enum",
+     "portchannel-lag": "pattern",
+     "profile-name": "const",
+     "ptp-lag-role": "enum",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed": "enum",
+     "speed-duplex": "enum",
+     "speed-mode": "enum",
+     "split-port-count": "int32",
+     "split-port-speed": "enum",
+     "sw-profile": "const",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -14012,6 +14710,7 @@
      "arp",
      "boundary-acl",
      "br-profile",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit",
@@ -14020,12 +14719,17 @@
      "description",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "duplex",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
      "exclude-app-cat-contract",
      "exclude-app-contract",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "gw-profile",
@@ -14044,16 +14748,24 @@
      "isolated-vlans",
      "jumbo-mtu",
      "lacp",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "name",
      "nd",
      "nd-snooping",
@@ -14074,13 +14786,18 @@
      "profile-name",
      "ptp",
      "ptp-lag-role",
+     "pvlan-port-mode",
      "qinq",
      "qos",
      "retain-profile-configs",
+     "routing",
      "session-holdtime",
      "sflow",
      "speed",
+     "speed-downshift-enable",
+     "speed-duplex",
      "speed-mode",
+     "speed-override",
      "split-port-count",
      "split-port-enable",
      "split-port-speed",
@@ -14088,14 +14805,53 @@
      "sw-profile",
      "switchport",
      "trusted",
+     "trusted-vlans",
      "tunneled-node-port",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "ap-profile": "const",
+     "boundary-acl": "const",
+     "br-profile": "const",
+     "broadcast-limit": "int32",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "duplex": "enum",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "gw-profile": "const",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "name": "pattern",
+     "port-type": "enum",
+     "portchannel-lag": "pattern",
+     "profile-name": "const",
+     "ptp-lag-role": "enum",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed": "enum",
+     "speed-duplex": "enum",
+     "speed-mode": "enum",
+     "split-port-count": "int32",
+     "split-port-speed": "enum",
+     "sw-profile": "const",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -14311,7 +15067,11 @@
      "excessive-tx-drops",
      "link-flap",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -14377,7 +15137,11 @@
      "excessive-tx-drops",
      "link-flap",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -14487,7 +15251,11 @@
      "excessive-tx-drops",
      "link-flap",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -14723,7 +15491,15 @@
      "trusted",
      "trusted-vlans",
      "tunneled-node-port"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "duplex": "enum",
+     "port-type": "enum",
+     "profile-name": "const",
+     "speed": "enum",
+     "switchport-alias": "pattern"
+    }
    }
   },
   {
@@ -14809,7 +15585,15 @@
      "trusted",
      "trusted-vlans",
      "tunneled-node-port"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "duplex": "enum",
+     "port-type": "enum",
+     "profile-name": "const",
+     "speed": "enum",
+     "switchport-alias": "pattern"
+    }
    }
   },
   {
@@ -14939,7 +15723,15 @@
      "trusted",
      "trusted-vlans",
      "tunneled-node-port"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "duplex": "enum",
+     "port-type": "enum",
+     "profile-name": "const",
+     "speed": "enum",
+     "switchport-alias": "pattern"
+    }
    }
   },
   {
@@ -15815,7 +16607,20 @@
      "tlv-dcbx-app",
      "transmit-delay",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "dcbx-version": "enum",
+     "description": "const",
+     "hold-multiplier": "int64",
+     "management-ip-address": "pattern",
+     "management-ipv6-address": "pattern",
+     "management-vlan": "int32",
+     "med-fast-transmit-counter": "int64",
+     "name": "const",
+     "reinit-delay": "int64",
+     "transmit-delay": "int64",
+     "transmit-interval": "int64"
+    }
    }
   },
   {
@@ -15885,7 +16690,20 @@
      "tlv-dcbx-app",
      "transmit-delay",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "dcbx-version": "enum",
+     "description": "const",
+     "hold-multiplier": "int64",
+     "management-ip-address": "pattern",
+     "management-ipv6-address": "pattern",
+     "management-vlan": "int32",
+     "med-fast-transmit-counter": "int64",
+     "name": "const",
+     "reinit-delay": "int64",
+     "transmit-delay": "int64",
+     "transmit-interval": "int64"
+    }
    }
   },
   {
@@ -15999,7 +16817,20 @@
      "tlv-dcbx-app",
      "transmit-delay",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "dcbx-version": "enum",
+     "description": "const",
+     "hold-multiplier": "int64",
+     "management-ip-address": "pattern",
+     "management-ipv6-address": "pattern",
+     "management-vlan": "int32",
+     "med-fast-transmit-counter": "int64",
+     "name": "const",
+     "reinit-delay": "int64",
+     "transmit-delay": "int64",
+     "transmit-interval": "int64"
+    }
    }
   },
   {
@@ -16217,7 +17048,14 @@
      "secondary-ip",
      "urpf",
      "vrf-forwarding"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int32",
+     "ipv4-prefix": "pattern",
+     "link-local": "pattern",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -16285,7 +17123,14 @@
      "secondary-ip",
      "urpf",
      "vrf-forwarding"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int32",
+     "ipv4-prefix": "pattern",
+     "link-local": "pattern",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -16397,7 +17242,14 @@
      "secondary-ip",
      "urpf",
      "vrf-forwarding"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int32",
+     "ipv4-prefix": "pattern",
+     "link-local": "pattern",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -16599,11 +17451,60 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "anycast",
+     "autoconfig",
+     "default-gateway-ipv4",
+     "default-gateway-ipv4-alias",
+     "default-gateway-ipv6",
+     "default-gateway-ipv6-alias",
      "description",
+     "dhcp-client",
      "domain-name",
+     "enable",
+     "eui64",
      "ip",
-     "name"
-    ]
+     "ipv4-static",
+     "ipv6-dhcp-rapid-commit",
+     "ipv6-enable",
+     "ipv6-static",
+     "lldp-oper-mode",
+     "lldp-trap",
+     "member",
+     "name",
+     "ntp-ipv6-multicast",
+     "primary-nameserver-ipv4",
+     "primary-nameserver-ipv4-alias",
+     "primary-nameserver-ipv6",
+     "primary-nameserver-ipv6-alias",
+     "secondary-nameserver-ipv4",
+     "secondary-nameserver-ipv4-alias",
+     "secondary-nameserver-ipv6",
+     "secondary-nameserver-ipv6-alias",
+     "speed-duplex",
+     "vlan-tag"
+    ],
+    "property_formats": {
+     "default-gateway-ipv4": "pattern",
+     "default-gateway-ipv4-alias": "pattern",
+     "default-gateway-ipv6": "pattern",
+     "default-gateway-ipv6-alias": "pattern",
+     "description": "const",
+     "domain-name": "pattern",
+     "ipv4-static": "pattern",
+     "ipv6-static": "pattern",
+     "lldp-oper-mode": "enum",
+     "name": "const",
+     "primary-nameserver-ipv4": "pattern",
+     "primary-nameserver-ipv4-alias": "pattern",
+     "primary-nameserver-ipv6": "pattern",
+     "primary-nameserver-ipv6-alias": "pattern",
+     "secondary-nameserver-ipv4": "pattern",
+     "secondary-nameserver-ipv4-alias": "pattern",
+     "secondary-nameserver-ipv6": "pattern",
+     "secondary-nameserver-ipv6-alias": "pattern",
+     "speed-duplex": "enum",
+     "vlan-tag": "int32"
+    }
    }
   },
   {
@@ -16655,11 +17556,60 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "anycast",
+     "autoconfig",
+     "default-gateway-ipv4",
+     "default-gateway-ipv4-alias",
+     "default-gateway-ipv6",
+     "default-gateway-ipv6-alias",
      "description",
+     "dhcp-client",
      "domain-name",
+     "enable",
+     "eui64",
      "ip",
-     "name"
-    ]
+     "ipv4-static",
+     "ipv6-dhcp-rapid-commit",
+     "ipv6-enable",
+     "ipv6-static",
+     "lldp-oper-mode",
+     "lldp-trap",
+     "member",
+     "name",
+     "ntp-ipv6-multicast",
+     "primary-nameserver-ipv4",
+     "primary-nameserver-ipv4-alias",
+     "primary-nameserver-ipv6",
+     "primary-nameserver-ipv6-alias",
+     "secondary-nameserver-ipv4",
+     "secondary-nameserver-ipv4-alias",
+     "secondary-nameserver-ipv6",
+     "secondary-nameserver-ipv6-alias",
+     "speed-duplex",
+     "vlan-tag"
+    ],
+    "property_formats": {
+     "default-gateway-ipv4": "pattern",
+     "default-gateway-ipv4-alias": "pattern",
+     "default-gateway-ipv6": "pattern",
+     "default-gateway-ipv6-alias": "pattern",
+     "description": "const",
+     "domain-name": "pattern",
+     "ipv4-static": "pattern",
+     "ipv6-static": "pattern",
+     "lldp-oper-mode": "enum",
+     "name": "const",
+     "primary-nameserver-ipv4": "pattern",
+     "primary-nameserver-ipv4-alias": "pattern",
+     "primary-nameserver-ipv6": "pattern",
+     "primary-nameserver-ipv6-alias": "pattern",
+     "secondary-nameserver-ipv4": "pattern",
+     "secondary-nameserver-ipv4-alias": "pattern",
+     "secondary-nameserver-ipv6": "pattern",
+     "secondary-nameserver-ipv6-alias": "pattern",
+     "speed-duplex": "enum",
+     "vlan-tag": "int32"
+    }
    }
   },
   {
@@ -16755,11 +17705,60 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "anycast",
+     "autoconfig",
+     "default-gateway-ipv4",
+     "default-gateway-ipv4-alias",
+     "default-gateway-ipv6",
+     "default-gateway-ipv6-alias",
      "description",
+     "dhcp-client",
      "domain-name",
+     "enable",
+     "eui64",
      "ip",
-     "name"
-    ]
+     "ipv4-static",
+     "ipv6-dhcp-rapid-commit",
+     "ipv6-enable",
+     "ipv6-static",
+     "lldp-oper-mode",
+     "lldp-trap",
+     "member",
+     "name",
+     "ntp-ipv6-multicast",
+     "primary-nameserver-ipv4",
+     "primary-nameserver-ipv4-alias",
+     "primary-nameserver-ipv6",
+     "primary-nameserver-ipv6-alias",
+     "secondary-nameserver-ipv4",
+     "secondary-nameserver-ipv4-alias",
+     "secondary-nameserver-ipv6",
+     "secondary-nameserver-ipv6-alias",
+     "speed-duplex",
+     "vlan-tag"
+    ],
+    "property_formats": {
+     "default-gateway-ipv4": "pattern",
+     "default-gateway-ipv4-alias": "pattern",
+     "default-gateway-ipv6": "pattern",
+     "default-gateway-ipv6-alias": "pattern",
+     "description": "const",
+     "domain-name": "pattern",
+     "ipv4-static": "pattern",
+     "ipv6-static": "pattern",
+     "lldp-oper-mode": "enum",
+     "name": "const",
+     "primary-nameserver-ipv4": "pattern",
+     "primary-nameserver-ipv4-alias": "pattern",
+     "primary-nameserver-ipv6": "pattern",
+     "primary-nameserver-ipv6-alias": "pattern",
+     "secondary-nameserver-ipv4": "pattern",
+     "secondary-nameserver-ipv4-alias": "pattern",
+     "secondary-nameserver-ipv6": "pattern",
+     "secondary-nameserver-ipv6-alias": "pattern",
+     "speed-duplex": "enum",
+     "vlan-tag": "int32"
+    }
    }
   },
   {
@@ -17716,6 +18715,7 @@
      "dynamic-arp-inspection",
      "enable",
      "forbid-vlans",
+     "hashing",
      "igmp",
      "igmp-snooping-lag",
      "incoming-clients-only",
@@ -17731,6 +18731,7 @@
      "jumbo-mtu",
      "lacp",
      "log",
+     "loop-protect",
      "mac-notify-traps",
      "macsec-policy",
      "mka-policy",
@@ -17761,8 +18762,10 @@
      "sw-profile",
      "sw-profile-alias",
      "switchport",
+     "trunk-type",
      "trusted",
      "trusted-vlans",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
@@ -17770,7 +18773,26 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "hashing": "enum",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "name": "pattern",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "sw-profile": "const",
+     "sw-profile-alias": "pattern",
+     "trunk-type": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -17835,6 +18857,7 @@
      "dynamic-arp-inspection",
      "enable",
      "forbid-vlans",
+     "hashing",
      "igmp",
      "igmp-snooping-lag",
      "incoming-clients-only",
@@ -17850,6 +18873,7 @@
      "jumbo-mtu",
      "lacp",
      "log",
+     "loop-protect",
      "mac-notify-traps",
      "macsec-policy",
      "mka-policy",
@@ -17880,8 +18904,10 @@
      "sw-profile",
      "sw-profile-alias",
      "switchport",
+     "trunk-type",
      "trusted",
      "trusted-vlans",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
@@ -17889,7 +18915,26 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "hashing": "enum",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "name": "pattern",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "sw-profile": "const",
+     "sw-profile-alias": "pattern",
+     "trunk-type": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -17998,6 +19043,7 @@
      "dynamic-arp-inspection",
      "enable",
      "forbid-vlans",
+     "hashing",
      "igmp",
      "igmp-snooping-lag",
      "incoming-clients-only",
@@ -18013,6 +19059,7 @@
      "jumbo-mtu",
      "lacp",
      "log",
+     "loop-protect",
      "mac-notify-traps",
      "macsec-policy",
      "mka-policy",
@@ -18043,8 +19090,10 @@
      "sw-profile",
      "sw-profile-alias",
      "switchport",
+     "trunk-type",
      "trusted",
      "trusted-vlans",
+     "unknown-vlans",
      "update-interval",
      "urpf",
      "virtual-router",
@@ -18052,7 +19101,26 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "client-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "hashing": "enum",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "name": "pattern",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "sw-profile": "const",
+     "sw-profile-alias": "pattern",
+     "trunk-type": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19018,7 +20086,14 @@
      "urpf",
      "vrf-forwarding",
      "vrrp"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "description": "const",
+     "encapsulation-vlan-id": "int32",
+     "parent-name-id": "const",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19092,7 +20167,14 @@
      "urpf",
      "vrf-forwarding",
      "vrrp"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "description": "const",
+     "encapsulation-vlan-id": "int32",
+     "parent-name-id": "const",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19210,7 +20292,14 @@
      "urpf",
      "vrf-forwarding",
      "vrrp"
-    ]
+    ],
+    "property_formats": {
+     "boundary-acl": "const",
+     "description": "const",
+     "encapsulation-vlan-id": "int32",
+     "parent-name-id": "const",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19414,6 +20503,7 @@
     "properties": [
      "aaa-profile",
      "boundary-acl",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit-max",
@@ -19422,9 +20512,14 @@
      "dfp-profile",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "hello-holdtime",
@@ -19441,16 +20536,24 @@
      "isolated-vlans",
      "lacp",
      "lag",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "nd-snooping-profile",
      "pfc-watchdog",
      "pim-bidir",
@@ -19463,18 +20566,51 @@
      "policy-vlan-config",
      "priority-flow-control",
      "profile-name",
+     "pvlan-port-mode",
      "qinq",
      "qos",
+     "routing",
      "session-holdtime",
      "sflow",
+     "speed-downshift-enable",
+     "speed-duplex",
+     "speed-override",
      "stp",
      "switchport",
+     "trusted-vlans",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "aaa-profile": "const",
+     "boundary-acl": "const",
+     "broadcast-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "dfp-profile": "const",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "nd-snooping-profile": "const",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed-duplex": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19528,6 +20664,7 @@
     "properties": [
      "aaa-profile",
      "boundary-acl",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit-max",
@@ -19536,9 +20673,14 @@
      "dfp-profile",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "hello-holdtime",
@@ -19555,16 +20697,24 @@
      "isolated-vlans",
      "lacp",
      "lag",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "nd-snooping-profile",
      "pfc-watchdog",
      "pim-bidir",
@@ -19577,18 +20727,51 @@
      "policy-vlan-config",
      "priority-flow-control",
      "profile-name",
+     "pvlan-port-mode",
      "qinq",
      "qos",
+     "routing",
      "session-holdtime",
      "sflow",
+     "speed-downshift-enable",
+     "speed-duplex",
+     "speed-override",
      "stp",
      "switchport",
+     "trusted-vlans",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "aaa-profile": "const",
+     "boundary-acl": "const",
+     "broadcast-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "dfp-profile": "const",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "nd-snooping-profile": "const",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed-duplex": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -19686,6 +20869,7 @@
     "properties": [
      "aaa-profile",
      "boundary-acl",
+     "broadcast-limit",
      "cable-length",
      "cdp",
      "client-limit-max",
@@ -19694,9 +20878,14 @@
      "dfp-profile",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
+     "dpi-enable",
      "dynamic-arp-inspection",
+     "enable",
+     "energy-efficient",
+     "error-control",
      "excessive-broadcasts",
      "excessive-multicasts",
+     "fault-monitor-profile",
      "flow-control-mode",
      "forbid-vlans",
      "hello-holdtime",
@@ -19713,16 +20902,24 @@
      "isolated-vlans",
      "lacp",
      "lag",
+     "link-clock-narrow-tolerance",
      "link-flap",
      "lldp",
      "llfc-flow-control",
      "log",
+     "loop-protect",
      "lossless-buffer-based-link-level-flow-control",
      "lossless-buffer-based-priority-flow-control",
+     "mac-notify-traps",
+     "macsec-policy",
+     "mka-policy",
      "mld",
      "mld-snooping-eth",
      "mode",
      "mpls",
+     "mpls-ldp",
+     "mtu",
+     "mvrp",
      "nd-snooping-profile",
      "pfc-watchdog",
      "pim-bidir",
@@ -19735,18 +20932,51 @@
      "policy-vlan-config",
      "priority-flow-control",
      "profile-name",
+     "pvlan-port-mode",
      "qinq",
      "qos",
+     "routing",
      "session-holdtime",
      "sflow",
+     "speed-downshift-enable",
+     "speed-duplex",
+     "speed-override",
      "stp",
      "switchport",
+     "trusted-vlans",
      "udld",
+     "unknown-vlans",
      "update-interval",
      "virtual-router",
      "vlan-translate",
+     "vrf-forwarding",
+     "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "aaa-profile": "const",
+     "boundary-acl": "const",
+     "broadcast-limit": "int32",
+     "client-limit-max": "int32",
+     "description": "const",
+     "dfp-profile": "const",
+     "error-control": "enum",
+     "fault-monitor-profile": "pattern",
+     "flow-control-mode": "enum",
+     "hello-holdtime": "int32",
+     "macsec-policy": "const",
+     "mka-policy": "const",
+     "mode": "enum",
+     "mtu": "int64",
+     "nd-snooping-profile": "const",
+     "profile-name": "const",
+     "pvlan-port-mode": "enum",
+     "session-holdtime": "int32",
+     "speed-duplex": "enum",
+     "unknown-vlans": "enum",
+     "update-interval": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -20365,7 +21595,17 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "bandwidth-contract": "const",
+     "boundary-acl": "const",
+     "description": "const",
+     "id": "int32",
+     "ip-access-group-in": "const",
+     "mm-auth-lease-time": "int32",
+     "tcp-adj-mss": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -20460,7 +21700,17 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "bandwidth-contract": "const",
+     "boundary-acl": "const",
+     "description": "const",
+     "id": "int32",
+     "ip-access-group-in": "const",
+     "mm-auth-lease-time": "int32",
+     "tcp-adj-mss": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -20599,7 +21849,17 @@
      "vrf-forwarding",
      "vrrp",
      "vsx"
-    ]
+    ],
+    "property_formats": {
+     "bandwidth-contract": "const",
+     "boundary-acl": "const",
+     "description": "const",
+     "id": "int32",
+     "ip-access-group-in": "const",
+     "mm-auth-lease-time": "int32",
+     "tcp-adj-mss": "int32",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -21387,7 +22647,12 @@
      "name",
      "uplink-to-uplink",
      "workload-migration"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "monitor-name": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -21446,7 +22711,12 @@
      "name",
      "uplink-to-uplink",
      "workload-migration"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "monitor-name": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -21549,7 +22819,12 @@
      "name",
      "uplink-to-uplink",
      "workload-migration"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "monitor-name": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -22762,7 +24037,16 @@
      "role",
      "split-recovery-disable",
      "system-mac"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "intent-name": "const",
+     "linkup-delay-timer": "int64",
+     "name": "const",
+     "peer-device-serial": "const",
+     "role": "enum",
+     "system-mac": "pattern"
+    }
    }
   },
   {
@@ -22826,7 +24110,16 @@
      "role",
      "split-recovery-disable",
      "system-mac"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "intent-name": "const",
+     "linkup-delay-timer": "int64",
+     "name": "const",
+     "peer-device-serial": "const",
+     "role": "enum",
+     "system-mac": "pattern"
+    }
    }
   },
   {
@@ -22934,7 +24227,16 @@
      "role",
      "split-recovery-disable",
      "system-mac"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "intent-name": "const",
+     "linkup-delay-timer": "int64",
+     "name": "const",
+     "peer-device-serial": "const",
+     "role": "enum",
+     "system-mac": "pattern"
+    }
    }
   },
   {
@@ -23150,7 +24452,16 @@
      "src-ipv6",
      "udp-port",
      "vni"
-    ]
+    ],
+    "property_formats": {
+     "bridging-mode": "enum",
+     "description": "const",
+     "ip-version-types": "enum",
+     "name": "const",
+     "src-ipv4": "pattern",
+     "src-ipv6": "pattern",
+     "udp-port": "int64"
+    }
    },
    "deprecated": true
   },
@@ -23216,7 +24527,16 @@
      "src-ipv6",
      "udp-port",
      "vni"
-    ]
+    ],
+    "property_formats": {
+     "bridging-mode": "enum",
+     "description": "const",
+     "ip-version-types": "enum",
+     "name": "const",
+     "src-ipv4": "pattern",
+     "src-ipv6": "pattern",
+     "udp-port": "int64"
+    }
    },
    "deprecated": true
   },
@@ -23327,7 +24647,16 @@
      "src-ipv6",
      "udp-port",
      "vni"
-    ]
+    ],
+    "property_formats": {
+     "bridging-mode": "enum",
+     "description": "const",
+     "ip-version-types": "enum",
+     "name": "const",
+     "src-ipv4": "pattern",
+     "src-ipv6": "pattern",
+     "udp-port": "int64"
+    }
    },
    "deprecated": true
   },
@@ -28741,14 +30070,6 @@
      "in": "path",
      "required": true,
      "type": "string",
-     "description": "The ID of the site where the device/FloorPlan is present.",
-     "format": "const"
-    },
-    {
-     "name": "site-id",
-     "in": "path",
-     "required": true,
-     "type": "string",
      "description": "Id of the site where device/FloorPlan is present.",
      "format": "const"
     }
@@ -31403,7 +32724,12 @@
      "ipv4-pool",
      "ipv6-pool",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "ip-version": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -31460,7 +32786,12 @@
      "ipv4-pool",
      "ipv6-pool",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "ip-version": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -31561,7 +32892,12 @@
      "ipv4-pool",
      "ipv6-pool",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "ip-version": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -31767,7 +33103,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -31823,7 +33163,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -31923,7 +33267,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32125,12 +33473,18 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "conflict-logging",
      "database",
      "description",
      "external-storage",
+     "instance",
      "name",
      "ping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32182,12 +33536,18 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "conflict-logging",
      "database",
      "description",
      "external-storage",
+     "instance",
      "name",
      "ping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32283,12 +33643,18 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "conflict-logging",
      "database",
      "description",
      "external-storage",
+     "instance",
      "name",
      "ping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32565,7 +33931,11 @@
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32621,7 +33991,11 @@
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32721,7 +34095,11 @@
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32856,7 +34234,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -32912,7 +34294,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33012,7 +34398,11 @@
      "ipv4",
      "ipv6",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33217,7 +34607,11 @@
      "description",
      "dynamic-arp-inspection",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33272,7 +34666,11 @@
      "description",
      "dynamic-arp-inspection",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33371,7 +34769,11 @@
      "description",
      "dynamic-arp-inspection",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33576,7 +34978,11 @@
      "description",
      "name",
      "store"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33631,7 +35037,11 @@
      "description",
      "name",
      "store"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -33730,7 +35140,11 @@
      "description",
      "name",
      "store"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34006,7 +35420,11 @@
      "description",
      "ip-source-lockdown",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34061,7 +35479,11 @@
      "description",
      "ip-source-lockdown",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34160,7 +35582,11 @@
      "description",
      "ip-source-lockdown",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34673,7 +36099,11 @@
      "responder-sessions",
      "source-sessions",
      "wan"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34730,7 +36160,11 @@
      "responder-sessions",
      "source-sessions",
      "wan"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -34831,7 +36265,11 @@
      "responder-sessions",
      "source-sessions",
      "wan"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -35835,7 +37273,12 @@
      "ready",
      "tags",
      "watches"
-    ]
+    ],
+    "property_formats": {
+     "agent-type": "enum",
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -35896,7 +37339,12 @@
      "ready",
      "tags",
      "watches"
-    ]
+    ],
+    "property_formats": {
+     "agent-type": "enum",
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -36001,7 +37449,12 @@
      "ready",
      "tags",
      "watches"
-    ]
+    ],
+    "property_formats": {
+     "agent-type": "enum",
+     "description": "const",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -36277,7 +37730,11 @@
      "description",
      "name",
      "nd-snooping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -36332,7 +37789,11 @@
      "description",
      "name",
      "nd-snooping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -36431,7 +37892,11 @@
      "description",
      "name",
      "nd-snooping"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -36567,7 +38032,11 @@
      "mac-check",
      "name",
      "ra-guard-policy"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -36624,7 +38093,11 @@
      "mac-check",
      "name",
      "ra-guard-policy"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -36725,7 +38198,11 @@
      "mac-check",
      "name",
      "ra-guard-policy"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -37310,7 +38787,16 @@
      "service-type",
      "thresh-profile",
      "trust"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "pfc-watchdog-resume": "int64",
+     "pfc-watchdog-timeout": "int64",
+     "service-type": "enum",
+     "thresh-profile": "pattern",
+     "trust": "enum"
+    }
    }
   },
   {
@@ -37380,7 +38866,16 @@
      "service-type",
      "thresh-profile",
      "trust"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "pfc-watchdog-resume": "int64",
+     "pfc-watchdog-timeout": "int64",
+     "service-type": "enum",
+     "thresh-profile": "pattern",
+     "trust": "enum"
+    }
    }
   },
   {
@@ -37494,7 +38989,16 @@
      "service-type",
      "thresh-profile",
      "trust"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "pfc-watchdog-resume": "int64",
+     "pfc-watchdog-timeout": "int64",
+     "service-type": "enum",
+     "thresh-profile": "pattern",
+     "trust": "enum"
+    }
    }
   },
   {
@@ -37699,7 +39203,11 @@
      "description",
      "priority",
      "q-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "q-profile-name": "const"
+    }
    }
   },
   {
@@ -37754,7 +39262,11 @@
      "description",
      "priority",
      "q-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "q-profile-name": "const"
+    }
    }
   },
   {
@@ -37853,7 +39365,11 @@
      "description",
      "priority",
      "q-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "q-profile-name": "const"
+    }
    }
   },
   {
@@ -38058,7 +39574,11 @@
      "description",
      "sched-entries",
      "sched-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "sched-profile-name": "pattern"
+    }
    }
   },
   {
@@ -38113,7 +39633,11 @@
      "description",
      "sched-entries",
      "sched-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "sched-profile-name": "pattern"
+    }
    }
   },
   {
@@ -38212,7 +39736,11 @@
      "description",
      "sched-entries",
      "sched-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "sched-profile-name": "pattern"
+    }
    }
   },
   {
@@ -38417,7 +39945,11 @@
      "description",
      "queue",
      "thresh-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "thresh-profile-name": "pattern"
+    }
    }
   },
   {
@@ -38472,7 +40004,11 @@
      "description",
      "queue",
      "thresh-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "thresh-profile-name": "pattern"
+    }
    }
   },
   {
@@ -38571,7 +40107,11 @@
      "description",
      "queue",
      "thresh-profile-name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "thresh-profile-name": "pattern"
+    }
    }
   },
   {
@@ -40693,7 +42233,13 @@
      "name",
      "security-policy",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "association": "enum",
+     "description": "const",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -40751,7 +42297,13 @@
      "name",
      "security-policy",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "association": "enum",
+     "description": "const",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -40853,7 +42405,13 @@
      "name",
      "security-policy",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "association": "enum",
+     "description": "const",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -42354,7 +43912,19 @@
      "vlan-type",
      "web-category-aaa-contract",
      "web-reputation-aaa-contract"
-    ]
+    ],
+    "property_formats": {
+     "access-vlan-id": "int32",
+     "access-vlan-name": "const",
+     "description": "const",
+     "error-page-url": "int64",
+     "macsec-policy": "const",
+     "name": "const",
+     "object-group-ipv4": "const",
+     "object-group-ipv6": "const",
+     "via-connection-profile": "const",
+     "vlan-type": "enum"
+    }
    }
   },
   {
@@ -42436,7 +44006,19 @@
      "vlan-type",
      "web-category-aaa-contract",
      "web-reputation-aaa-contract"
-    ]
+    ],
+    "property_formats": {
+     "access-vlan-id": "int32",
+     "access-vlan-name": "const",
+     "description": "const",
+     "error-page-url": "int64",
+     "macsec-policy": "const",
+     "name": "const",
+     "object-group-ipv4": "const",
+     "object-group-ipv6": "const",
+     "via-connection-profile": "const",
+     "vlan-type": "enum"
+    }
    }
   },
   {
@@ -42562,7 +44144,19 @@
      "vlan-type",
      "web-category-aaa-contract",
      "web-reputation-aaa-contract"
-    ]
+    ],
+    "property_formats": {
+     "access-vlan-id": "int32",
+     "access-vlan-name": "const",
+     "description": "const",
+     "error-page-url": "int64",
+     "macsec-policy": "const",
+     "name": "const",
+     "object-group-ipv4": "const",
+     "object-group-ipv6": "const",
+     "via-connection-profile": "const",
+     "vlan-type": "enum"
+    }
    }
   },
   {
@@ -45779,7 +47373,13 @@
      "static-lsp",
      "static-mpls-enable",
      "upper-bound"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "lower-bound": "int64",
+     "name": "const",
+     "upper-bound": "int64"
+    }
    }
   },
   {
@@ -45839,7 +47439,13 @@
      "static-lsp",
      "static-mpls-enable",
      "upper-bound"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "lower-bound": "int64",
+     "name": "const",
+     "upper-bound": "int64"
+    }
    }
   },
   {
@@ -45943,7 +47549,13 @@
      "static-lsp",
      "static-mpls-enable",
      "upper-bound"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "lower-bound": "int64",
+     "name": "const",
+     "upper-bound": "int64"
+    }
    }
   },
   {
@@ -50672,7 +52284,18 @@
      "policy-in",
      "policy-out",
      "route-distinguisher"
-    ]
+    ],
+    "property_formats": {
+     "access-list": "const",
+     "description": "const",
+     "l3vni": "int64",
+     "multipath-hash-ipv4": "enum",
+     "multipath-hash-ipv6": "enum",
+     "name": "pattern",
+     "policy-in": "const",
+     "policy-out": "const",
+     "route-distinguisher": "pattern"
+    }
    }
   },
   {
@@ -50739,7 +52362,18 @@
      "policy-in",
      "policy-out",
      "route-distinguisher"
-    ]
+    ],
+    "property_formats": {
+     "access-list": "const",
+     "description": "const",
+     "l3vni": "int64",
+     "multipath-hash-ipv4": "enum",
+     "multipath-hash-ipv6": "enum",
+     "name": "pattern",
+     "policy-in": "const",
+     "policy-out": "const",
+     "route-distinguisher": "pattern"
+    }
    }
   },
   {
@@ -50850,7 +52484,18 @@
      "policy-in",
      "policy-out",
      "route-distinguisher"
-    ]
+    ],
+    "property_formats": {
+     "access-list": "const",
+     "description": "const",
+     "l3vni": "int64",
+     "multipath-hash-ipv4": "enum",
+     "multipath-hash-ipv6": "enum",
+     "name": "pattern",
+     "policy-in": "const",
+     "policy-out": "const",
+     "route-distinguisher": "pattern"
+    }
    }
   },
   {
@@ -52586,19 +54231,52 @@
     "properties": [
      "acct-server-group",
      "acct-session-id-in-access",
+     "ageout-bridge-user",
      "authentication",
      "authorization",
+     "denylist-sco-attack",
      "description",
+     "devtype-classification",
+     "dh-groups",
+     "dl3-radius-proxy-mode",
+     "download-role",
+     "dpp-netaccess-default-role",
+     "dpp-netaccess-server-group",
+     "enforce-dhcp",
      "interim-accounting",
+     "l2-auth-fail-through",
+     "max-ipv4-ip-wireless",
      "multiple-server-accounting",
      "name",
      "open-system-accounting",
+     "pan-integration",
      "radius-loc-obj-in-access",
      "radius-loc-obj-in-accting",
      "radius-station-based-acct-session",
+     "reauth-wired-user-vlan-change",
+     "rfc3576-profile",
+     "rfc3576-server-list",
      "roam-accounting",
-     "security-violation"
-    ]
+     "security-violation",
+     "user-derivation-rule",
+     "user-idle-timeout",
+     "username-from-dhcp-opt12",
+     "webserver",
+     "wired-to-wireless-roam",
+     "xml-api-server"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "description": "const",
+     "dh-groups": "enum",
+     "dpp-netaccess-default-role": "const",
+     "dpp-netaccess-server-group": "const",
+     "max-ipv4-ip-wireless": "int64",
+     "name": "const",
+     "rfc3576-profile": "const",
+     "user-derivation-rule": "const",
+     "user-idle-timeout": "int64"
+    }
    }
   },
   {
@@ -52652,19 +54330,52 @@
     "properties": [
      "acct-server-group",
      "acct-session-id-in-access",
+     "ageout-bridge-user",
      "authentication",
      "authorization",
+     "denylist-sco-attack",
      "description",
+     "devtype-classification",
+     "dh-groups",
+     "dl3-radius-proxy-mode",
+     "download-role",
+     "dpp-netaccess-default-role",
+     "dpp-netaccess-server-group",
+     "enforce-dhcp",
      "interim-accounting",
+     "l2-auth-fail-through",
+     "max-ipv4-ip-wireless",
      "multiple-server-accounting",
      "name",
      "open-system-accounting",
+     "pan-integration",
      "radius-loc-obj-in-access",
      "radius-loc-obj-in-accting",
      "radius-station-based-acct-session",
+     "reauth-wired-user-vlan-change",
+     "rfc3576-profile",
+     "rfc3576-server-list",
      "roam-accounting",
-     "security-violation"
-    ]
+     "security-violation",
+     "user-derivation-rule",
+     "user-idle-timeout",
+     "username-from-dhcp-opt12",
+     "webserver",
+     "wired-to-wireless-roam",
+     "xml-api-server"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "description": "const",
+     "dh-groups": "enum",
+     "dpp-netaccess-default-role": "const",
+     "dpp-netaccess-server-group": "const",
+     "max-ipv4-ip-wireless": "int64",
+     "name": "const",
+     "rfc3576-profile": "const",
+     "user-derivation-rule": "const",
+     "user-idle-timeout": "int64"
+    }
    }
   },
   {
@@ -52762,19 +54473,52 @@
     "properties": [
      "acct-server-group",
      "acct-session-id-in-access",
+     "ageout-bridge-user",
      "authentication",
      "authorization",
+     "denylist-sco-attack",
      "description",
+     "devtype-classification",
+     "dh-groups",
+     "dl3-radius-proxy-mode",
+     "download-role",
+     "dpp-netaccess-default-role",
+     "dpp-netaccess-server-group",
+     "enforce-dhcp",
      "interim-accounting",
+     "l2-auth-fail-through",
+     "max-ipv4-ip-wireless",
      "multiple-server-accounting",
      "name",
      "open-system-accounting",
+     "pan-integration",
      "radius-loc-obj-in-access",
      "radius-loc-obj-in-accting",
      "radius-station-based-acct-session",
+     "reauth-wired-user-vlan-change",
+     "rfc3576-profile",
+     "rfc3576-server-list",
      "roam-accounting",
-     "security-violation"
-    ]
+     "security-violation",
+     "user-derivation-rule",
+     "user-idle-timeout",
+     "username-from-dhcp-opt12",
+     "webserver",
+     "wired-to-wireless-roam",
+     "xml-api-server"
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "description": "const",
+     "dh-groups": "enum",
+     "dpp-netaccess-default-role": "const",
+     "dpp-netaccess-server-group": "const",
+     "max-ipv4-ip-wireless": "int64",
+     "name": "const",
+     "rfc3576-profile": "const",
+     "user-derivation-rule": "const",
+     "user-idle-timeout": "int64"
+    }
    }
   },
   {
@@ -53561,7 +55305,57 @@
      "window-type",
      "xmlapi-server-address",
      "xmlapi-server-key"
-    ]
+    ],
+    "property_formats": {
+     "acct-modifier": "const",
+     "acct-port": "int32",
+     "admin-dn": "const",
+     "admin-dn-alias": "pattern",
+     "admin-password": "const",
+     "admin-password-alias": "pattern",
+     "auth-modifier": "const",
+     "auth-port": "int32",
+     "authentication-type": "enum",
+     "base-dn": "const",
+     "base-dn-alias": "pattern",
+     "cppm-user-name": "const",
+     "deadtime": "int32",
+     "default-authenticated-role": "const",
+     "description": "const",
+     "domain": "const",
+     "dynamic-authorization-port": "int32",
+     "filter": "const",
+     "key-attribute": "const",
+     "mac-address-delimiter": "enum",
+     "max-connection": "int32",
+     "max-retransmit-attempts": "int32",
+     "name": "const",
+     "nas-identifier": "const",
+     "port-access-keepalive": "enum",
+     "preferred-conn-type": "enum",
+     "radius-server-mode": "enum",
+     "radius-server-mode-alias": "pattern",
+     "radsec-client-cert": "const",
+     "radsec-est-cert-profile": "const",
+     "radsec-keepalive": "enum",
+     "radsec-port": "int32",
+     "radsec-trusted-cacert-name": "const",
+     "radsec-trusted-servercert-name": "const",
+     "rfc5176-enforcement-mode": "enum",
+     "rfc5997": "enum",
+     "service-type": "enum",
+     "source-interface-vlan": "int32",
+     "tcp-port": "int32",
+     "timeout": "int32",
+     "tls-initial-connection-timeout": "int32",
+     "tracking-method": "enum",
+     "tracking-mode": "enum",
+     "type": "enum",
+     "vrf": "pattern",
+     "window-duration": "int64",
+     "window-type": "enum",
+     "xmlapi-server-key": "const"
+    }
    }
   },
   {
@@ -53692,7 +55486,57 @@
      "window-type",
      "xmlapi-server-address",
      "xmlapi-server-key"
-    ]
+    ],
+    "property_formats": {
+     "acct-modifier": "const",
+     "acct-port": "int32",
+     "admin-dn": "const",
+     "admin-dn-alias": "pattern",
+     "admin-password": "const",
+     "admin-password-alias": "pattern",
+     "auth-modifier": "const",
+     "auth-port": "int32",
+     "authentication-type": "enum",
+     "base-dn": "const",
+     "base-dn-alias": "pattern",
+     "cppm-user-name": "const",
+     "deadtime": "int32",
+     "default-authenticated-role": "const",
+     "description": "const",
+     "domain": "const",
+     "dynamic-authorization-port": "int32",
+     "filter": "const",
+     "key-attribute": "const",
+     "mac-address-delimiter": "enum",
+     "max-connection": "int32",
+     "max-retransmit-attempts": "int32",
+     "name": "const",
+     "nas-identifier": "const",
+     "port-access-keepalive": "enum",
+     "preferred-conn-type": "enum",
+     "radius-server-mode": "enum",
+     "radius-server-mode-alias": "pattern",
+     "radsec-client-cert": "const",
+     "radsec-est-cert-profile": "const",
+     "radsec-keepalive": "enum",
+     "radsec-port": "int32",
+     "radsec-trusted-cacert-name": "const",
+     "radsec-trusted-servercert-name": "const",
+     "rfc5176-enforcement-mode": "enum",
+     "rfc5997": "enum",
+     "service-type": "enum",
+     "source-interface-vlan": "int32",
+     "tcp-port": "int32",
+     "timeout": "int32",
+     "tls-initial-connection-timeout": "int32",
+     "tracking-method": "enum",
+     "tracking-mode": "enum",
+     "type": "enum",
+     "vrf": "pattern",
+     "window-duration": "int64",
+     "window-type": "enum",
+     "xmlapi-server-key": "const"
+    }
    }
   },
   {
@@ -53867,7 +55711,57 @@
      "window-type",
      "xmlapi-server-address",
      "xmlapi-server-key"
-    ]
+    ],
+    "property_formats": {
+     "acct-modifier": "const",
+     "acct-port": "int32",
+     "admin-dn": "const",
+     "admin-dn-alias": "pattern",
+     "admin-password": "const",
+     "admin-password-alias": "pattern",
+     "auth-modifier": "const",
+     "auth-port": "int32",
+     "authentication-type": "enum",
+     "base-dn": "const",
+     "base-dn-alias": "pattern",
+     "cppm-user-name": "const",
+     "deadtime": "int32",
+     "default-authenticated-role": "const",
+     "description": "const",
+     "domain": "const",
+     "dynamic-authorization-port": "int32",
+     "filter": "const",
+     "key-attribute": "const",
+     "mac-address-delimiter": "enum",
+     "max-connection": "int32",
+     "max-retransmit-attempts": "int32",
+     "name": "const",
+     "nas-identifier": "const",
+     "port-access-keepalive": "enum",
+     "preferred-conn-type": "enum",
+     "radius-server-mode": "enum",
+     "radius-server-mode-alias": "pattern",
+     "radsec-client-cert": "const",
+     "radsec-est-cert-profile": "const",
+     "radsec-keepalive": "enum",
+     "radsec-port": "int32",
+     "radsec-trusted-cacert-name": "const",
+     "radsec-trusted-servercert-name": "const",
+     "rfc5176-enforcement-mode": "enum",
+     "rfc5997": "enum",
+     "service-type": "enum",
+     "source-interface-vlan": "int32",
+     "tcp-port": "int32",
+     "timeout": "int32",
+     "tls-initial-connection-timeout": "int32",
+     "tracking-method": "enum",
+     "tracking-mode": "enum",
+     "type": "enum",
+     "vrf": "pattern",
+     "window-duration": "int64",
+     "window-type": "enum",
+     "xmlapi-server-key": "const"
+    }
    }
   },
   {
@@ -55825,7 +57719,27 @@
      "type",
      "valid-from",
      "valid-to"
-    ]
+    ],
+    "required_properties": [
+     "type"
+    ],
+    "property_formats": {
+     "algorithm": "enum",
+     "certificate": "const",
+     "certificate-body": "const",
+     "days-until-expiry": "int32",
+     "extended-key-usage": "const",
+     "format": "enum",
+     "key-size": "int32",
+     "md5-checksum": "const",
+     "name": "const",
+     "passphrase": "const",
+     "sha1-checksum": "const",
+     "sha2-checksum": "const",
+     "type": "enum",
+     "valid-from": "pattern",
+     "valid-to": "pattern"
+    }
    }
   },
   {
@@ -55894,7 +57808,27 @@
      "type",
      "valid-from",
      "valid-to"
-    ]
+    ],
+    "required_properties": [
+     "type"
+    ],
+    "property_formats": {
+     "algorithm": "enum",
+     "certificate": "const",
+     "certificate-body": "const",
+     "days-until-expiry": "int32",
+     "extended-key-usage": "const",
+     "format": "enum",
+     "key-size": "int32",
+     "md5-checksum": "const",
+     "name": "const",
+     "passphrase": "const",
+     "sha1-checksum": "const",
+     "sha2-checksum": "const",
+     "type": "enum",
+     "valid-from": "pattern",
+     "valid-to": "pattern"
+    }
    }
   },
   {
@@ -56007,7 +57941,27 @@
      "type",
      "valid-from",
      "valid-to"
-    ]
+    ],
+    "required_properties": [
+     "type"
+    ],
+    "property_formats": {
+     "algorithm": "enum",
+     "certificate": "const",
+     "certificate-body": "const",
+     "days-until-expiry": "int32",
+     "extended-key-usage": "const",
+     "format": "enum",
+     "key-size": "int32",
+     "md5-checksum": "const",
+     "name": "const",
+     "passphrase": "const",
+     "sha1-checksum": "const",
+     "sha2-checksum": "const",
+     "type": "enum",
+     "valid-from": "pattern",
+     "valid-to": "pattern"
+    }
    }
   },
   {
@@ -56214,7 +58168,11 @@
      "iot-cert",
      "name",
      "radsec-use-est-certificate"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -56271,7 +58229,11 @@
      "iot-cert",
      "name",
      "radsec-use-est-certificate"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -56372,7 +58334,11 @@
      "iot-cert",
      "name",
      "radsec-use-est-certificate"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -57330,7 +59296,18 @@
      "subject-alt-name-ip",
      "validity-end",
      "validity-start"
-    ]
+    ],
+    "property_formats": {
+     "cert-key-type": "enum",
+     "ecdsa-curve-size": "enum",
+     "est-profile": "const",
+     "key-usage-restriction": "enum",
+     "name": "const",
+     "rsa-key-length": "enum",
+     "subject-alt-name-dns": "pattern",
+     "validity-end": "pattern",
+     "validity-start": "pattern"
+    }
    }
   },
   {
@@ -57396,7 +59373,18 @@
      "subject-alt-name-ip",
      "validity-end",
      "validity-start"
-    ]
+    ],
+    "property_formats": {
+     "cert-key-type": "enum",
+     "ecdsa-curve-size": "enum",
+     "est-profile": "const",
+     "key-usage-restriction": "enum",
+     "name": "const",
+     "rsa-key-length": "enum",
+     "subject-alt-name-dns": "pattern",
+     "validity-end": "pattern",
+     "validity-start": "pattern"
+    }
    }
   },
   {
@@ -57506,7 +59494,18 @@
      "subject-alt-name-ip",
      "validity-end",
      "validity-start"
-    ]
+    ],
+    "property_formats": {
+     "cert-key-type": "enum",
+     "ecdsa-curve-size": "enum",
+     "est-profile": "const",
+     "key-usage-restriction": "enum",
+     "name": "const",
+     "rsa-key-length": "enum",
+     "subject-alt-name-dns": "pattern",
+     "validity-end": "pattern",
+     "validity-start": "pattern"
+    }
    }
   },
   {
@@ -58112,12 +60111,102 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "auth-vlan-id",
+     "ca-cert",
+     "cached-reauth-enable",
+     "cached-reauth-period",
+     "canned-eap-success-enable",
+     "cert-cn-lookup",
+     "client-limit",
+     "control-mode",
+     "delete-keycache",
      "description",
+     "discovery-period",
      "dot1x-termination",
+     "eapol-logoff",
+     "eapol-max-requests",
+     "eapol-timeout",
+     "enable",
+     "enforce-cached-reauth-enable",
+     "enforce-suite-b-128",
+     "enforce-suite-b-192",
+     "framed-mtu",
+     "heldstate-bypass",
+     "ignore-eap-id-match",
+     "ignore-eapolstart-afterauthentication",
+     "initial-auth-response-timeout",
+     "keycache-timeout",
+     "logoff-period",
      "machine-auth",
+     "macsec",
+     "max-reauth",
+     "max-retries",
+     "multicast-key-rotation-period",
+     "multicast-keyrotation",
      "name",
-     "server-parameters"
-    ]
+     "opp-key-caching",
+     "quiet-period",
+     "reauth-enable",
+     "reauth-period",
+     "reauth-server-termination-action",
+     "role-tls-guest",
+     "server-cert",
+     "server-parameters",
+     "server-timeout",
+     "tls-guest-access",
+     "tls-guest-role",
+     "unauth-period",
+     "unauth-vlan-id",
+     "unicast-key-rotation-period",
+     "unicast-keyrotation",
+     "use-session-key",
+     "use-static-key",
+     "validate-pmkid",
+     "wep-key-retries",
+     "wep-key-size",
+     "wpa-fast-handover",
+     "wpa-groupkey-delay",
+     "wpa-key-period",
+     "wpa-key-retries",
+     "wpa2-key-delay",
+     "xsec-mtu"
+    ],
+    "property_formats": {
+     "auth-vlan-id": "int32",
+     "ca-cert": "const",
+     "cached-reauth-period": "int64",
+     "client-limit": "int32",
+     "control-mode": "enum",
+     "description": "const",
+     "discovery-period": "int32",
+     "eapol-max-requests": "int32",
+     "eapol-timeout": "int32",
+     "framed-mtu": "int64",
+     "heldstate-bypass": "int64",
+     "initial-auth-response-timeout": "int32",
+     "keycache-timeout": "int64",
+     "logoff-period": "int64",
+     "max-reauth": "int32",
+     "max-retries": "int32",
+     "multicast-key-rotation-period": "int64",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "role-tls-guest": "const",
+     "server-cert": "const",
+     "server-timeout": "int32",
+     "tls-guest-role": "const",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32",
+     "unicast-key-rotation-period": "int64",
+     "wep-key-retries": "int32",
+     "wep-key-size": "int64",
+     "wpa-groupkey-delay": "int64",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32",
+     "wpa2-key-delay": "int64",
+     "xsec-mtu": "int64"
+    }
    }
   },
   {
@@ -58169,12 +60258,102 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "auth-vlan-id",
+     "ca-cert",
+     "cached-reauth-enable",
+     "cached-reauth-period",
+     "canned-eap-success-enable",
+     "cert-cn-lookup",
+     "client-limit",
+     "control-mode",
+     "delete-keycache",
      "description",
+     "discovery-period",
      "dot1x-termination",
+     "eapol-logoff",
+     "eapol-max-requests",
+     "eapol-timeout",
+     "enable",
+     "enforce-cached-reauth-enable",
+     "enforce-suite-b-128",
+     "enforce-suite-b-192",
+     "framed-mtu",
+     "heldstate-bypass",
+     "ignore-eap-id-match",
+     "ignore-eapolstart-afterauthentication",
+     "initial-auth-response-timeout",
+     "keycache-timeout",
+     "logoff-period",
      "machine-auth",
+     "macsec",
+     "max-reauth",
+     "max-retries",
+     "multicast-key-rotation-period",
+     "multicast-keyrotation",
      "name",
-     "server-parameters"
-    ]
+     "opp-key-caching",
+     "quiet-period",
+     "reauth-enable",
+     "reauth-period",
+     "reauth-server-termination-action",
+     "role-tls-guest",
+     "server-cert",
+     "server-parameters",
+     "server-timeout",
+     "tls-guest-access",
+     "tls-guest-role",
+     "unauth-period",
+     "unauth-vlan-id",
+     "unicast-key-rotation-period",
+     "unicast-keyrotation",
+     "use-session-key",
+     "use-static-key",
+     "validate-pmkid",
+     "wep-key-retries",
+     "wep-key-size",
+     "wpa-fast-handover",
+     "wpa-groupkey-delay",
+     "wpa-key-period",
+     "wpa-key-retries",
+     "wpa2-key-delay",
+     "xsec-mtu"
+    ],
+    "property_formats": {
+     "auth-vlan-id": "int32",
+     "ca-cert": "const",
+     "cached-reauth-period": "int64",
+     "client-limit": "int32",
+     "control-mode": "enum",
+     "description": "const",
+     "discovery-period": "int32",
+     "eapol-max-requests": "int32",
+     "eapol-timeout": "int32",
+     "framed-mtu": "int64",
+     "heldstate-bypass": "int64",
+     "initial-auth-response-timeout": "int32",
+     "keycache-timeout": "int64",
+     "logoff-period": "int64",
+     "max-reauth": "int32",
+     "max-retries": "int32",
+     "multicast-key-rotation-period": "int64",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "role-tls-guest": "const",
+     "server-cert": "const",
+     "server-timeout": "int32",
+     "tls-guest-role": "const",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32",
+     "unicast-key-rotation-period": "int64",
+     "wep-key-retries": "int32",
+     "wep-key-size": "int64",
+     "wpa-groupkey-delay": "int64",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32",
+     "wpa2-key-delay": "int64",
+     "xsec-mtu": "int64"
+    }
    }
   },
   {
@@ -58270,12 +60449,102 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "auth-vlan-id",
+     "ca-cert",
+     "cached-reauth-enable",
+     "cached-reauth-period",
+     "canned-eap-success-enable",
+     "cert-cn-lookup",
+     "client-limit",
+     "control-mode",
+     "delete-keycache",
      "description",
+     "discovery-period",
      "dot1x-termination",
+     "eapol-logoff",
+     "eapol-max-requests",
+     "eapol-timeout",
+     "enable",
+     "enforce-cached-reauth-enable",
+     "enforce-suite-b-128",
+     "enforce-suite-b-192",
+     "framed-mtu",
+     "heldstate-bypass",
+     "ignore-eap-id-match",
+     "ignore-eapolstart-afterauthentication",
+     "initial-auth-response-timeout",
+     "keycache-timeout",
+     "logoff-period",
      "machine-auth",
+     "macsec",
+     "max-reauth",
+     "max-retries",
+     "multicast-key-rotation-period",
+     "multicast-keyrotation",
      "name",
-     "server-parameters"
-    ]
+     "opp-key-caching",
+     "quiet-period",
+     "reauth-enable",
+     "reauth-period",
+     "reauth-server-termination-action",
+     "role-tls-guest",
+     "server-cert",
+     "server-parameters",
+     "server-timeout",
+     "tls-guest-access",
+     "tls-guest-role",
+     "unauth-period",
+     "unauth-vlan-id",
+     "unicast-key-rotation-period",
+     "unicast-keyrotation",
+     "use-session-key",
+     "use-static-key",
+     "validate-pmkid",
+     "wep-key-retries",
+     "wep-key-size",
+     "wpa-fast-handover",
+     "wpa-groupkey-delay",
+     "wpa-key-period",
+     "wpa-key-retries",
+     "wpa2-key-delay",
+     "xsec-mtu"
+    ],
+    "property_formats": {
+     "auth-vlan-id": "int32",
+     "ca-cert": "const",
+     "cached-reauth-period": "int64",
+     "client-limit": "int32",
+     "control-mode": "enum",
+     "description": "const",
+     "discovery-period": "int32",
+     "eapol-max-requests": "int32",
+     "eapol-timeout": "int32",
+     "framed-mtu": "int64",
+     "heldstate-bypass": "int64",
+     "initial-auth-response-timeout": "int32",
+     "keycache-timeout": "int64",
+     "logoff-period": "int64",
+     "max-reauth": "int32",
+     "max-retries": "int32",
+     "multicast-key-rotation-period": "int64",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "role-tls-guest": "const",
+     "server-cert": "const",
+     "server-timeout": "int32",
+     "tls-guest-role": "const",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32",
+     "unicast-key-rotation-period": "int64",
+     "wep-key-retries": "int32",
+     "wep-key-size": "int64",
+     "wpa-groupkey-delay": "int64",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32",
+     "wpa2-key-delay": "int64",
+     "xsec-mtu": "int64"
+    }
    }
   },
   {
@@ -58494,7 +60763,21 @@
      "max-retries",
      "name",
      "start-mode"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "discovery-timeout": "int32",
+     "eap-identity": "const",
+     "eapol-method": "enum",
+     "eapol-protocol-version": "int32",
+     "eapol-source-mac": "enum",
+     "eapol-timeout": "int32",
+     "fail-mode": "enum",
+     "held-period": "int32",
+     "max-retries": "int32",
+     "name": "const",
+     "start-mode": "enum"
+    }
    }
   },
   {
@@ -58563,7 +60846,21 @@
      "max-retries",
      "name",
      "start-mode"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "discovery-timeout": "int32",
+     "eap-identity": "const",
+     "eapol-method": "enum",
+     "eapol-protocol-version": "int32",
+     "eapol-source-mac": "enum",
+     "eapol-timeout": "int32",
+     "fail-mode": "enum",
+     "held-period": "int32",
+     "max-retries": "int32",
+     "name": "const",
+     "start-mode": "enum"
+    }
    }
   },
   {
@@ -58676,7 +60973,21 @@
      "max-retries",
      "name",
      "start-mode"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "discovery-timeout": "int32",
+     "eap-identity": "const",
+     "eapol-method": "enum",
+     "eapol-protocol-version": "int32",
+     "eapol-source-mac": "enum",
+     "eapol-timeout": "int32",
+     "fail-mode": "enum",
+     "held-period": "int32",
+     "max-retries": "int32",
+     "name": "const",
+     "start-mode": "enum"
+    }
    }
   },
   {
@@ -59744,7 +62055,12 @@
      "revocation-check-point",
      "signer-cert",
      "webserver"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern",
+     "signer-cert": "const"
+    }
    }
   },
   {
@@ -59803,7 +62119,12 @@
      "revocation-check-point",
      "signer-cert",
      "webserver"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern",
+     "signer-cert": "const"
+    }
    }
   },
   {
@@ -59906,7 +62227,12 @@
      "revocation-check-point",
      "signer-cert",
      "webserver"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "pattern",
+     "signer-cert": "const"
+    }
    }
   },
   {
@@ -60111,7 +62437,11 @@
      "description",
      "name",
      "users"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -60166,7 +62496,11 @@
      "description",
      "name",
      "users"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -60265,7 +62599,11 @@
      "description",
      "name",
      "users"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -60469,7 +62807,10 @@
     "properties": [
      "keys",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -60523,7 +62864,10 @@
     "properties": [
      "keys",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -60621,7 +62965,10 @@
     "properties": [
      "keys",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -60827,7 +63174,11 @@
      "description",
      "log",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -60883,7 +63234,11 @@
      "description",
      "log",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -60983,7 +63338,11 @@
      "description",
      "log",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -61205,7 +63564,23 @@
      "unauth-period",
      "unauth-vlan-id",
      "use-server-reauth-period"
-    ]
+    ],
+    "property_formats": {
+     "addr-limit": "int32",
+     "address-format": "enum",
+     "auth-vlan-id": "int32",
+     "cached-reauth-period": "int64",
+     "case-type": "enum",
+     "description": "const",
+     "logoff-period": "int64",
+     "max-retries": "int32",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "server-timeout": "int32",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32"
+    }
    }
   },
   {
@@ -61277,7 +63652,23 @@
      "unauth-period",
      "unauth-vlan-id",
      "use-server-reauth-period"
-    ]
+    ],
+    "property_formats": {
+     "addr-limit": "int32",
+     "address-format": "enum",
+     "auth-vlan-id": "int32",
+     "cached-reauth-period": "int64",
+     "case-type": "enum",
+     "description": "const",
+     "logoff-period": "int64",
+     "max-retries": "int32",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "server-timeout": "int32",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32"
+    }
    }
   },
   {
@@ -61393,7 +63784,23 @@
      "unauth-period",
      "unauth-vlan-id",
      "use-server-reauth-period"
-    ]
+    ],
+    "property_formats": {
+     "addr-limit": "int32",
+     "address-format": "enum",
+     "auth-vlan-id": "int32",
+     "cached-reauth-period": "int64",
+     "case-type": "enum",
+     "description": "const",
+     "logoff-period": "int64",
+     "max-retries": "int32",
+     "name": "const",
+     "quiet-period": "int32",
+     "reauth-period": "int64",
+     "server-timeout": "int32",
+     "unauth-period": "int32",
+     "unauth-vlan-id": "int32"
+    }
    }
   },
   {
@@ -61609,7 +64016,17 @@
      "replay-protect-enable",
      "replay-window",
      "secure-mode"
-    ]
+    ],
+    "property_formats": {
+     "cak": "pattern",
+     "ckn": "pattern",
+     "clear-tag-mode": "enum",
+     "confidentiality-offset": "enum",
+     "description": "const",
+     "name": "const",
+     "replay-window": "int64",
+     "secure-mode": "enum"
+    }
    }
   },
   {
@@ -61675,7 +64092,17 @@
      "replay-protect-enable",
      "replay-window",
      "secure-mode"
-    ]
+    ],
+    "property_formats": {
+     "cak": "pattern",
+     "ckn": "pattern",
+     "clear-tag-mode": "enum",
+     "confidentiality-offset": "enum",
+     "description": "const",
+     "name": "const",
+     "replay-window": "int64",
+     "secure-mode": "enum"
+    }
    }
   },
   {
@@ -61785,7 +64212,17 @@
      "replay-protect-enable",
      "replay-window",
      "secure-mode"
-    ]
+    ],
+    "property_formats": {
+     "cak": "pattern",
+     "ckn": "pattern",
+     "clear-tag-mode": "enum",
+     "confidentiality-offset": "enum",
+     "description": "const",
+     "name": "const",
+     "replay-window": "int64",
+     "secure-mode": "enum"
+    }
    }
   },
   {
@@ -61997,7 +64434,17 @@
      "name",
      "sak-rekey-interval",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "eapol-destination-mac": "pattern",
+     "eapol-eth-type": "pattern",
+     "key-server-priority": "int32",
+     "keychain": "const",
+     "name": "const",
+     "sak-rekey-interval": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -62059,7 +64506,17 @@
      "name",
      "sak-rekey-interval",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "eapol-destination-mac": "pattern",
+     "eapol-eth-type": "pattern",
+     "key-server-priority": "int32",
+     "keychain": "const",
+     "name": "const",
+     "sak-rekey-interval": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -62165,7 +64622,17 @@
      "name",
      "sak-rekey-interval",
      "transmit-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "eapol-destination-mac": "pattern",
+     "eapol-eth-type": "pattern",
+     "key-server-priority": "int32",
+     "keychain": "const",
+     "name": "const",
+     "sak-rekey-interval": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -63161,10 +65628,21 @@
     "description": "policybody object",
     "properties": [
      "allow-flood-traffic",
+     "client-limit",
      "description",
+     "eavesdrop-prevention",
+     "enable",
+     "learn-mode",
      "name",
-     "security-violation"
-    ]
+     "security-violation",
+     "sticky-mac-enable"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "description": "const",
+     "learn-mode": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -63217,10 +65695,21 @@
     "description": "policybody object",
     "properties": [
      "allow-flood-traffic",
+     "client-limit",
      "description",
+     "eavesdrop-prevention",
+     "enable",
+     "learn-mode",
      "name",
-     "security-violation"
-    ]
+     "security-violation",
+     "sticky-mac-enable"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "description": "const",
+     "learn-mode": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -63317,10 +65806,21 @@
     "description": "policybody object",
     "properties": [
      "allow-flood-traffic",
+     "client-limit",
      "description",
+     "eavesdrop-prevention",
+     "enable",
+     "learn-mode",
      "name",
-     "security-violation"
-    ]
+     "security-violation",
+     "sticky-mac-enable"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "description": "const",
+     "learn-mode": "enum",
+     "name": "const"
+    }
    }
   },
   {
@@ -64274,7 +66774,14 @@
      "name",
      "servers",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "count-servers": "int64",
+     "description": "const",
+     "load-balance-algo": "enum",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -64336,7 +66843,14 @@
      "name",
      "servers",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "count-servers": "int64",
+     "description": "const",
+     "load-balance-algo": "enum",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -64442,7 +66956,14 @@
      "name",
      "servers",
      "type"
-    ]
+    ],
+    "property_formats": {
+     "count-servers": "int64",
+     "description": "const",
+     "load-balance-algo": "enum",
+     "name": "const",
+     "type": "enum"
+    }
    }
   },
   {
@@ -64650,7 +67171,14 @@
      "name",
      "server-group",
      "timeout"
-    ]
+    ],
+    "property_formats": {
+     "default-role": "const",
+     "description": "const",
+     "name": "const",
+     "server-group": "const",
+     "timeout": "int32"
+    }
    }
   },
   {
@@ -64708,7 +67236,14 @@
      "name",
      "server-group",
      "timeout"
-    ]
+    ],
+    "property_formats": {
+     "default-role": "const",
+     "description": "const",
+     "name": "const",
+     "server-group": "const",
+     "timeout": "int32"
+    }
    }
   },
   {
@@ -64810,7 +67345,14 @@
      "name",
      "server-group",
      "timeout"
-    ]
+    ],
+    "property_formats": {
+     "default-role": "const",
+     "description": "const",
+     "name": "const",
+     "server-group": "const",
+     "timeout": "int32"
+    }
    }
   },
   {
@@ -67817,7 +70359,11 @@
      "role-restrictions",
      "server-expiry-time",
      "vlan-restrictions"
-    ]
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "server-expiry-time": "int64"
+    }
    }
   },
   {
@@ -67874,7 +70420,11 @@
      "role-restrictions",
      "server-expiry-time",
      "vlan-restrictions"
-    ]
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "server-expiry-time": "int64"
+    }
    }
   },
   {
@@ -67975,7 +70525,11 @@
      "role-restrictions",
      "server-expiry-time",
      "vlan-restrictions"
-    ]
+    ],
+    "property_formats": {
+     "name": "pattern",
+     "server-expiry-time": "int64"
+    }
    }
   },
   {
@@ -68842,8 +71396,10 @@
     "description": "airgroup-systembody object",
     "properties": [
      "cppm",
+     "enable",
      "guest-multicast",
-     "multi-swarm"
+     "multi-swarm",
+     "protocol"
     ],
     "property_formats": {
      "protocol": "enum"
@@ -68928,8 +71484,10 @@
     "description": "airgroup-systembody object",
     "properties": [
      "cppm",
+     "enable",
      "guest-multicast",
-     "multi-swarm"
+     "multi-swarm",
+     "protocol"
     ],
     "property_formats": {
      "protocol": "enum"
@@ -69140,7 +71698,11 @@
      "name",
      "rssi-report",
      "rtls"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -69197,7 +71759,11 @@
      "name",
      "rssi-report",
      "rtls"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -69298,7 +71864,11 @@
      "name",
      "rssi-report",
      "rtls"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -69569,7 +72139,38 @@
      "voip-qos-trusted",
      "zonename",
      "zonename-alias"
-    ]
+    ],
+    "property_formats": {
+     "allow-new-aps-alias": "pattern",
+     "conductor-alias": "pattern",
+     "country-code": "const",
+     "country-code-alias": "pattern",
+     "description": "const",
+     "dhcp-option82-xml": "enum",
+     "dhcp-option82-xml-vlan-list": "pattern",
+     "dynamic-cpu-mgmt": "enum",
+     "enet-vlan": "int32",
+     "ip-mode": "enum",
+     "lacp": "enum",
+     "lacp-alias": "pattern",
+     "location": "const",
+     "location-alias": "pattern",
+     "mtu": "int32",
+     "name": "const",
+     "out-of-service-hold-on-time": "int64",
+     "recovery-ssid-backoff-time": "int32",
+     "swarm-mode-alias": "pattern",
+     "system-vlan": "int32",
+     "usb-port-alias": "pattern",
+     "usb-power-override-alias": "pattern",
+     "utb-filter-block": "enum",
+     "vc-dnsip-alias": "pattern",
+     "vc-vlan-alias": "pattern",
+     "virtual-controller-dnsip": "pattern",
+     "virtual-controller-ip": "pattern",
+     "virtual-controller-ipv6": "pattern",
+     "virtual-controller-name": "const"
+    }
    }
   },
   {
@@ -69690,7 +72291,38 @@
      "voip-qos-trusted",
      "zonename",
      "zonename-alias"
-    ]
+    ],
+    "property_formats": {
+     "allow-new-aps-alias": "pattern",
+     "conductor-alias": "pattern",
+     "country-code": "const",
+     "country-code-alias": "pattern",
+     "description": "const",
+     "dhcp-option82-xml": "enum",
+     "dhcp-option82-xml-vlan-list": "pattern",
+     "dynamic-cpu-mgmt": "enum",
+     "enet-vlan": "int32",
+     "ip-mode": "enum",
+     "lacp": "enum",
+     "lacp-alias": "pattern",
+     "location": "const",
+     "location-alias": "pattern",
+     "mtu": "int32",
+     "name": "const",
+     "out-of-service-hold-on-time": "int64",
+     "recovery-ssid-backoff-time": "int32",
+     "swarm-mode-alias": "pattern",
+     "system-vlan": "int32",
+     "usb-port-alias": "pattern",
+     "usb-power-override-alias": "pattern",
+     "utb-filter-block": "enum",
+     "vc-dnsip-alias": "pattern",
+     "vc-vlan-alias": "pattern",
+     "virtual-controller-dnsip": "pattern",
+     "virtual-controller-ip": "pattern",
+     "virtual-controller-ipv6": "pattern",
+     "virtual-controller-name": "const"
+    }
    }
   },
   {
@@ -69855,7 +72487,38 @@
      "voip-qos-trusted",
      "zonename",
      "zonename-alias"
-    ]
+    ],
+    "property_formats": {
+     "allow-new-aps-alias": "pattern",
+     "conductor-alias": "pattern",
+     "country-code": "const",
+     "country-code-alias": "pattern",
+     "description": "const",
+     "dhcp-option82-xml": "enum",
+     "dhcp-option82-xml-vlan-list": "pattern",
+     "dynamic-cpu-mgmt": "enum",
+     "enet-vlan": "int32",
+     "ip-mode": "enum",
+     "lacp": "enum",
+     "lacp-alias": "pattern",
+     "location": "const",
+     "location-alias": "pattern",
+     "mtu": "int32",
+     "name": "const",
+     "out-of-service-hold-on-time": "int64",
+     "recovery-ssid-backoff-time": "int32",
+     "swarm-mode-alias": "pattern",
+     "system-vlan": "int32",
+     "usb-port-alias": "pattern",
+     "usb-power-override-alias": "pattern",
+     "utb-filter-block": "enum",
+     "vc-dnsip-alias": "pattern",
+     "vc-vlan-alias": "pattern",
+     "virtual-controller-dnsip": "pattern",
+     "virtual-controller-ip": "pattern",
+     "virtual-controller-ipv6": "pattern",
+     "virtual-controller-name": "const"
+    }
    }
   },
   {
@@ -71717,7 +74380,12 @@
      "interval",
      "name",
      "server"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "interval": "int64",
+     "name": "const"
+    }
    }
   },
   {
@@ -71775,7 +74443,12 @@
      "interval",
      "name",
      "server"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "interval": "int64",
+     "name": "const"
+    }
    }
   },
   {
@@ -71877,7 +74550,12 @@
      "interval",
      "name",
      "server"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "interval": "int64",
+     "name": "const"
+    }
    }
   },
   {
@@ -72093,7 +74771,14 @@
      "resolver-alias",
      "split-dns",
      "static-host"
-    ]
+    ],
+    "property_formats": {
+     "cache-size": "int32",
+     "description": "const",
+     "name": "const",
+     "redirect-dns-vlans": "enum",
+     "resolver-alias": "pattern"
+    }
    }
   },
   {
@@ -72159,7 +74844,14 @@
      "resolver-alias",
      "split-dns",
      "static-host"
-    ]
+    ],
+    "property_formats": {
+     "cache-size": "int32",
+     "description": "const",
+     "name": "const",
+     "redirect-dns-vlans": "enum",
+     "resolver-alias": "pattern"
+    }
    }
   },
   {
@@ -72269,7 +74961,14 @@
      "resolver-alias",
      "split-dns",
      "static-host"
-    ]
+    ],
+    "property_formats": {
+     "cache-size": "int32",
+     "description": "const",
+     "name": "const",
+     "redirect-dns-vlans": "enum",
+     "resolver-alias": "pattern"
+    }
    }
   },
   {
@@ -74135,7 +76834,11 @@
      "description",
      "ip-source",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -74190,7 +76893,11 @@
      "description",
      "ip-source",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -74289,7 +76996,11 @@
      "description",
      "ip-source",
      "name"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -74865,6 +77576,10 @@
     "schema_type": "object",
     "description": "schedulebody object",
     "properties": [
+     "cli-command",
+     "config-save",
+     "count",
+     "date-time",
      "days",
      "days-of-the-week",
      "description",
@@ -74883,9 +77598,46 @@
      "start-time-at",
      "start-time-every",
      "start-time-on",
+     "trigger-at",
+     "trigger-at-event",
+     "trigger-every",
+     "trigger-on",
+     "trigger-on-monthly",
+     "trigger-on-weekly",
+     "trigger-on-yearly",
+     "trigger-type",
      "week-day",
      "yearly-date"
-    ]
+    ],
+    "property_formats": {
+     "cli-command": "const",
+     "count": "int32",
+     "date-time": "pattern",
+     "days": "int32",
+     "description": "const",
+     "duration": "const",
+     "frequency": "enum",
+     "hours": "int32",
+     "minutes": "int64",
+     "month-day": "int32",
+     "name": "const",
+     "start-date-at": "pattern",
+     "start-date-every": "pattern",
+     "start-date-on": "pattern",
+     "start-time-at": "pattern",
+     "start-time-every": "pattern",
+     "start-time-on": "pattern",
+     "trigger-at": "enum",
+     "trigger-at-event": "enum",
+     "trigger-every": "enum",
+     "trigger-on": "enum",
+     "trigger-on-monthly": "enum",
+     "trigger-on-weekly": "enum",
+     "trigger-on-yearly": "enum",
+     "trigger-type": "enum",
+     "week-day": "enum",
+     "yearly-date": "pattern"
+    }
    }
   },
   {
@@ -74937,6 +77689,10 @@
     "schema_type": "object",
     "description": "schedulebody object",
     "properties": [
+     "cli-command",
+     "config-save",
+     "count",
+     "date-time",
      "days",
      "days-of-the-week",
      "description",
@@ -74955,9 +77711,46 @@
      "start-time-at",
      "start-time-every",
      "start-time-on",
+     "trigger-at",
+     "trigger-at-event",
+     "trigger-every",
+     "trigger-on",
+     "trigger-on-monthly",
+     "trigger-on-weekly",
+     "trigger-on-yearly",
+     "trigger-type",
      "week-day",
      "yearly-date"
-    ]
+    ],
+    "property_formats": {
+     "cli-command": "const",
+     "count": "int32",
+     "date-time": "pattern",
+     "days": "int32",
+     "description": "const",
+     "duration": "const",
+     "frequency": "enum",
+     "hours": "int32",
+     "minutes": "int64",
+     "month-day": "int32",
+     "name": "const",
+     "start-date-at": "pattern",
+     "start-date-every": "pattern",
+     "start-date-on": "pattern",
+     "start-time-at": "pattern",
+     "start-time-every": "pattern",
+     "start-time-on": "pattern",
+     "trigger-at": "enum",
+     "trigger-at-event": "enum",
+     "trigger-every": "enum",
+     "trigger-on": "enum",
+     "trigger-on-monthly": "enum",
+     "trigger-on-weekly": "enum",
+     "trigger-on-yearly": "enum",
+     "trigger-type": "enum",
+     "week-day": "enum",
+     "yearly-date": "pattern"
+    }
    }
   },
   {
@@ -75053,6 +77846,10 @@
     "schema_type": "object",
     "description": "schedulebody object",
     "properties": [
+     "cli-command",
+     "config-save",
+     "count",
+     "date-time",
      "days",
      "days-of-the-week",
      "description",
@@ -75071,9 +77868,46 @@
      "start-time-at",
      "start-time-every",
      "start-time-on",
+     "trigger-at",
+     "trigger-at-event",
+     "trigger-every",
+     "trigger-on",
+     "trigger-on-monthly",
+     "trigger-on-weekly",
+     "trigger-on-yearly",
+     "trigger-type",
      "week-day",
      "yearly-date"
-    ]
+    ],
+    "property_formats": {
+     "cli-command": "const",
+     "count": "int32",
+     "date-time": "pattern",
+     "days": "int32",
+     "description": "const",
+     "duration": "const",
+     "frequency": "enum",
+     "hours": "int32",
+     "minutes": "int64",
+     "month-day": "int32",
+     "name": "const",
+     "start-date-at": "pattern",
+     "start-date-every": "pattern",
+     "start-date-on": "pattern",
+     "start-time-at": "pattern",
+     "start-time-every": "pattern",
+     "start-time-on": "pattern",
+     "trigger-at": "enum",
+     "trigger-at-event": "enum",
+     "trigger-every": "enum",
+     "trigger-on": "enum",
+     "trigger-on-monthly": "enum",
+     "trigger-on-weekly": "enum",
+     "trigger-on-yearly": "enum",
+     "trigger-type": "enum",
+     "week-day": "enum",
+     "yearly-date": "pattern"
+    }
    }
   },
   {
@@ -75307,7 +78141,16 @@
      "tftp-server",
      "tracking-range",
      "webservers"
-    ]
+    ],
+    "property_formats": {
+     "audit-period": "int32",
+     "description": "const",
+     "login-session-timeout": "int64",
+     "login-session-timeout-seconds": "int64",
+     "max-sessions-per-user": "int32",
+     "name": "const",
+     "tracking-range": "int32"
+    }
    }
   },
   {
@@ -75391,7 +78234,16 @@
      "tftp-server",
      "tracking-range",
      "webservers"
-    ]
+    ],
+    "property_formats": {
+     "audit-period": "int32",
+     "description": "const",
+     "login-session-timeout": "int64",
+     "login-session-timeout-seconds": "int64",
+     "max-sessions-per-user": "int32",
+     "name": "const",
+     "tracking-range": "int32"
+    }
    }
   },
   {
@@ -75519,7 +78371,16 @@
      "tftp-server",
      "tracking-range",
      "webservers"
-    ]
+    ],
+    "property_formats": {
+     "audit-period": "int32",
+     "description": "const",
+     "login-session-timeout": "int64",
+     "login-session-timeout-seconds": "int64",
+     "max-sessions-per-user": "int32",
+     "name": "const",
+     "tracking-range": "int32"
+    }
    }
   },
   {
@@ -75721,19 +78582,39 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "accounting-format-native",
      "command",
+     "console",
      "description",
+     "destination",
+     "event-trap",
+     "facility",
      "filter",
+     "local-file",
      "module",
      "name",
+     "notification-threshold",
      "origin-id",
      "prefix",
      "priority-description",
      "remote-syslog",
      "running-config-change",
+     "severity",
      "system-module",
      "transmission-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "destination": "enum",
+     "facility": "enum",
+     "name": "const",
+     "origin-id": "enum",
+     "prefix": "const",
+     "priority-description": "const",
+     "severity": "enum",
+     "system-module": "enum",
+     "transmission-interval": "int64"
+    }
    }
   },
   {
@@ -75785,19 +78666,39 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "accounting-format-native",
      "command",
+     "console",
      "description",
+     "destination",
+     "event-trap",
+     "facility",
      "filter",
+     "local-file",
      "module",
      "name",
+     "notification-threshold",
      "origin-id",
      "prefix",
      "priority-description",
      "remote-syslog",
      "running-config-change",
+     "severity",
      "system-module",
      "transmission-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "destination": "enum",
+     "facility": "enum",
+     "name": "const",
+     "origin-id": "enum",
+     "prefix": "const",
+     "priority-description": "const",
+     "severity": "enum",
+     "system-module": "enum",
+     "transmission-interval": "int64"
+    }
    }
   },
   {
@@ -75893,19 +78794,39 @@
     "schema_type": "object",
     "description": "profilebody object",
     "properties": [
+     "accounting-format-native",
      "command",
+     "console",
      "description",
+     "destination",
+     "event-trap",
+     "facility",
      "filter",
+     "local-file",
      "module",
      "name",
+     "notification-threshold",
      "origin-id",
      "prefix",
      "priority-description",
      "remote-syslog",
      "running-config-change",
+     "severity",
      "system-module",
      "transmission-interval"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "destination": "enum",
+     "facility": "enum",
+     "name": "const",
+     "origin-id": "enum",
+     "prefix": "const",
+     "priority-description": "const",
+     "severity": "enum",
+     "system-module": "enum",
+     "transmission-interval": "int64"
+    }
    }
   },
   {
@@ -76507,7 +79428,12 @@
      "name",
      "rest-rule",
      "rule"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "inherit-group": "pattern",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -76564,7 +79490,12 @@
      "name",
      "rest-rule",
      "rule"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "inherit-group": "pattern",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -76665,7 +79596,12 @@
      "name",
      "rest-rule",
      "rule"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "inherit-group": "pattern",
+     "name": "pattern"
+    }
    }
   },
   {
@@ -77685,7 +80621,16 @@
      "name",
      "plaintext-script",
      "script"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "plaintext-script": "const",
+     "script": "const"
+    }
    }
   },
   {
@@ -77741,7 +80686,16 @@
      "name",
      "plaintext-script",
      "script"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "plaintext-script": "const",
+     "script": "const"
+    }
    }
   },
   {
@@ -77841,7 +80795,16 @@
      "name",
      "plaintext-script",
      "script"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "plaintext-script": "const",
+     "script": "const"
+    }
    }
   },
   {
@@ -78061,7 +81024,17 @@
      "traps",
      "trusted-key",
      "vrf"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "max-association": "int32",
+     "name": "const",
+     "operation-mode": "enum",
+     "servers-alias": "pattern",
+     "source-interface": "enum",
+     "source-vlan": "int32",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -78131,7 +81104,17 @@
      "traps",
      "trusted-key",
      "vrf"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "max-association": "int32",
+     "name": "const",
+     "operation-mode": "enum",
+     "servers-alias": "pattern",
+     "source-interface": "enum",
+     "source-vlan": "int32",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -78245,7 +81228,17 @@
      "traps",
      "trusted-key",
      "vrf"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "max-association": "int32",
+     "name": "const",
+     "operation-mode": "enum",
+     "servers-alias": "pattern",
+     "source-interface": "enum",
+     "source-vlan": "int32",
+     "vrf": "pattern"
+    }
    }
   },
   {
@@ -80083,7 +83076,20 @@
      "view",
      "vrf",
      "vrrp-id"
-    ]
+    ],
+    "property_formats": {
+     "agent-port": "int32",
+     "description": "const",
+     "ieee8021mib": "enum",
+     "inform-queue-length": "int32",
+     "listen": "enum",
+     "loopback-interface": "int32",
+     "macsecmib": "enum",
+     "name": "const",
+     "switchauthmib": "enum",
+     "trap-interface": "int32",
+     "vrrp-id": "int32"
+    }
    }
   },
   {
@@ -80173,7 +83179,20 @@
      "view",
      "vrf",
      "vrrp-id"
-    ]
+    ],
+    "property_formats": {
+     "agent-port": "int32",
+     "description": "const",
+     "ieee8021mib": "enum",
+     "inform-queue-length": "int32",
+     "listen": "enum",
+     "loopback-interface": "int32",
+     "macsecmib": "enum",
+     "name": "const",
+     "switchauthmib": "enum",
+     "trap-interface": "int32",
+     "vrrp-id": "int32"
+    }
    }
   },
   {
@@ -80307,7 +83326,20 @@
      "view",
      "vrf",
      "vrrp-id"
-    ]
+    ],
+    "property_formats": {
+     "agent-port": "int32",
+     "description": "const",
+     "ieee8021mib": "enum",
+     "inform-queue-length": "int32",
+     "listen": "enum",
+     "loopback-interface": "int32",
+     "macsecmib": "enum",
+     "name": "const",
+     "switchauthmib": "enum",
+     "trap-interface": "int32",
+     "vrrp-id": "int32"
+    }
    }
   },
   {
@@ -80945,7 +83977,11 @@
      "flexible-modules",
      "line-modules",
      "platform"
-    ]
+    ],
+    "property_formats": {
+     "chassis-name": "const",
+     "description": "const"
+    }
    }
   },
   {
@@ -81005,7 +84041,11 @@
      "flexible-modules",
      "line-modules",
      "platform"
-    ]
+    ],
+    "property_formats": {
+     "chassis-name": "const",
+     "description": "const"
+    }
    }
   },
   {
@@ -81109,7 +84149,11 @@
      "flexible-modules",
      "line-modules",
      "platform"
-    ]
+    ],
+    "property_formats": {
+     "chassis-name": "const",
+     "description": "const"
+    }
    }
   },
   {
@@ -81732,7 +84776,26 @@
      "unsupported-transceiver-logging-interval",
      "usb-port-disable",
      "virtual-mac"
-    ]
+    ],
+    "property_formats": {
+     "contact": "const",
+     "description": "const",
+     "dfp-cppm-timer": "int32",
+     "internal-vlan-range": "pattern",
+     "ip-load-sharing": "int32",
+     "ip-router-id": "pattern",
+     "ip-ttl": "int32",
+     "location": "const",
+     "mac-address-delimiter": "enum",
+     "mac-age-time": "int64",
+     "management-vlan-id": "int32",
+     "max-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "primary-vlan": "int32",
+     "unsupported-transceiver-logging-interval": "int32",
+     "virtual-mac": "pattern"
+    }
    }
   },
   {
@@ -81831,7 +84894,26 @@
      "unsupported-transceiver-logging-interval",
      "usb-port-disable",
      "virtual-mac"
-    ]
+    ],
+    "property_formats": {
+     "contact": "const",
+     "description": "const",
+     "dfp-cppm-timer": "int32",
+     "internal-vlan-range": "pattern",
+     "ip-load-sharing": "int32",
+     "ip-router-id": "pattern",
+     "ip-ttl": "int32",
+     "location": "const",
+     "mac-address-delimiter": "enum",
+     "mac-age-time": "int64",
+     "management-vlan-id": "int32",
+     "max-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "primary-vlan": "int32",
+     "unsupported-transceiver-logging-interval": "int32",
+     "virtual-mac": "pattern"
+    }
    }
   },
   {
@@ -81974,7 +85056,26 @@
      "unsupported-transceiver-logging-interval",
      "usb-port-disable",
      "virtual-mac"
-    ]
+    ],
+    "property_formats": {
+     "contact": "const",
+     "description": "const",
+     "dfp-cppm-timer": "int32",
+     "internal-vlan-range": "pattern",
+     "ip-load-sharing": "int32",
+     "ip-router-id": "pattern",
+     "ip-ttl": "int32",
+     "location": "const",
+     "mac-address-delimiter": "enum",
+     "mac-age-time": "int64",
+     "management-vlan-id": "int32",
+     "max-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "primary-vlan": "int32",
+     "unsupported-transceiver-logging-interval": "int32",
+     "virtual-mac": "pattern"
+    }
    }
   },
   {
@@ -84164,7 +87265,13 @@
      "mode",
      "name",
      "update-interval"
-    ]
+    ],
+    "property_formats": {
+     "client-limit-max": "int32",
+     "mode": "enum",
+     "name": "const",
+     "update-interval": "int32"
+    }
    }
   },
   {
@@ -84221,7 +87328,13 @@
      "mode",
      "name",
      "update-interval"
-    ]
+    ],
+    "property_formats": {
+     "client-limit-max": "int32",
+     "mode": "enum",
+     "name": "const",
+     "update-interval": "int32"
+    }
    }
   },
   {
@@ -84322,7 +87435,13 @@
      "mode",
      "name",
      "update-interval"
-    ]
+    ],
+    "property_formats": {
+     "client-limit-max": "int32",
+     "mode": "enum",
+     "name": "const",
+     "update-interval": "int32"
+    }
    }
   },
   {
@@ -84459,7 +87578,12 @@
      "name",
      "probe-delay",
      "trust-mode"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "probe-delay": "int32",
+     "trust-mode": "enum"
+    }
    }
   },
   {
@@ -84517,7 +87641,12 @@
      "name",
      "probe-delay",
      "trust-mode"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "probe-delay": "int32",
+     "trust-mode": "enum"
+    }
    }
   },
   {
@@ -84619,7 +87748,12 @@
      "name",
      "probe-delay",
      "trust-mode"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "probe-delay": "int32",
+     "trust-mode": "enum"
+    }
    }
   },
   {
@@ -84896,7 +88030,15 @@
      "incoming-clients-only",
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -84952,7 +88094,15 @@
      "incoming-clients-only",
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -85052,7 +88202,15 @@
      "incoming-clients-only",
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "client-limit": "int32",
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -85265,7 +88423,13 @@
      "lldp-tlv-names",
      "lldp-tlv-numbers",
      "name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -85328,7 +88492,13 @@
      "lldp-tlv-names",
      "lldp-tlv-numbers",
      "name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -85435,7 +88605,13 @@
      "lldp-tlv-names",
      "lldp-tlv-numbers",
      "name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const"
+    }
    }
   },
   {
@@ -85568,7 +88744,14 @@
     "properties": [
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -85622,7 +88805,14 @@
     "properties": [
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -85720,7 +88910,14 @@
     "properties": [
      "name",
      "profile-name"
-    ]
+    ],
+    "required_properties": [
+     "name"
+    ],
+    "property_formats": {
+     "name": "const",
+     "profile-name": "const"
+    }
    }
   },
   {
@@ -86761,7 +89958,11 @@
      "monitor",
      "name",
      "source"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "source": "enum"
+    }
    }
   },
   {
@@ -86817,7 +90018,11 @@
      "monitor",
      "name",
      "source"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "source": "enum"
+    }
    }
   },
   {
@@ -86917,7 +90122,11 @@
      "monitor",
      "name",
      "source"
-    ]
+    ],
+    "property_formats": {
+     "name": "const",
+     "source": "enum"
+    }
    }
   },
   {
@@ -89587,6 +92796,13 @@
     "content_type": "application/json",
     "schema_type": "object",
     "description": "PingSweep request.",
+    "properties": [
+     "count",
+     "destination",
+     "endPacketSize",
+     "startPacketSize",
+     "sweepInterval"
+    ],
     "required_properties": [
      "destination",
      "endPacketSize",
@@ -90522,7 +93738,22 @@
      "src",
      "ttl",
      "vrf-forwarding"
-    ]
+    ],
+    "required_properties": [
+     "ip-version",
+     "mode"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int64",
+     "ip-version": "enum",
+     "ipv4-prefix": "pattern",
+     "ipv6-address": "pattern",
+     "l3-counters": "enum",
+     "mode": "enum",
+     "mtu": "int64",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -90590,7 +93821,22 @@
      "src",
      "ttl",
      "vrf-forwarding"
-    ]
+    ],
+    "required_properties": [
+     "ip-version",
+     "mode"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int64",
+     "ip-version": "enum",
+     "ipv4-prefix": "pattern",
+     "ipv6-address": "pattern",
+     "l3-counters": "enum",
+     "mode": "enum",
+     "mtu": "int64",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -90702,7 +93948,22 @@
      "src",
      "ttl",
      "vrf-forwarding"
-    ]
+    ],
+    "required_properties": [
+     "ip-version",
+     "mode"
+    ],
+    "property_formats": {
+     "description": "const",
+     "id": "int64",
+     "ip-version": "enum",
+     "ipv4-prefix": "pattern",
+     "ipv6-address": "pattern",
+     "l3-counters": "enum",
+     "mode": "enum",
+     "mtu": "int64",
+     "vrf-forwarding": "pattern"
+    }
    }
   },
   {
@@ -91191,18 +94452,38 @@
      "access-list-in",
      "access-list-out",
      "client-ip-tracker-enable",
+     "description",
+     "description-alias",
      "destination-guard",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "dynamic-arp-inspection",
+     "enable",
      "igmp",
+     "is-l3-vlan",
      "mld",
-     "nd-snooping"
+     "nd-snooping",
+     "option-82",
+     "policy-in",
+     "policy-out",
+     "protocols",
+     "ttl-threshold",
+     "vlan-range",
+     "voice-enable",
+     "voice-enable-alias",
+     "wired-aaa-profile"
     ],
     "property_formats": {
+     "access-list-in": "const",
+     "access-list-out": "const",
+     "description": "const",
      "description-alias": "pattern",
+     "policy-in": "const",
+     "policy-out": "const",
+     "ttl-threshold": "int64",
      "vlan-range": "pattern",
-     "voice-enable-alias": "pattern"
+     "voice-enable-alias": "pattern",
+     "wired-aaa-profile": "const"
     }
    }
   },
@@ -91338,23 +94619,50 @@
      "access-list-out",
      "client-ip-tracker-enable",
      "community-vlan",
+     "description",
      "description-alias",
      "destination-guard",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "dynamic-arp-inspection",
+     "enable",
      "igmp",
+     "is-l3-vlan",
      "isolated-vlan",
      "mld",
      "name",
      "nd-snooping",
+     "option-82",
+     "policy-in",
+     "policy-out",
      "private-vlan-association",
      "private-vlan-type",
+     "protocols",
      "qinq-svlan",
+     "ttl-threshold",
      "vlan",
+     "voice-enable",
      "voice-enable-alias",
-     "vrf"
-    ]
+     "vrf",
+     "wired-aaa-profile"
+    ],
+    "property_formats": {
+     "access-list-in": "const",
+     "access-list-out": "const",
+     "description": "const",
+     "description-alias": "pattern",
+     "isolated-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "policy-out": "const",
+     "private-vlan-association": "int32",
+     "private-vlan-type": "enum",
+     "ttl-threshold": "int64",
+     "vlan": "int32",
+     "voice-enable-alias": "pattern",
+     "vrf": "pattern",
+     "wired-aaa-profile": "const"
+    }
    }
   },
   {
@@ -91410,23 +94718,50 @@
      "access-list-out",
      "client-ip-tracker-enable",
      "community-vlan",
+     "description",
      "description-alias",
      "destination-guard",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "dynamic-arp-inspection",
+     "enable",
      "igmp",
+     "is-l3-vlan",
      "isolated-vlan",
      "mld",
      "name",
      "nd-snooping",
+     "option-82",
+     "policy-in",
+     "policy-out",
      "private-vlan-association",
      "private-vlan-type",
+     "protocols",
      "qinq-svlan",
+     "ttl-threshold",
      "vlan",
+     "voice-enable",
      "voice-enable-alias",
-     "vrf"
-    ]
+     "vrf",
+     "wired-aaa-profile"
+    ],
+    "property_formats": {
+     "access-list-in": "const",
+     "access-list-out": "const",
+     "description": "const",
+     "description-alias": "pattern",
+     "isolated-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "policy-out": "const",
+     "private-vlan-association": "int32",
+     "private-vlan-type": "enum",
+     "ttl-threshold": "int64",
+     "vlan": "int32",
+     "voice-enable-alias": "pattern",
+     "vrf": "pattern",
+     "wired-aaa-profile": "const"
+    }
    }
   },
   {
@@ -91526,23 +94861,50 @@
      "access-list-out",
      "client-ip-tracker-enable",
      "community-vlan",
+     "description",
      "description-alias",
      "destination-guard",
      "dhcpv4-snooping",
      "dhcpv6-snooping",
      "dynamic-arp-inspection",
+     "enable",
      "igmp",
+     "is-l3-vlan",
      "isolated-vlan",
      "mld",
      "name",
      "nd-snooping",
+     "option-82",
+     "policy-in",
+     "policy-out",
      "private-vlan-association",
      "private-vlan-type",
+     "protocols",
      "qinq-svlan",
+     "ttl-threshold",
      "vlan",
+     "voice-enable",
      "voice-enable-alias",
-     "vrf"
-    ]
+     "vrf",
+     "wired-aaa-profile"
+    ],
+    "property_formats": {
+     "access-list-in": "const",
+     "access-list-out": "const",
+     "description": "const",
+     "description-alias": "pattern",
+     "isolated-vlan": "int32",
+     "name": "const",
+     "policy-in": "const",
+     "policy-out": "const",
+     "private-vlan-association": "int32",
+     "private-vlan-type": "enum",
+     "ttl-threshold": "int64",
+     "vlan": "int32",
+     "voice-enable-alias": "pattern",
+     "vrf": "pattern",
+     "wired-aaa-profile": "const"
+    }
    }
   },
   {
@@ -91750,7 +95112,13 @@
      "transmit-interval",
      "trap",
      "vlans"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "re-enable-timer": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -91808,7 +95176,13 @@
      "transmit-interval",
      "trap",
      "vlans"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "re-enable-timer": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -91910,7 +95284,13 @@
      "transmit-interval",
      "trap",
      "vlans"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const",
+     "re-enable-timer": "int64",
+     "transmit-interval": "int32"
+    }
    }
   },
   {
@@ -94901,7 +98281,11 @@
      "description",
      "name",
      "virtual-router"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -94956,7 +98340,11 @@
      "description",
      "name",
      "virtual-router"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -95055,7 +98443,11 @@
      "description",
      "name",
      "virtual-router"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -95641,7 +99033,11 @@
      "detection-protection",
      "name",
      "wired-protection"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -95697,7 +99093,11 @@
      "detection-protection",
      "name",
      "wired-protection"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -95797,7 +99197,11 @@
      "detection-protection",
      "name",
      "wired-protection"
-    ]
+    ],
+    "property_formats": {
+     "description": "const",
+     "name": "const"
+    }
    }
   },
   {
@@ -97380,7 +100784,19 @@
      "rf-zone",
      "sam-detection",
      "utb-filter-block"
-    ]
+    ],
+    "property_formats": {
+     "ant-direction-mode": "enum",
+     "antenna-type": "const",
+     "description": "const",
+     "dynamic-ant": "enum",
+     "installation-type": "enum",
+     "iot-antenna-gain": "const",
+     "name": "const",
+     "recovery-mode": "enum",
+     "rf-zone": "const",
+     "utb-filter-block": "enum"
+    }
    }
   },
   {
@@ -97448,7 +100864,19 @@
      "rf-zone",
      "sam-detection",
      "utb-filter-block"
-    ]
+    ],
+    "property_formats": {
+     "ant-direction-mode": "enum",
+     "antenna-type": "const",
+     "description": "const",
+     "dynamic-ant": "enum",
+     "installation-type": "enum",
+     "iot-antenna-gain": "const",
+     "name": "const",
+     "recovery-mode": "enum",
+     "rf-zone": "const",
+     "utb-filter-block": "enum"
+    }
    }
   },
   {
@@ -97560,7 +100988,19 @@
      "rf-zone",
      "sam-detection",
      "utb-filter-block"
-    ]
+    ],
+    "property_formats": {
+     "ant-direction-mode": "enum",
+     "antenna-type": "const",
+     "description": "const",
+     "dynamic-ant": "enum",
+     "installation-type": "enum",
+     "iot-antenna-gain": "const",
+     "name": "const",
+     "recovery-mode": "enum",
+     "rf-zone": "const",
+     "utb-filter-block": "enum"
+    }
    }
   },
   {
@@ -97779,6 +101219,7 @@
      "auth-req-thresh",
      "auth-server-group",
      "auth-survivability",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "bandwidth-limit",
@@ -97795,6 +101236,7 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "deny-inter-user-bridging",
      "deny-local-routing",
      "denylist",
@@ -97808,7 +101250,9 @@
      "dot11r-key-duration",
      "dot11r-ondemand-keyfetch",
      "dot11v",
+     "dot1x",
      "dot1x-timer-idrequest-period",
+     "download-role",
      "dtim-period",
      "enable",
      "enforce-dhcp",
@@ -97829,9 +101273,11 @@
      "l2-auth-failthrough",
      "local-probe-req-thresh",
      "local-proxy-ns",
+     "mac-auth-only-role",
      "mac-authentication",
      "mac-authentication-delimiter",
      "mac-authentication-upper-case",
+     "machine-auth",
      "max-authentication-failures",
      "max-clients-threshold",
      "max-ipv4-users",
@@ -97842,6 +101288,7 @@
      "mfp-capable",
      "mfp-required",
      "mobility-domain-id",
+     "opmode",
      "opp-key-caching",
      "optimize-mcast-rate",
      "out-of-service",
@@ -97849,6 +101296,7 @@
      "passpoint",
      "personal-security",
      "pmk-cache-delete-on-leave",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "priority-use-local-cache",
@@ -97856,15 +101304,22 @@
      "qos-management",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
      "refresh-direction",
      "rf-band",
      "rrm-quiet-ie",
      "rts-threshold",
+     "server-load-balancing",
      "short-preamble",
      "ssid",
      "ssid-utf8",
      "termination",
      "time-range",
+     "type",
+     "use-ip-for-calling-station-id",
      "vlan-id-range",
      "vlan-name",
      "vlan-selector",
@@ -97875,7 +101330,63 @@
      "wpa-key-retries",
      "wpa3-transition-mode-enable",
      "zone"
-    ]
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "allowed-5ghz-radio": "enum",
+     "allowed-6ghz-radio": "enum",
+     "ap-mode": "enum",
+     "auth-failure-code": "enum",
+     "auth-req-thresh": "int32",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "bandwidth-limit": "int32",
+     "broadcast-filter-ipv4": "enum",
+     "broadcast-filter-ipv6": "enum",
+     "captive-portal": "const",
+     "captive-portal-landing-page-delay": "int32",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot11k-profile-name": "const",
+     "dot11r-key-duration": "int64",
+     "dot1x-timer-idrequest-period": "int32",
+     "dtim-period": "int32",
+     "forward-mode": "enum",
+     "hotspot-profile": "const",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "local-probe-req-thresh": "int32",
+     "mac-auth-only-role": "const",
+     "mac-authentication-delimiter": "enum",
+     "max-authentication-failures": "int32",
+     "max-clients-threshold": "int32",
+     "max-ipv4-users": "int32",
+     "max-retries": "int32",
+     "mbssid-group-profile": "const",
+     "mfp-association-comeback-time": "int32",
+     "mobility-domain-id": "int64",
+     "opmode": "enum",
+     "out-of-service": "enum",
+     "passpoint": "const",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "refresh-direction": "enum",
+     "rf-band": "enum",
+     "rts-threshold": "int32",
+     "ssid": "const",
+     "type": "enum",
+     "vlan-name": "const",
+     "vlan-selector": "enum",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32"
+    }
    }
   },
   {
@@ -97944,6 +101455,7 @@
      "auth-req-thresh",
      "auth-server-group",
      "auth-survivability",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "bandwidth-limit",
@@ -97960,6 +101472,7 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "deny-inter-user-bridging",
      "deny-local-routing",
      "denylist",
@@ -97973,7 +101486,9 @@
      "dot11r-key-duration",
      "dot11r-ondemand-keyfetch",
      "dot11v",
+     "dot1x",
      "dot1x-timer-idrequest-period",
+     "download-role",
      "dtim-period",
      "enable",
      "enforce-dhcp",
@@ -97994,9 +101509,11 @@
      "l2-auth-failthrough",
      "local-probe-req-thresh",
      "local-proxy-ns",
+     "mac-auth-only-role",
      "mac-authentication",
      "mac-authentication-delimiter",
      "mac-authentication-upper-case",
+     "machine-auth",
      "max-authentication-failures",
      "max-clients-threshold",
      "max-ipv4-users",
@@ -98007,6 +101524,7 @@
      "mfp-capable",
      "mfp-required",
      "mobility-domain-id",
+     "opmode",
      "opp-key-caching",
      "optimize-mcast-rate",
      "out-of-service",
@@ -98014,6 +101532,7 @@
      "passpoint",
      "personal-security",
      "pmk-cache-delete-on-leave",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "priority-use-local-cache",
@@ -98021,15 +101540,22 @@
      "qos-management",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
      "refresh-direction",
      "rf-band",
      "rrm-quiet-ie",
      "rts-threshold",
+     "server-load-balancing",
      "short-preamble",
      "ssid",
      "ssid-utf8",
      "termination",
      "time-range",
+     "type",
+     "use-ip-for-calling-station-id",
      "vlan-id-range",
      "vlan-name",
      "vlan-selector",
@@ -98040,7 +101566,63 @@
      "wpa-key-retries",
      "wpa3-transition-mode-enable",
      "zone"
-    ]
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "allowed-5ghz-radio": "enum",
+     "allowed-6ghz-radio": "enum",
+     "ap-mode": "enum",
+     "auth-failure-code": "enum",
+     "auth-req-thresh": "int32",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "bandwidth-limit": "int32",
+     "broadcast-filter-ipv4": "enum",
+     "broadcast-filter-ipv6": "enum",
+     "captive-portal": "const",
+     "captive-portal-landing-page-delay": "int32",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot11k-profile-name": "const",
+     "dot11r-key-duration": "int64",
+     "dot1x-timer-idrequest-period": "int32",
+     "dtim-period": "int32",
+     "forward-mode": "enum",
+     "hotspot-profile": "const",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "local-probe-req-thresh": "int32",
+     "mac-auth-only-role": "const",
+     "mac-authentication-delimiter": "enum",
+     "max-authentication-failures": "int32",
+     "max-clients-threshold": "int32",
+     "max-ipv4-users": "int32",
+     "max-retries": "int32",
+     "mbssid-group-profile": "const",
+     "mfp-association-comeback-time": "int32",
+     "mobility-domain-id": "int64",
+     "opmode": "enum",
+     "out-of-service": "enum",
+     "passpoint": "const",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "refresh-direction": "enum",
+     "rf-band": "enum",
+     "rts-threshold": "int32",
+     "ssid": "const",
+     "type": "enum",
+     "vlan-name": "const",
+     "vlan-selector": "enum",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32"
+    }
    }
   },
   {
@@ -98153,6 +101735,7 @@
      "auth-req-thresh",
      "auth-server-group",
      "auth-survivability",
+     "auto-default-role",
      "backup-acct-server",
      "backup-auth-server",
      "bandwidth-limit",
@@ -98169,6 +101752,7 @@
      "cluster-preemption",
      "content-filtering",
      "cp-accounting-mode",
+     "default-role",
      "deny-inter-user-bridging",
      "deny-local-routing",
      "denylist",
@@ -98182,7 +101766,9 @@
      "dot11r-key-duration",
      "dot11r-ondemand-keyfetch",
      "dot11v",
+     "dot1x",
      "dot1x-timer-idrequest-period",
+     "download-role",
      "dtim-period",
      "enable",
      "enforce-dhcp",
@@ -98203,9 +101789,11 @@
      "l2-auth-failthrough",
      "local-probe-req-thresh",
      "local-proxy-ns",
+     "mac-auth-only-role",
      "mac-authentication",
      "mac-authentication-delimiter",
      "mac-authentication-upper-case",
+     "machine-auth",
      "max-authentication-failures",
      "max-clients-threshold",
      "max-ipv4-users",
@@ -98216,6 +101804,7 @@
      "mfp-capable",
      "mfp-required",
      "mobility-domain-id",
+     "opmode",
      "opp-key-caching",
      "optimize-mcast-rate",
      "out-of-service",
@@ -98223,6 +101812,7 @@
      "passpoint",
      "personal-security",
      "pmk-cache-delete-on-leave",
+     "pre-auth-role",
      "primary-acct-server",
      "primary-auth-server",
      "priority-use-local-cache",
@@ -98230,15 +101820,22 @@
      "qos-management",
      "radius-accounting",
      "radius-interim-accounting-interval",
+     "radius-ip-based-acct-session",
+     "radius-loc-obj-in-access",
+     "radius-loc-obj-in-accting",
+     "radius-reauth-interval",
      "refresh-direction",
      "rf-band",
      "rrm-quiet-ie",
      "rts-threshold",
+     "server-load-balancing",
      "short-preamble",
      "ssid",
      "ssid-utf8",
      "termination",
      "time-range",
+     "type",
+     "use-ip-for-calling-station-id",
      "vlan-id-range",
      "vlan-name",
      "vlan-selector",
@@ -98249,7 +101846,63 @@
      "wpa-key-retries",
      "wpa3-transition-mode-enable",
      "zone"
-    ]
+    ],
+    "property_formats": {
+     "acct-server-group": "const",
+     "allowed-5ghz-radio": "enum",
+     "allowed-6ghz-radio": "enum",
+     "ap-mode": "enum",
+     "auth-failure-code": "enum",
+     "auth-req-thresh": "int32",
+     "auth-server-group": "const",
+     "auto-default-role": "const",
+     "backup-acct-server": "const",
+     "backup-auth-server": "const",
+     "bandwidth-limit": "int32",
+     "broadcast-filter-ipv4": "enum",
+     "broadcast-filter-ipv6": "enum",
+     "captive-portal": "const",
+     "captive-portal-landing-page-delay": "int32",
+     "captive-portal-type": "enum",
+     "cp-accounting-mode": "enum",
+     "default-role": "const",
+     "description": "const",
+     "dot11k-profile-name": "const",
+     "dot11r-key-duration": "int64",
+     "dot1x-timer-idrequest-period": "int32",
+     "dtim-period": "int32",
+     "forward-mode": "enum",
+     "hotspot-profile": "const",
+     "inactivity-timeout": "int64",
+     "internal-auth-server": "enum",
+     "local-probe-req-thresh": "int32",
+     "mac-auth-only-role": "const",
+     "mac-authentication-delimiter": "enum",
+     "max-authentication-failures": "int32",
+     "max-clients-threshold": "int32",
+     "max-ipv4-users": "int32",
+     "max-retries": "int32",
+     "mbssid-group-profile": "const",
+     "mfp-association-comeback-time": "int32",
+     "mobility-domain-id": "int64",
+     "opmode": "enum",
+     "out-of-service": "enum",
+     "passpoint": "const",
+     "pre-auth-role": "const",
+     "primary-acct-server": "const",
+     "primary-auth-server": "const",
+     "radius-interim-accounting-interval": "int32",
+     "radius-reauth-interval": "int32",
+     "refresh-direction": "enum",
+     "rf-band": "enum",
+     "rts-threshold": "int32",
+     "ssid": "const",
+     "type": "enum",
+     "vlan-name": "const",
+     "vlan-selector": "enum",
+     "wpa-key-period": "int32",
+     "wpa-key-retries": "int32"
+    }
    }
   }
  ]

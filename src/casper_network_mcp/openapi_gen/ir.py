@@ -376,6 +376,8 @@ class SpecParser:
                 if st != "object" and st != "any":
                     merged_type = st
                 props.extend(pr)
+            # Properties declared next to allOf belong to the same object.
+            props.extend((schema.get("properties") or {}).keys())
             return merged_type, None, enum, default, sorted(set(props))
         for comp in ("oneOf", "anyOf"):
             if comp in schema and isinstance(schema[comp], list):
@@ -406,6 +408,47 @@ class SpecParser:
                 return "integer", None, enum, default, []
             return "string", None, enum, default, []
         return "any", None, enum, default, []
+
+    def object_fields(self, schema: Any, _depth: int = 0) -> tuple[set[str], set[str], dict[str, str]]:
+        """Return ``(property_names, required, property_formats)`` for an object schema.
+
+        Collects the schema's own ``properties`` and ``required`` plus those of
+        every ``allOf`` member (refs followed). ``oneOf``/``anyOf`` are not walked.
+        """
+        if _depth > _MAX_RESOLVE_DEPTH:
+            return set(), set(), {}
+        schema = self._deref(schema)
+        if not isinstance(schema, dict):
+            return set(), set(), {}
+        own = schema.get("properties")
+        if not isinstance(own, dict):
+            own = {}
+        names = {str(name) for name in own}
+        required = {name for name in schema.get("required", []) if isinstance(name, str)}
+        formats: dict[str, str] = {}
+        if isinstance(schema.get("allOf"), list):
+            for sub in schema["allOf"]:
+                sub_names, sub_required, sub_formats = self.object_fields(sub, _depth + 1)
+                names |= sub_names
+                required |= sub_required
+                formats.update(sub_formats)
+        for name, raw_property in own.items():
+            prop = self._deref(raw_property)
+            if isinstance(prop, dict) and prop.get("format"):
+                formats[str(name)] = str(prop["format"])
+        return names, required, formats
+
+    def json_body_properties(self, path: str, method: str) -> set[str] | None:
+        """Property names of one operation's ``application/json`` body, or ``None`` if not described."""
+        item = self._deref((self.spec.get("paths") or {}).get(path))
+        op = item.get(method.lower()) if isinstance(item, dict) else None
+        body = self._deref(op.get("requestBody")) if isinstance(op, dict) else None
+        content = body.get("content") if isinstance(body, dict) else None
+        media = content.get("application/json") if isinstance(content, dict) else None
+        if not isinstance(media, dict):
+            return None
+        names, _, _ = self.object_fields(media.get("schema"))
+        return names or None
 
     # -- parameters ----------------------------------------------------
     def _parse_param(self, raw: Any) -> ParamIR:
@@ -443,14 +486,8 @@ class SpecParser:
         media = content.get(content_type) or {}
         schema = self._deref(media.get("schema", {}))
         st, item_type, _, _, props = self.schema_type(schema)
-        required_properties: list[str] = []
-        property_formats: dict[str, str] = {}
-        if isinstance(schema, dict):
-            required_properties = sorted(str(name) for name in schema.get("required", []) if isinstance(name, str))
-            for name, raw_property in (schema.get("properties") or {}).items():
-                prop = self._deref(raw_property)
-                if isinstance(prop, dict) and prop.get("format"):
-                    property_formats[str(name)] = str(prop["format"])
+        _, required, property_formats = self.object_fields(schema)
+        required_properties = sorted(required)
         return RequestBodyIR(
             required=bool(body.get("required", False)),
             content_type=content_type,
@@ -478,8 +515,12 @@ class SpecParser:
                 op = item.get(method)
                 if not isinstance(op, dict):
                     continue
-                raw_params = list(shared_params) + list(op.get("parameters", []))
-                params = [self._parse_param(p) for p in raw_params]
+                # An operation parameter overrides the path-level one with the same name and location.
+                by_key: dict[tuple[str, str], ParamIR] = {}
+                for raw_param in list(shared_params) + list(op.get("parameters", [])):
+                    param = self._parse_param(raw_param)
+                    by_key[(param.name, param.location)] = param
+                params = list(by_key.values())
                 request_body = None
                 if "requestBody" in op:
                     request_body = self._parse_request_body(op["requestBody"])
