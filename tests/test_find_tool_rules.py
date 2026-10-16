@@ -99,6 +99,32 @@ def test_update_intent(word):
     assert find.intent(f"can you {word} an account") == "update"
 
 
+@pytest.mark.parametrize("product", ["mist", "central", "aruba", "clearpass", "cppm"])
+@pytest.mark.parametrize("action_query", ["create a policy", "remove a policy", "show policies", "restart a device"])
+def test_leading_product_does_not_hide_intent(product, action_query):
+    assert find.intent(f"please {product}: {action_query}") == find.intent(action_query)
+
+
+@pytest.mark.parametrize("query", ["policy delete example", "unknown create a policy"])
+def test_intent_still_stops_at_an_unknown_leading_word(query):
+    assert find.intent(query) is None
+
+
+@pytest.mark.parametrize(
+    ("query", "product", "expected"),
+    [
+        ("central create a webhook", "central", {"create_webhook"}),
+        ("aruba remove a report", "central", {"delete_report"}),
+        ("mist create a wlan", "mist", {"mist_create_site_wlan", "mist_create_org_wlan"}),
+        ("mist remove a wlan", "mist", {"mist_delete_wlan", "mist_delete_site_wlan"}),
+        ("mist restart an access point", "mist", {"mist_restart_site_device"}),
+        ("clearpass remove a guest", "clearpass", {"clearpass_delete_guest"}),
+    ],
+)
+def test_product_prefixed_requests_rank_the_requested_action_first(query, product, expected):
+    assert find.find_tool(query, top_k=1, product=product)[0]["name"] in expected
+
+
 @pytest.fixture
 def paired_tools(monkeypatch):
     entries = tuple(
@@ -149,3 +175,22 @@ def test_collection_and_single_resource_preference(paired_tools, query, expected
 )
 def test_exact_lookup_overrides_read_form_preference(paired_tools, query, expected):
     assert find.find_tool(query, top_k=1)[0]["name"] == expected
+
+
+def test_exact_name_and_api_path_keep_precedence(paired_tools, monkeypatch):
+    # Make the competing getter win ordinary scoring, but not an exact lookup.
+    monkeypatch.setattr(find, "_score", lambda entry, *args: 1000 if entry.name == "mist_get_site" else 0)
+    for query in ("mist_list_sites", "GET /api/sites"):
+        assert find.find_tool(query, top_k=3)[0]["name"] == "mist_list_sites"
+
+
+def test_flapping_is_not_bounce_and_collection_stays_distinct_from_one_resource(paired_tools, monkeypatch):
+    # Check real diagnostic routing before using the synthetic list/get pair.
+    with monkeypatch.context() as patch:
+        patch.setattr(find, "load_index", index.load_index)
+        hits = find.find_tool("port keeps flapping", top_k=3, product="central")
+        assert hits
+        assert hits[0]["kind"] in {"read", "troubleshoot"}
+        assert hits[0]["name"] != "port_bounce"
+    assert find.find_tool("mist list sites", top_k=1)[0]["name"] == "mist_list_sites"
+    assert find.find_tool("mist get site Branch-1", top_k=1)[0]["name"] == "mist_get_site"

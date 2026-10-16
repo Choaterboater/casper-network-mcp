@@ -1,12 +1,11 @@
-"""Measure find_tool on the fixed question set: how often it is right, and how fast.
+"""Measure find_tool accuracy, ordering and warm latency without contacting a backend.
 
-    uv run python scripts/bench_find_tool.py          # numbers, then every miss
-    uv run python scripts/bench_find_tool.py --json   # the same as JSON
+    uv run python scripts/bench_find_tool.py
+    uv run python scripts/bench_find_tool.py --questions path/to/questions.yaml --json
 
-``bench(questions)`` returns top-1 and top-3 accuracy (each question passes its
-product as find_tool's filter), the same top-3 without the product filter, and
-p50/p95 time per call once the router is loaded. ``cold_start_ms()`` times a
-fresh process from import to its first answer.
+The default remains the fixed 60-question development benchmark. Ranks and MRR
+are bounded to ten results (an absent answer contributes zero). Latency retains
+its original definition: product-filtered top-three calls, after warm-up.
 """
 
 from __future__ import annotations
@@ -38,37 +37,66 @@ def _percentile(values: list[float], pct: float) -> float:
     return ordered[k]
 
 
+def _rank(names: list[str], expected: set[str]) -> int | None:
+    return next((i for i, name in enumerate(names, 1) if name in expected), None)
+
+
+def _metrics(rows: list[dict[str, Any]], mode: str) -> dict[str, Any]:
+    ranks = [row[mode]["expected_rank"] for row in rows]
+    n = max(len(ranks), 1)
+    return {
+        "questions": len(ranks),
+        "top1": round(sum(r == 1 for r in ranks) / n, 3),
+        "top3": round(sum(r is not None and r <= 3 for r in ranks) / n, 3),
+        "top10": round(sum(r is not None for r in ranks) / n, 3),
+        "mrr": round(sum(1 / r for r in ranks if r is not None) / n, 4),
+    }
+
+
+def _failures(rows: list[dict[str, Any]], mode: str, cutoff: int) -> list[dict[str, Any]]:
+    return [
+        {"q": row["q"], "product": row["product"], "expect": row["expect"], **row[mode]}
+        for row in rows
+        if row[mode]["expected_rank"] is None or row[mode]["expected_rank"] > cutoff
+    ]
+
+
 def bench(questions: list[dict[str, Any]]) -> dict[str, Any]:
     from casper_network_mcp.router.find import find_tool
 
-    find_tool("warm up", top_k=3)  # load the router once, as a running server has
-    top1 = top3 = top3_any = 0
+    find_tool("warm up", top_k=3)
     times: list[float] = []
-    misses: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     for item in questions:
-        expect = set(item["expect"])
         for _ in range(ROUNDS):
             start = time.perf_counter()
-            hits = find_tool(item["q"], top_k=3, product=item["product"])
+            find_tool(item["q"], top_k=3, product=item["product"])
             times.append((time.perf_counter() - start) * 1000)
-        names = [h["name"] for h in hits]
-        if names[:1] and names[0] in expect:
-            top1 += 1
-        if expect & set(names):
-            top3 += 1
-        else:
-            misses.append({"q": item["q"], "product": item["product"], "expect": item["expect"], "got": names})
-        if expect & {h["name"] for h in find_tool(item["q"], top_k=3)}:
-            top3_any += 1
-    n = max(len(questions), 1)
+        row = {"q": item["q"], "product": item["product"], "expect": item["expect"]}
+        for mode, product in (("filtered", item["product"]), ("unfiltered", None)):
+            names = [h["name"] for h in find_tool(item["q"], top_k=10, product=product)]
+            row[mode] = {"got": names[:3], "top10": names, "expected_rank": _rank(names, set(item["expect"]))}
+        rows.append(row)
+    filtered = _metrics(rows, "filtered")
+    unfiltered = _metrics(rows, "unfiltered")
+    products = sorted({str(row["product"]) for row in rows if row["product"] is not None})
     return {
-        "questions": len(questions),
-        "top1": round(top1 / n, 3),
-        "top3": round(top3 / n, 3),
-        "top3_no_product": round(top3_any / n, 3),
+        **filtered,
+        **{f"{key}_no_product": unfiltered[key] for key in ("top1", "top3", "top10", "mrr")},
+        "by_product": {
+            product: {
+                mode: _metrics([row for row in rows if row["product"] == product], mode)
+                for mode in ("filtered", "unfiltered")
+            }
+            for product in products
+        },
         "p50_ms": round(statistics.median(times), 2) if times else 0.0,
         "p95_ms": round(_percentile(times, 95), 2) if times else 0.0,
-        "misses": misses,
+        "misses": _failures(rows, "filtered", 3),
+        "wrong_first": _failures(rows, "filtered", 1),
+        "misses_no_product": _failures(rows, "unfiltered", 3),
+        "wrong_first_no_product": _failures(rows, "unfiltered", 1),
+        "results": rows,
     }
 
 
@@ -87,8 +115,9 @@ def cold_start_ms() -> float:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--json", action="store_true", help="print JSON")
+    parser.add_argument("--questions", type=pathlib.Path, default=QUESTIONS, help="labelled YAML question file")
     args = parser.parse_args(argv)
-    result = bench(load_questions())
+    result = bench(load_questions(args.questions))
     result["cold_start_ms"] = cold_start_ms()
     if args.json:
         print(json.dumps(result, indent=2))
@@ -98,8 +127,20 @@ def main(argv: list[str] | None = None) -> int:
         f"top3 without product {result['top3_no_product']:.0%}  "
         f"p50 {result['p50_ms']} ms  p95 {result['p95_ms']} ms  cold start {result['cold_start_ms']} ms"
     )
-    for miss in result["misses"]:
-        print(f"  miss [{miss['product']}] {miss['q']!r}: expected {miss['expect']}, got {miss['got']}")
+    for product, modes in result["by_product"].items():
+        for mode, scores in modes.items():
+            print(
+                f"  {product} {mode}: n={scores['questions']}  top1 {scores['top1']:.1%}  "
+                f"top3 {scores['top3']:.1%}  top10 {scores['top10']:.1%}  MRR {scores['mrr']:.4f}"
+            )
+    for mode, key in (("filtered", "wrong_first"), ("unfiltered", "wrong_first_no_product")):
+        for miss in result[key]:
+            rank = miss["expected_rank"]
+            label = "top3 miss" if rank is None or rank > 3 else "wrong first"
+            print(
+                f"  {mode} {label} [{miss['product']}] {miss['q']!r}: "
+                f"expected {miss['expect']}, rank {rank if rank is not None else '>10'}, got {miss['got']}"
+            )
     return 0
 
 
