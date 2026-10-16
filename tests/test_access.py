@@ -65,7 +65,7 @@ async def test_name_with_odd_characters_drops_the_list(server_with_replies):
 
 
 async def test_missing_login_reported(monkeypatch, server_with_replies):
-    for var in ("CLEARPASS_BASE_URL", "CLEARPASS_API_TOKEN"):
+    for var in ("CLEARPASS_BASE_URL", "CLEARPASS_API_TOKEN", "CLEARPASS_CLIENT_ID", "CLEARPASS_CLIENT_SECRET"):
         monkeypatch.delenv(var, raising=False)
     out = await server_with_replies({}).call("access_check", {})
     cp = next(p for p in out["products"] if p["product"] == "clearpass")

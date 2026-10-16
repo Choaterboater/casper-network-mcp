@@ -55,11 +55,16 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | --- | --- |
 | Juniper Mist | `MIST_API_TOKEN`, and `MIST_HOST` if your cloud is not `api.mist.com` |
 | HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET` |
-| HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, `CLEARPASS_API_TOKEN` |
+| HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
 
-ClearPass API tokens expire (the API client's token lifetime in ClearPass sets when). When a product turns a login
-away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a call to one of its tools returns
-`{"error": "login_expired", "product": ...}`, so the client can ask you for a new one.
+For ClearPass, an API client is best: the server logs in with it and gets a new token before the old one runs out.
+In ClearPass Guest, open Administration > API Services > API Clients, create a client with grant type Client
+Credentials and an operator profile that allows what you want Casper to do, and set its client ID and secret. If
+`CLEARPASS_API_TOKEN` is set it is used as is and the client ID and secret are ignored.
+
+ClearPass API tokens expire (the API client's token lifetime in ClearPass sets when); a pasted token is not renewed.
+When a product turns a login away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a
+call to one of its tools returns `{"error": "login_expired", "product": ...}`, so the client can ask you for a new one.
 
 ## Changes to your network
 
