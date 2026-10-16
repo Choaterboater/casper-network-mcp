@@ -134,9 +134,12 @@ _INTENT_WORDS = {
     "create": frozenset({"create", "make", "add", "new", "build", "claim", "register", "onboard"}),
     "delete": frozenset({"delete", "remove", "release", "drop", "purge"}),
     "update": frozenset(
-        {"change", "update", "set", "edit", "rename", "modify", "move", "assign", "disable", "enable", "turn", "tag"}
+        {
+            "change", "update", "set", "edit", "rename", "modify", "move", "assign", "disable", "enable",
+            "turn", "tag", "extend", "block", "mark",
+        }
     ),
-    "act": frozenset({"reboot", "restart", "reload", "upgrade", "downgrade"}),
+    "act": frozenset({"reboot", "restart", "reload", "upgrade", "downgrade", "bounce", "shut", "re-enable"}),
     "check": frozenset({"ping", "traceroute", "trace"}),
 }
 
@@ -154,7 +157,7 @@ _INTENT_MISMATCH = 0.75
 
 def intent(query: str) -> str | None:
     """read, create, delete or update, from the first real word of the question; None when it is unclear."""
-    for word in (w for w in re.split(r"[^a-z0-9']+", query.lower()) if w):
+    for word in re.findall(r"\bre-enable\b|[a-z0-9']+", query.lower()):
         if word in _FILLER:
             continue
         return next((name for name, cues in _INTENT_WORDS.items() if word in cues), None)
@@ -185,32 +188,62 @@ def _intent_bonus(entry: IndexEntry, wanted: str | None) -> float:
     return _INTENT_MATCH if matched else -_INTENT_MISMATCH
 
 
+def _folded_text(text: str) -> str:
+    """Use the same word boundaries and singular forms for synonym keys and questions."""
+    return " ".join(fold(w) for w in re.split(r"[^a-z0-9]+", text.lower()) if w)
+
+
 @functools.cache
-def synonyms() -> tuple[tuple[re.Pattern[str], frozenset[str]], ...]:
-    """``router/synonyms.yaml``: (word or phrase pattern, words it adds), longest phrase first."""
+def synonyms(product: str | None = None) -> tuple[tuple[re.Pattern[str], frozenset[str]], ...]:
+    """Folded word or phrase patterns and the words they add, longest phrase first."""
     raw = yaml.safe_load((files("casper_network_mcp.router") / "synonyms.yaml").read_text(encoding="utf-8")) or {}
-    out = []
-    for key in sorted(raw, key=lambda k: (-len(str(k)), str(k))):
-        words = frozenset(fold(str(w).lower()) for w in raw[key])
-        out.append((re.compile(r"(?<![a-z0-9])" + re.escape(str(key).lower()) + r"(?![a-z0-9])"), words))
-    return tuple(out)
+    # Router vocabulary additions and corrections, without changing the shipped index.
+    raw.update(
+        {
+            "failed": ["failure"],
+            "denied": ["failure"],
+            "add": ["create"],
+            "connection": ["event"],
+            "interface": ["port"],
+            "drop": ["error", "flapping"],
+            "dropping": ["flapping"],
+            "reconnect": ["flapping"],
+            "reconnecting": ["flapping"],
+            "flap": ["flapping"],
+            "shut": ["bounce"],
+            "re-enable": ["bounce"],
+            "extend": ["update"],
+            "block": ["update"],
+            "mark": ["update"],
+        }
+    )
+    if product == "clearpass":
+        raw.update({"connected": ["client", "session"], "online": ["session"], "switch": ["network", "device"]})
+    folded: dict[str, set[str]] = {}
+    for key, values in raw.items():
+        folded.setdefault(_folded_text(str(key)), set()).update(fold(str(w).lower()) for w in values)
+    return tuple(
+        (re.compile(r"(?<![a-z0-9])" + re.escape(key) + r"(?![a-z0-9])"), frozenset(folded[key]))
+        for key in sorted(folded, key=lambda k: (-len(k), k))
+    )
 
 
-def query_groups(query: str) -> list[frozenset[str]]:
+def query_groups(query: str, product: str | None = None) -> list[frozenset[str]]:
     """The question's ideas: each typed word with its synonyms, and each matched phrase's words.
 
     A word that a synonym spreads into several tool words ("wifi" -> wlan,
     ssid, wireless) is still one idea, so it counts once when tools are ranked.
     """
-    low = query.lower()
-    typed = [t for t in dict.fromkeys(fold(t) for t in re.split(r"[^a-z0-9]+", low) if t)]
+    low = _folded_text(query)
+    typed = list(dict.fromkeys(low.split()))
+    product = product or next((_PRODUCT_WORDS[w] for w in typed if w in _PRODUCT_WORDS), None)
     groups: dict[str, set[str]] = {t: {t} for t in typed if len(t) >= 2 and t not in _STOPWORDS}
     phrases: list[set[str]] = []
-    for pattern, extra in synonyms():
+    for pattern, extra in synonyms(product):
         match = pattern.search(low)
         if not match:
             continue
-        key = fold(match.group(0))
+        key = match.group(0)
         if key in groups:
             groups[key] |= extra
         else:
@@ -259,6 +292,15 @@ def _score(
     return score + _intent_bonus(entry, wanted)
 
 
+def _read_form_preference(entry: IndexEntry, query_words: set[str]) -> int:
+    """Break list/get ties using explicit collection cues or a plural resource noun."""
+    if entry.kind != "read":
+        return 0
+    plural_resources = {fold(w) for w in query_words if fold(w) != w and fold(w) not in _STOPWORDS}
+    collection = bool(query_words & {"list", "all"} or plural_resources & entry.name_tokens)
+    return int(("list" if collection else "get") in entry.name_tokens)
+
+
 def _hit(entry: IndexEntry, include_schema: bool) -> dict[str, Any]:
     hit: dict[str, Any] = {
         "name": entry.name,
@@ -295,22 +337,23 @@ def find_tool(
         out.append(_hit(exact, include_schema))
         seen.add(exact.name)
 
-    groups = query_groups(query)
+    groups = query_groups(query, wanted_product)
     words = set().union(*groups) if groups else set()
     hint = next((_PRODUCT_WORDS[w] for w in words if w in _PRODUCT_WORDS), None)
     query_low = query.lower()
     wanted = intent(query)
     # Only tools with a query word in their name can be hits (the index lists them per word).
     candidates = {i for word in words for i in index.name_postings.get(word, ())}
-    scored: list[tuple[float, str, IndexEntry]] = []
+    query_words = {w for w in re.split(r"[^a-z0-9]+", query_low) if w}
+    scored: list[tuple[float, int, str, IndexEntry]] = []
     for i in candidates:
         entry = index.entries[i]
         if entry.name in seen or not allowed(entry):
             continue
         score = _score(entry, groups, query_low, hint, wanted)
         if score is not None:
-            scored.append((score, entry.name, entry))
-    scored.sort(key=lambda item: (-item[0], item[1]))
-    for _, _, entry in scored[: top_k - len(out)]:
+            scored.append((score, _read_form_preference(entry, query_words), entry.name, entry))
+    scored.sort(key=lambda item: (-item[0], -item[1], item[2]))
+    for _, _, _, entry in scored[: top_k - len(out)]:
         out.append(_hit(entry, include_schema))
     return out
