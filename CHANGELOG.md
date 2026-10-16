@@ -1,6 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.1.4
+
+Secrets stay hidden in large replies, ClearPass logs in by itself, writes send the bodies the specs
+require, and a cable test now asks first.
+
+- Security: a reply too large to return whole is now redacted before it is cut, so a secret deep in it
+  (a WLAN PSK, a RADIUS secret) can no longer reach the AI in the cut text; text that is not JSON gets the
+  string redaction, which now also hides `"key": "value"` pairs with a secret key. Mist claim codes
+  (`magic`, `claim_code(s)`, `registration_code`) are hidden everywhere.
+- Cable (TDR) tests on Central CX, AOS-S and Mist are now disruptive changes: they go through the change
+  route and its confirmation, and the read-only pin blocks them. They briefly take the tested link down.
+- Errors carry distinct codes and recovery guidance for permission (403), rate limit (429) and timeouts; a
+  timed-out write is never reported as definitely failed, and a write is still sent only once.
+- `find_tool`: a request naming one product ranks that product's tools first when no filter is given
+  (explicit filters and exact API lookups still win); intent is read past a leading product name ("mist
+  create a wlan"); folded plurals and synonyms, list/get ties and ClearPass denial questions rank better.
+  The benchmark reports per product (filtered and unfiltered top-1/3/10 and MRR) with a frozen evaluation set.
+- Generated tools keep body fields and required fields from `allOf` schemas (46 and 51 Central operations),
+  an operation-level parameter overrides the path-level one of the same name (no more `site_id_2`), and the
+  dry-run body check counts `allOf` properties.
+- Mist search paging follows `search_after`, cursors Mist returns can be passed back to any tool, switch
+  ports page for real, and NAC troubleshooting searches by MAC across pages.
+- The Mist spec pin is labelled 2610.1.0, the version of the bundled file.
 
 - ClearPass can log in by itself with an API client: set `CLEARPASS_CLIENT_ID` and `CLEARPASS_CLIENT_SECRET`
   and the server gets a token at `POST /api/oauth` (client credentials), keeps it in memory, renews it a minute
