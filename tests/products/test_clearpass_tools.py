@@ -11,6 +11,7 @@ import json
 
 import pytest
 from conftest import Backend, body_of
+from mcp.server.mcpserver.exceptions import ToolError
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.gate import Gate
@@ -136,9 +137,55 @@ async def test_guest_enable_needs_one_identifier(recording_transport, clearpass_
 
 async def test_create_guest_hides_the_password_in_the_preview(recording_transport, clearpass_backend):
     out = await clearpass_backend.call(
-        "clearpass_create_guest", {"username": "visitor1", "password": "s3cret", "dry_run": True}
+        "clearpass_create_guest", {"username": "visitor1", "password": "s3cret", "role_id": 2, "dry_run": True}
     )
-    assert out["would_send"]["body"] == {"username": "visitor1", "password": "[hidden]"}
+    assert out["would_send"]["body"] == {"username": "visitor1", "password": "[hidden]", "role_id": 2}
+    assert recording_transport.calls == []
+
+
+async def test_create_guest_sends_the_fields_the_spec_requires(recording_transport, clearpass_backend):
+    await clearpass_backend.call("clearpass_create_guest", {"username": "visitor1", "password": "s3cret", "role_id": 2})
+    call = recording_transport.calls[0]
+    assert (call.method, call.url.path) == ("POST", "/api/guest")
+    assert body_of(call) == {"username": "visitor1", "password": "s3cret", "role_id": 2}
+    with pytest.raises(ToolError, match="password"):
+        await clearpass_backend.call("clearpass_create_guest", {"username": "visitor1", "role_id": 2})
+
+
+async def test_create_guest_looks_up_a_role_name(recording_transport, clearpass_backend):
+    recording_transport.reply(
+        {"_embedded": {"items": [{"id": 2, "name": "[Guest]"}, {"id": 9, "name": "[Guest] Extra"}]}}, "GET", "/api/role"
+    )
+    await clearpass_backend.call(
+        "clearpass_create_guest", {"username": "visitor1", "password": "s3cret", "role_name": "[Guest]"}
+    )
+    lookup, create = recording_transport.calls
+    assert (lookup.method, lookup.url.path) == ("GET", "/api/role")
+    assert json.loads(_params(lookup)["filter"]) == {"name": "[Guest]"}
+    assert body_of(create) == {"username": "visitor1", "password": "s3cret", "role_id": 2}
+
+
+async def test_create_guest_refuses_a_missing_or_doubled_role(recording_transport, clearpass_backend):
+    base = {"username": "visitor1", "password": "s3cret"}
+    for args in ({}, {"role_id": 2, "role_name": "[Guest]"}):
+        out = await clearpass_backend.call("clearpass_create_guest", {**base, **args})
+        assert "exactly one of role_id or role_name" in out["error"]
+    assert recording_transport.calls == []
+    recording_transport.reply({"_embedded": {"items": []}}, "GET", "/api/role")
+    out = await clearpass_backend.call("clearpass_create_guest", {**base, "role_name": "Nope"})
+    assert "No ClearPass role is named 'Nope'" in out["error"]
+    assert [c.method for c in recording_transport.calls] == ["GET"]
+
+
+async def test_create_guest_refuses_an_ambiguous_role_name(recording_transport, clearpass_backend):
+    recording_transport.reply(
+        {"_embedded": {"items": [{"id": 2, "name": "Staff"}, {"id": 3, "name": "Staff"}]}}, "GET", "/api/role"
+    )
+    out = await clearpass_backend.call(
+        "clearpass_create_guest", {"username": "visitor1", "password": "s3cret", "role_name": "Staff"}
+    )
+    assert "More than one" in out["error"] and "role_id" in out["error"]
+    assert [c.method for c in recording_transport.calls] == ["GET"]
 
 
 async def test_disconnect_and_service_toggle(recording_transport, clearpass_backend):
@@ -146,7 +193,15 @@ async def test_disconnect_and_service_toggle(recording_transport, clearpass_back
     await clearpass_backend.call("clearpass_set_service_enabled", {"name": "Guest Access", "enabled": False})
     first, second = recording_transport.calls
     assert (first.method, first.url.path) == ("POST", "/api/session/abc/disconnect")
+    assert body_of(first) == {"id": "abc", "confirm_disconnect": True}
     assert (second.method, second.url.raw_path) == ("PATCH", b"/api/config/service/name/Guest%20Access/disable")
+
+
+async def test_clearpass_get_refuses_a_get_that_is_not_a_plain_read(recording_transport, clearpass_backend):
+    out = await clearpass_backend.call("clearpass_get", {"path": "/api/guest/7/receipt/1"})
+    assert "Not sent" in out["error"] and "receipt" in out["error"]
+    assert "GET /api/guest/{guest_id}/receipt/{id}" in out["error"]
+    assert recording_transport.calls == []
 
 
 async def test_insight_and_onguard_paths(recording_transport, clearpass_backend):
