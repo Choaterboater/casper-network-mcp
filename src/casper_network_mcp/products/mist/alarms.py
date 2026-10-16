@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from casper_network_mcp.products.mist._common import MIST, bool_param, change, get, seg
+from casper_network_mcp.sdk_compat import OptionalText
 
 mcp = MIST
 
@@ -27,7 +28,7 @@ async def alarms_list(
     group: Literal["certificate_expiry", "infrastructure", "marvis", "security"] | None = None,
     site_id: str | None = None,
     limit: int = 100,
-    search_after: str | None = None,
+    search_after: OptionalText = None,
 ) -> Any:
     """Search the org's alarms (``GET /api/v1/orgs/{org_id}/alarms/search``).
 
