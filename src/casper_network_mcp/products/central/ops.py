@@ -21,7 +21,7 @@ safe).
 """
 
 import asyncio
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 from casper_network_mcp.products._tools import ToolSet, would_send
@@ -527,19 +527,46 @@ async def get_switch_interface_counters(
 
 
 @mcp.tool()
-async def run_speed_test(serial_number: str) -> dict[str, Any]:
-    """Run a speed test from an AP to measure uplink bandwidth.
+async def run_speed_test(
+    serial_number: str,
+    iperf_server_address: str,
+    protocol: Literal["tcp", "udp"] | None = None,
+    server_port: int | None = None,
+    bandwidth_kbps: int | None = None,
+    include_reverse: bool | None = None,
+    seconds_to_measure: int | None = None,
+    parallel: int | None = None,
+    omit_seconds: int | None = None,
+    window_size_kb: int | None = None,
+) -> dict[str, Any]:
+    """Run an iperf speed test from an AP to an iperf server, to measure uplink bandwidth.
 
-    Uses the Central async troubleshooting API. Returns download/upload
-    throughput and latency from the AP's perspective. Useful for verifying
-    whether a slow client experience is a radio issue or an uplink issue.
+    Uses the Central async troubleshooting API. ``iperf_server_address`` (an
+    IP address) is required by the spec. Optional: ``protocol`` tcp or udp,
+    ``server_port`` 0-65535, ``bandwidth_kbps``, ``include_reverse``,
+    ``seconds_to_measure`` 0-20, ``parallel`` 1-30 streams, ``omit_seconds``
+    1-5 and ``window_size_kb`` 64-1638. Returns throughput from the AP's
+    perspective: is a slow client a radio issue or an uplink issue?
     """
     client = get_client()
     errors: list[str] = []
+    payload: dict[str, Any] = {"iperfServerAddress": iperf_server_address}
+    for key, value in (
+        ("protocol", protocol),
+        ("serverPort", server_port),
+        ("bandwidth", bandwidth_kbps),
+        ("includeReverse", include_reverse),
+        ("secondsToMeasure", seconds_to_measure),
+        ("parallel", parallel),
+        ("omit", omit_seconds),
+        ("windowSize", window_size_kb),
+    ):
+        if value is not None:
+            payload[key] = value
     return await atroubleshoot_async(
         client,
         troubleshooting_endpoint_candidates("aps", serial_number, "speedtest"),
-        {},
+        payload,
         errors,
         diagnostic=True,
     )

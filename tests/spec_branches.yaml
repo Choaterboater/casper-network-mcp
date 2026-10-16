@@ -47,6 +47,7 @@ defaults:
   clearpass_create_guest: {role_id: 2, role_name: null}
   marvis_troubleshoot: {site_id: x1}
   mist_update_wlan: {changes: {vlan_id: 30}}
+  gateway_config_static_route: {routes: [{prefix: 198.51.100.0/24, nexthop: 192.0.2.1}]}
   gateway_join_cluster: {gateways: [{ip: 192.0.2.10, mac: "00:00:5e:00:53:01", priority: 128}]}
   run_firmware_compliance_campaign: {targets: [{scope_id: "1001", device_function: ACCESS_SWITCH}]}
 
@@ -97,6 +98,11 @@ branches:
     - {site_id: null, site_name: Branch-12}
   central_site_overview:
     - {site_id: null, site_name: Branch-12}
+  gateway_config_static_route:
+    - {routes: [{prefix: "2001:db8:1::/48", nexthop: "2001:db8::1", distance: 5}]}
+  list_visitors:
+    - {offset: 10}
+    - {full_list: true}
 
 replies:
   clearpass_create_guest:
@@ -106,6 +112,10 @@ replies:
         _embedded:
           items:
             - {id: 2, name: x1}
+  mist_update_wlan:
+    - method: GET
+      path: /api/v1/sites/x1/wlans/x1
+      reply: {id: x1, ssid: Example}
   clearpass_why_denied:
     - method: GET
       path: /api/session

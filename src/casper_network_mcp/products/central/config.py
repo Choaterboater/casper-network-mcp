@@ -22,6 +22,7 @@ lifecycle (build_vsf_template/delete_vsf_template), bulk site/site-collection
 delete, and multi-target firmware-compliance campaigns.
 """
 
+import ipaddress
 import uuid
 from typing import Any
 from urllib.parse import quote
@@ -1469,74 +1470,80 @@ def gateway_config_interface(
         }
 
 
+_IPV4_KEY_NOTE = (
+    "The IPv4 route key prefix-vrf-nexthop-id is sent as '<prefix>~<vrf>', following the spec's description "
+    "('prefix and vrf separated by ~'); this format is not yet confirmed on a device."
+)
+
+
+def _static_routes(routes: list[dict[str, Any]], vrf: str) -> dict[str, list[dict[str, Any]]]:
+    """``[{prefix, nexthop, distance}]`` as the spec's ``ipv4`` and ``ipv6`` route lists."""
+    out: dict[str, list[dict[str, Any]]] = {"ipv4": [], "ipv6": []}
+    for i, route in enumerate(routes):
+        if not isinstance(route, dict) or not route.get("prefix") or not route.get("nexthop"):
+            raise ValueError(f"routes[{i}] needs a prefix (CIDR) and a nexthop (IP address)")
+        try:
+            prefix = ipaddress.ip_network(str(route["prefix"]), strict=False)
+            nexthop = ipaddress.ip_address(str(route["nexthop"]))
+        except ValueError as exc:
+            raise ValueError(f"routes[{i}]: {exc}") from None
+        if prefix.version != nexthop.version:
+            raise ValueError(f"routes[{i}]: prefix and nexthop must both be IPv4 or both IPv6")
+        entry: dict[str, Any] = {"next-hop": str(nexthop)}
+        if route.get("distance") is not None:
+            entry["distance"] = int(route["distance"])
+        if prefix.version == 4:
+            out["ipv4"].append({"prefix-vrf-nexthop-id": f"{prefix}~{vrf}", **entry})
+        else:
+            out["ipv6"].append({"prefix": str(prefix), **entry})
+    return {k: v for k, v in out.items() if v}
+
+
 @mcp.tool()
 def gateway_config_static_route(
-    serial_number: str,
-    destination: str,
-    nexthop: str,
     device_scope_id: str,
-    admin_distance: int = 1,
+    profile_name: str,
+    routes: list[dict[str, Any]],
+    vrf: str = "default",
+    description: str | None = None,
+    device_function: str = "BRANCH_GW",
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Create or replace a static route on an Aruba gateway at device scope.
+    """Create or replace a gateway's static-route profile at device scope.
 
-    destination: CIDR e.g. '0.0.0.0/0' (slashes become underscores in URL).
-    admin_distance: default 1; use 50 for a default route.
+    ``PUT /network-config/v1alpha1/static-route/{profile_name}`` (object-type
+    LOCAL at ``device_scope_id``). The profile is replaced as a whole, so
+    ``routes`` lists every route it should hold: ``{"prefix": "198.51.100.0/24",
+    "nexthop": "192.0.2.1", "distance": 1}`` (distance optional). IPv6
+    routes go in the spec's ``ipv6`` list with ``prefix``. The spec's IPv4
+    route has no prefix field, only the key ``prefix-vrf-nexthop-id``
+    ("prefix and vrf separated by ~"), so an IPv4 route is sent there as
+    ``<prefix>~<vrf>``; that format is not yet confirmed on a device.
     """
-    route_name = destination.replace("/", "_")
-    payload = {
-        "nexthop": [{"ip-address": nexthop, "admin-distance": admin_distance}],
-        "network": destination,
-    }
-
+    if not routes:
+        raise ValueError("routes must list at least one route")
+    shaped = _static_routes(routes, vrf)
+    payload: dict[str, Any] = {"name": profile_name, **shaped}
+    if description:
+        payload["description"] = description
+    endpoint = f"/network-config/v1alpha1/static-route/{seg(profile_name)}"
+    params = {"object-type": "LOCAL", "scope-id": device_scope_id, "device-function": device_function}
     if dry_run:
-        return {
-            "dry_run": True,
-            "serial_number": serial_number,
-            "destination": destination,
-            "nexthop": nexthop,
-            "admin_distance": admin_distance,
-            "device_scope_id": device_scope_id,
-            "payload": payload,
-            "errors": [],
-        }
-
-    client = get_client()
-    errors: list[str] = []
-    endpoint = f"/network-config/v1alpha1/static-route/{seg(route_name)}"
-    params = {"object-type": "LOCAL", "scope-id": device_scope_id}
-
+        preview = would_send("PUT", endpoint, payload, params)
+        if "ipv4" in shaped:
+            preview["note"] = _IPV4_KEY_NOTE
+        return preview
+    response = get_client()._request("PUT", endpoint, json=payload, params=params)
+    if response.status_code not in (200, 201, 202, 204):
+        error = compact_http_error(response, endpoint=endpoint)
+        if "ipv4" in shaped and 400 <= response.status_code < 500:
+            error = f"{error} {_IPV4_KEY_NOTE} Check how Central expects the IPv4 route key."
+        return {"profile_name": profile_name, "error": error}
     try:
-        response = client._request("PUT", endpoint, json=payload, params=params)
-        if response.status_code not in (200, 201, 202, 204):
-            errors.append(compact_http_error(response, endpoint=endpoint))
-            return {
-                "serial_number": serial_number,
-                "destination": destination,
-                "nexthop": nexthop,
-                "response": None,
-                "errors": errors,
-            }
-        try:
-            resp_body = response.json()
-        except Exception:
-            resp_body = {}
-        return {
-            "serial_number": serial_number,
-            "destination": destination,
-            "nexthop": nexthop,
-            "response": resp_body,
-            "errors": errors,
-        }
-    except Exception as exc:
-        errors.append(str(exc))
-        return {
-            "serial_number": serial_number,
-            "destination": destination,
-            "nexthop": nexthop,
-            "response": None,
-            "errors": errors,
-        }
+        resp_body = response.json()
+    except Exception:
+        resp_body = {}
+    return {"profile_name": profile_name, "routes": routes, "endpoint_used": endpoint, "response": resp_body}
 
 
 @mcp.tool()
@@ -1747,69 +1754,25 @@ def assign_device_to_site(
 
 
 @mcp.tool()
-def update_device_settings(
-    serial_number: str,
-    settings: dict[str, Any],
-    device_scope_id: str | None = None,
-    dry_run: bool = False,
-) -> dict[str, Any]:
-    """Update device metadata (name, location, notes, banner). device_scope_id
-    required for switch-system path."""
+def update_device_settings(serial_number: str, notes: str, dry_run: bool = False) -> dict[str, Any]:
+    """Set a device's notes in Central (``PATCH /network-monitoring/v1/devices/{serial-number}``).
+
+    Notes are the only field this endpoint takes. To set a hostname use
+    ``set_hostname``; for other device settings find the config tool with
+    ``find_tool``.
+    """
+    endpoint = f"/network-monitoring/v1/devices/{seg(serial_number)}"
+    body = {"notes": notes}
     if dry_run:
-        return {
-            "dry_run": True,
-            "serial_number": serial_number,
-            "settings": settings,
-            "device_scope_id": device_scope_id,
-            "response": None,
-            "errors": [],
-        }
-
-    client = get_client()
-    errors: list[str] = []
-    candidates: list[tuple[str, str, dict[str, Any], dict[str, Any] | None]] = [
-        ("PATCH", f"/network-monitoring/v1/devices/{seg(serial_number)}", settings, None),
-    ]
-    if device_scope_id:
-        candidates.append(
-            (
-                "PATCH",
-                f"/network-config/v1alpha1/switch-system/{seg(serial_number)}",
-                settings,
-                {"object-type": "LOCAL", "scope-id": device_scope_id},
-            )
-        )
-
-    for method, endpoint, payload, params in candidates:
-        try:
-            response = client._request(method, endpoint, json=payload, params=params)
-            if response.status_code == 404:
-                errors.append(f"404 at {endpoint}")
-                continue
-            if response.status_code not in (200, 201, 202, 204):
-                errors.append(compact_http_error(response, endpoint=endpoint))
-                continue
-            try:
-                resp_body = response.json()
-            except Exception:
-                resp_body = {}
-            return {
-                "serial_number": serial_number,
-                "settings": settings,
-                "endpoint_used": endpoint,
-                "response": resp_body,
-                "errors": errors,
-            }
-        except Exception as exc:
-            errors.append(str(exc))
-
-    return {
-        "serial_number": serial_number,
-        "settings": settings,
-        "endpoint_used": None,
-        "response": None,
-        "errors": errors,
-    }
+        return would_send("PATCH", endpoint, body)
+    response = get_client()._request("PATCH", endpoint, json=body)
+    if response.status_code not in (200, 201, 202, 204):
+        return {"serial_number": serial_number, "error": compact_http_error(response, endpoint=endpoint)}
+    try:
+        resp_body = response.json()
+    except Exception:
+        resp_body = {}
+    return {"serial_number": serial_number, "notes": notes, "endpoint_used": endpoint, "response": resp_body}
 
 
 # ── Roles ─────────────────────────────────────────────────────────────────────

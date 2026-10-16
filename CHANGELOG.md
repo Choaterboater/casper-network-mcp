@@ -19,6 +19,23 @@
 - `clearpass_disconnect_session` now sends `{"id": ..., "confirm_disconnect": true}`, which the spec requires.
 - `clearpass_get` refuses a GET that is not a plain read (one listed in `KIND_OVERRIDES`, such as a guest
   receipt, which can hold a password) and points to that operation's own tool, like `mist_get` already did.
+- Central `run_speed_test` now takes `iperf_server_address`, which the spec requires, and the spec's optional
+  iperf settings (protocol, port, bandwidth, reverse, duration, parallel streams, omit, window size). It used
+  to send an empty body.
+- Central `gateway_config_static_route` now sends the spec's static-route profile: it takes `profile_name`
+  and `routes` (`[{prefix, nexthop, distance}]`), mapped into the profile's `ipv4` and `ipv6` route lists, and
+  sends the `device-function` the spec requires with a LOCAL object. The spec's IPv4 route has no prefix
+  field, so an IPv4 route's prefix goes in its `prefix-vrf-nexthop-id` key as `<prefix>~<vrf>` (`vrf`
+  defaults to `default`). That format is not yet confirmed on a device; the preview and a 4xx error say so.
+- Central `update_device_settings` sets the device notes only, the one field
+  `PATCH /network-monitoring/v1/devices/{serial-number}` takes. It no longer accepts other settings or tries
+  the switch-system profile; `set_hostname` sets a hostname.
+- Central `list_visitors` sends `limit`, `offset` and the `next` cursor (`next_cursor`), and `full_list`
+  follows `next` (up to 50 pages of 200, with `next` returned if more remain). It used to read one default page.
+- Mist `mist_update_wlan` reads the WLAN first and PUTs the whole object with the changes merged in, since the
+  spec's PUT requires `ssid`. That read keeps secrets (a PSK, RADIUS secrets) so they are sent back
+  unchanged; the preview and the reply still hide them. A WLAN that cannot be read whole is refused, and a
+  refused change (read-only pin or scope) is refused before the read.
 
 ## 0.1.3
 

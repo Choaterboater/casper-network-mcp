@@ -22,6 +22,7 @@ from casper_network_mcp.products.central.compat import (
     MAC_ADDRESS_STORE_NAME,
     atroubleshoot_async,
     bound_collection_response,
+    clamp_limit,
     compact_http_error,
     find_identity_store_id,
     get_client,
@@ -249,17 +250,51 @@ def delete_mpsk_registration(
 # ── Visitor Accounts ──────────────────────────────────────────────────────────
 
 
+_VISITOR_PAGE = 200
+_VISITOR_MAX_PAGES = 50
+
+
 @mcp.tool()
 def list_visitors(
     limit: int = 50,
     offset: int = 0,
+    next_cursor: str | None = None,
     full_list: bool = False,
 ) -> dict[str, Any]:
-    """List Central NAC visitor accounts (bounded by default)."""
-    data = get_client().get(f"{_CNAC_BASE}/cnac-visitor")
-    if full_list:
-        return data
-    return bound_collection_response(data, limit=limit, offset=offset)
+    """List Central NAC visitor accounts, one page at a time (``GET .../cnac-visitor``).
+
+    ``limit``, ``offset`` and ``next_cursor`` (the ``next`` value of an
+    earlier reply) are sent to Central as ``limit``, ``offset`` and ``next``. ``full_list=True`` follows ``next`` from there, up to
+    50 pages of 200; if visitors remain, the reply's ``next`` continues.
+    """
+    endpoint = f"{_CNAC_BASE}/cnac-visitor"
+    client = get_client()
+    params: dict[str, Any] = {"limit": _VISITOR_PAGE if full_list else clamp_limit(limit)}
+    if offset:
+        params["offset"] = max(0, offset)
+    if next_cursor:
+        params["next"] = next_cursor
+    if not full_list:
+        return client.get(endpoint, params=params)
+    items: list[Any] = []
+    data: Any = {}
+    seen: set[str] = set()
+    for _ in range(_VISITOR_MAX_PAGES):
+        data = client.get(endpoint, params=params)
+        page = data.get("items") if isinstance(data, dict) else None
+        items.extend(page or [])
+        cursor = data.get("next") if isinstance(data, dict) else None
+        if not page or not cursor or cursor in seen:
+            cursor = None
+            break
+        seen.add(cursor)
+        params = {"limit": _VISITOR_PAGE, "next": cursor}
+    out: dict[str, Any] = {"items": items, "count": len(items)}
+    if isinstance(data, dict) and "total" in data:
+        out["total"] = data["total"]
+    if cursor:
+        out["next"] = cursor
+    return out
 
 
 @mcp.tool()

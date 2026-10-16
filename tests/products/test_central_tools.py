@@ -402,3 +402,96 @@ def test_troubleshooting_plan_files_cable_test_as_a_check_and_has_no_confirm_ste
     text = str(plan)
     assert "requires_confirmation" not in text
     assert "dry_run" not in text
+
+
+async def test_speed_test_sends_the_iperf_server_the_spec_requires(central_backends, recording_transport):
+    await central_backends.call(
+        "run_speed_test",
+        {"serial_number": "SN1", "iperf_server_address": "192.0.2.20", "protocol": "udp", "seconds_to_measure": 10},
+    )
+    post = next(c for c in recording_transport.calls if c.method == "POST")
+    assert post.url.path == "/network-troubleshooting/v1/aps/SN1/speedtest"
+    assert body_of(post) == {"iperfServerAddress": "192.0.2.20", "protocol": "udp", "secondsToMeasure": 10}
+
+
+async def test_device_settings_are_the_notes_the_endpoint_takes(central_backends, recording_transport):
+    out = await central_backends.call("update_device_settings", {"serial_number": "SN1", "notes": "Lobby AP"})
+    (call,) = recording_transport.calls
+    assert (call.method, call.url.path) == ("PATCH", "/network-monitoring/v1/devices/SN1")
+    assert body_of(call) == {"notes": "Lobby AP"} and out["notes"] == "Lobby AP"
+    preview = await central_backends.call(
+        "update_device_settings", {"serial_number": "SN1", "notes": "Lobby AP", "dry_run": True}
+    )
+    assert preview["would_send"]["body"] == {"notes": "Lobby AP"} and len(recording_transport.calls) == 1
+
+
+VISITORS = "/network-config/v1alpha1/cnac-visitor"
+
+
+async def test_list_visitors_sends_paging_to_central(central_backends, recording_transport):
+    recording_transport.reply({"items": [{"name": "v1"}], "count": 1, "next": "c2"}, "GET", VISITORS)
+    out = await central_backends.call("list_visitors", {"limit": 5, "offset": 10, "next_cursor": "c1"})
+    assert dict(recording_transport.calls[0].url.params) == {"limit": "5", "offset": "10", "next": "c1"}
+    assert out["items"] == [{"name": "v1"}] and out["next"] == "c2"
+
+
+async def test_list_visitors_full_list_follows_next(central_backends, recording_transport):
+    pages = {None: (["v1", "v2"], "c2"), "c2": (["v3"], "c3"), "c3": (["v4"], None)}
+
+    def paged(request):
+        names, cursor = pages[request.url.params.get("next")]
+        reply = {"items": [{"name": n} for n in names], "count": len(names), "total": 4}
+        return {**reply, "next": cursor} if cursor else reply
+
+    recording_transport.reply(paged, "GET", VISITORS)
+    out = await central_backends.call("list_visitors", {"full_list": True})
+    assert [v["name"] for v in out["items"]] == ["v1", "v2", "v3", "v4"]
+    assert out["count"] == 4 and out["total"] == 4 and "next" not in out
+    assert [c.url.params.get("next") for c in recording_transport.calls] == [None, "c2", "c3"]
+
+
+async def test_static_route_sends_the_spec_profile_shape(central_backends, recording_transport):
+    routes = [
+        {"prefix": "198.51.100.0/24", "nexthop": "192.0.2.1"},
+        {"prefix": "2001:db8:1::/48", "nexthop": "2001:db8::1", "distance": 5},
+    ]
+    args = {"device_scope_id": "1001", "profile_name": "branch-routes", "routes": routes}
+    await central_backends.call("gateway_config_static_route", args)
+    (call,) = recording_transport.calls
+    assert (call.method, call.url.path) == ("PUT", "/network-config/v1alpha1/static-route/branch-routes")
+    assert dict(call.url.params) == {"object-type": "LOCAL", "scope-id": "1001", "device-function": "BRANCH_GW"}
+    assert body_of(call) == {
+        "name": "branch-routes",
+        "ipv4": [{"prefix-vrf-nexthop-id": "198.51.100.0/24~default", "next-hop": "192.0.2.1"}],
+        "ipv6": [{"prefix": "2001:db8:1::/48", "next-hop": "2001:db8::1", "distance": 5}],
+    }
+
+
+async def test_static_route_ipv4_key_takes_the_vrf_and_says_it_is_unconfirmed(central_backends, recording_transport):
+    routes = [{"prefix": "198.51.100.0/24", "nexthop": "192.0.2.1"}]
+    args = {"device_scope_id": "1001", "profile_name": "branch-routes", "routes": routes, "vrf": "blue"}
+    preview = await central_backends.call("gateway_config_static_route", {**args, "dry_run": True})
+    assert preview["would_send"]["body"]["ipv4"] == [
+        {"prefix-vrf-nexthop-id": "198.51.100.0/24~blue", "next-hop": "192.0.2.1"}
+    ]
+    assert "not yet confirmed on a device" in preview["note"] and recording_transport.calls == []
+    six = {**args, "routes": [{"prefix": "2001:db8:1::/48", "nexthop": "2001:db8::1"}], "dry_run": True}
+    assert "note" not in await central_backends.call("gateway_config_static_route", six)
+    recording_transport.reply(400, "PUT", "/network-config/v1alpha1/static-route/branch-routes")
+    out = await central_backends.call("gateway_config_static_route", args)
+    assert "400" in out["error"] and "not yet confirmed on a device" in out["error"]
+
+
+@pytest.mark.parametrize(
+    "routes",
+    [
+        [],
+        [{"prefix": "198.51.100.0/24"}],
+        [{"prefix": "not-a-prefix", "nexthop": "192.0.2.1"}],
+        [{"prefix": "198.51.100.0/24", "nexthop": "2001:db8::1"}],
+    ],
+)
+async def test_static_route_refuses_bad_routes_before_sending(central_backends, recording_transport, routes):
+    args = {"device_scope_id": "1001", "profile_name": "branch-routes", "routes": routes}
+    out = await central_backends.call("gateway_config_static_route", args)
+    assert "error" in out and recording_transport.calls == []
