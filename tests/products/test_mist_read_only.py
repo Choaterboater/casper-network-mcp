@@ -3,8 +3,8 @@
 All automated calls use MockTransport and synthetic IDs, never real logins.
 This covers the generated operations and curated tools, not live endpoint behavior.
 Listed troubleshooting POSTs are deliberately excluded: the server permits them
-under --read-only, and a cable test can interrupt a link. Live validation must use
-plain reads, not every tool accepted by invoke_read_tool.
+under --read-only. Cable tests are disruptive changes and are covered below.
+Live validation must use plain reads, not every tool accepted by invoke_read_tool.
 """
 
 from __future__ import annotations

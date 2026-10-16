@@ -4,9 +4,8 @@ Copied from hpe-networking-mcp ``mcp_servers/ops.py``. What changed: every reque
 gated Central client (``compat``); the questions the source asked the person
 before a PoE or port bounce, reboot, disconnect, gateway halt or swarm reboot
 are gone (Casper's box asks), and those tools take ``dry_run: bool = False``
-instead; the cable test is sent as a troubleshooting check like ping or show
-(on ``TROUBLESHOOT_OPS``), though a TDR test briefly takes the tested port's
-link down.
+instead. Cable tests use the change route because a TDR test briefly takes
+the tested port's link down.
 
 
 Covers: CX/AOS-S/Gateway/AP ping/traceroute/show, PoE bounce, port bounce, cable test,
@@ -335,8 +334,7 @@ async def cable_test(
 ) -> dict[str, Any]:
     """Run a cable/TDR test on CX or AOS-S switch ports (async, polls ~60s).
 
-    A troubleshooting check like ping or show; it briefly takes each tested
-    port's link down while it runs.
+    A disruptive change: it briefly takes each tested port's link down.
     """
     errors: list[str] = []
     dtype = await asyncio.to_thread(device_type_for_troubleshoot, serial_number, device_type)
@@ -356,7 +354,6 @@ async def cable_test(
         troubleshooting_endpoint_candidates(dtype, serial_number, "cableTest"),
         {"ports": ports},
         errors,
-        diagnostic=True,
     )
 
 

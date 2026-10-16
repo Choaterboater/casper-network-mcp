@@ -125,6 +125,41 @@ def test_product_prefixed_requests_rank_the_requested_action_first(query, produc
     assert find.find_tool(query, top_k=1, product=product)[0]["name"] in expected
 
 
+def test_product_named_restart_ranks_mist_first_without_filter():
+    hits = find.find_tool("mist restart an access point")
+    assert hits[0]["name"] == "mist_restart_site_device"
+    assert all(hit["product"] == "mist" for hit in hits)
+
+
+@pytest.mark.parametrize("query,product", [
+    ("central show guests", "clearpass"),
+    ("aruba show guests", "clearpass"),
+    ("mist show guests", "clearpass"),
+    ("cppm list sites", "mist"),
+    ("clearpass list sites", "central"),
+])
+def test_explicit_filter_overrides_conflicting_product_hint(query, product):
+    hits = find.find_tool(query, product=product)
+    assert hits
+    assert all(hit["product"] == product for hit in hits)
+
+
+@pytest.mark.parametrize("query", ["GET /api/v1/sites/{site_id}", "GET /api/v1/sites/central", "getSiteInfo"])
+def test_exact_api_lookup_keeps_its_match(query):
+    assert find.find_tool(query)[0]["name"] == "mist_get_site_info"
+
+
+def test_multiple_product_hints_do_not_filter_results():
+    hits = find.find_tool("mist central list sites", top_k=10)
+    assert {hit["product"] for hit in hits} >= {"mist", "central"}
+
+
+def test_aliases_for_one_product_are_unambiguous():
+    hits = find.find_tool("aruba central list sites", top_k=10)
+    assert hits
+    assert all(hit["product"] == "central" for hit in hits)
+
+
 @pytest.fixture
 def paired_tools(monkeypatch):
     entries = tuple(

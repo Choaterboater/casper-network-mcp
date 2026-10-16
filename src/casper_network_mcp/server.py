@@ -96,7 +96,9 @@ def build_server(
         return find.find_tool(query, top_k=top_k, product=product, include_schema=include_schema)
 
     async def invoke_read_tool(name: str, arguments: dict[str, Any] | None = None, cursor: str | None = None) -> Any:
-        """Run a tool that only reads, or a troubleshooting check (ping, show, cable test; a cable test briefly takes the tested port's link down). Names come from find_tool.
+        """Run a tool that only reads, or a non-disruptive troubleshooting check (ping, show). Names come from find_tool.
+
+        Cable tests can interrupt a link and require invoke_tool.
 
         A tool that can change something is refused with "not_a_read_tool".
         cursor: the next_cursor from a reply that was cut short, to get the rest.
