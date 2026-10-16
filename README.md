@@ -11,7 +11,7 @@ You normally never install this yourself: Casper sets it up, pins the exact vers
 | Tool | What it is for |
 | --- | --- |
 | `find_tool` | Finds the right tool for what you asked ("bounce port 7 on the closet switch") and says what kind of change it makes: read, troubleshoot, config, disruptive, firmware, delete or admin. |
-| `invoke_read_tool` | Runs a tool that only reads, or a troubleshooting check (ping, show, cable test; a cable test briefly takes the tested port's link down). Anything else is refused. |
+| `invoke_read_tool` | Runs a tool that only reads, or a non-disruptive troubleshooting check (ping, show). Anything else is refused. |
 | `invoke_tool` | Runs any tool, including ones that change your network. Casper asks you first. |
 | `access_check` | Says, for each product, whether a login is set and where that login can change things. |
 
@@ -75,12 +75,24 @@ every change, showing the tool and what it changes. On top of that:
 - a path piece that could reach somewhere else (`/`, `?`, `#`, `..`) is refused before anything is sent;
 - when the server knows a Mist login can only read a site, a change to that site is refused before anything is
   sent;
-- tools that disrupt the network (reboots, port and PoE bounces, disconnects) are labelled disruptive, so Casper
+- tools that disrupt the network (cable tests, reboots, port and PoE bounces, disconnects) require `invoke_tool`
+  and are labelled disruptive, so Casper
   asks every time;
 - tokens, passwords and pre-shared keys are hidden in replies and errors.
 
 The server never asks you to type anything and never treats an argument the AI sets as your approval. Approval is
 Casper's box only.
+
+## Failures and recovery
+
+API failures keep their existing `error`, `status`, `detail`, `request_id` and `url` fields, and add
+`code` and `guidance`: `permission_denied` for 403, `rate_limited` for 429, `upstream_error` for 5xx,
+and `api_error` otherwise. A valid `Retry-After` header also supplies `retry_after_seconds`.
+The existing `login_missing` and `login_expired` replies are unchanged.
+
+Transport failures report `timeout` or `connection_error`. After a write timeout, the outcome is unknown:
+check the target's current state before retrying. Writes are never resent automatically, including after
+401; renewable logins refresh and resend only plain reads.
 
 ## How well find_tool finds tools
 
@@ -137,8 +149,10 @@ Two filtered evaluation first-pick failures remain: `"show WLAN security for one
 `"show every authentication service"`; each acceptable answer is second. Unfiltered evaluation also
 prefers Central's overview for `"show the site health overview"`. No further tuning used these misses.
 The new development set also exposes a limitation: without a product filter, `"mist restart an access point"`
-drops out of the top three (Mist unfiltered development top-three: 11/11 → 10/11). Use the known product
-filter; product-name hints are not hard filters.
+drops out of the top three (Mist unfiltered development top-three: 11/11 → 10/11). These measurements
+predate the product-routing fix: an unambiguous product name or alias now restricts plain-language results
+to that product when no explicit filter is supplied. Explicit filters and exact API matches take precedence;
+requests naming several products remain unfiltered.
 
 The benchmark now reports every wrong-first result with its expected rank, separately from top-three
 misses, plus per-product filtered/unfiltered top-one, top-three, top-ten and MRR:

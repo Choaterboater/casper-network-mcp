@@ -338,9 +338,14 @@ def find_tool(
         out.append(_hit(exact, include_schema))
         seen.add(exact.name)
 
+    # Explicit filters and exact API matches take precedence over prose hints.
+    # Several aliases for one product are unambiguous; several products are not.
+    hints = {_PRODUCT_WORDS[w] for w in re.findall(r"[a-z0-9]+", query.lower()) if w in _PRODUCT_WORDS}
+    hint = next(iter(hints)) if len(hints) == 1 else None
+    if wanted_product is None and exact is None:
+        wanted_product = hint
     groups = query_groups(query, wanted_product)
     words = set().union(*groups) if groups else set()
-    hint = next((_PRODUCT_WORDS[w] for w in words if w in _PRODUCT_WORDS), None)
     query_low = query.lower()
     wanted = intent(query)
     # Only tools with a query word in their name can be hits (the index lists them per word).

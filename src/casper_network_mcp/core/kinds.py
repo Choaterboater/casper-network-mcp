@@ -216,21 +216,18 @@ for _action, _why in _MIST_CHECKS.items():
     TROUBLESHOOT_REASONS[("POST", _MIST_DEVICE.format(action=_action))] = (
         f"Mist spec: {_why}; changes nothing on the device."
     )
-#: A cable (TDR) test is troubleshooting and runs like ping or show, though it
-#: is not free: its reason says what it does to the port.
-_TDR = "runs a cable (TDR) test on the named ports and reports the result; briefly takes the tested port's link down"
-TROUBLESHOOT_REASONS[("POST", _CENTRAL_TS.format(device="cx", action="cableTest"))] = f"Central spec (cx): {_TDR}."
-TROUBLESHOOT_REASONS[("POST", _CENTRAL_TS.format(device="aos-s", action="cableTest"))] = (
-    f"Central spec (aos-s): {_TDR}."
-)
-TROUBLESHOOT_REASONS[("POST", _MIST_DEVICE.format(action="cable_test"))] = f"Mist spec: {_TDR}."
 TROUBLESHOOT_OPS: frozenset[tuple[str, str]] = frozenset(TROUBLESHOOT_REASONS)
+
+_TDR = "runs a cable (TDR) test on the named ports and reports the result; briefly takes the tested port's link down"
 
 _COA = "a change of authorisation can make the client re-authenticate or drop"
 _SECRET_TEXT = (
     "returns CSV or receipt text that can hold passwords, which redaction cannot read; not run as a plain read"
 )
 KIND_OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {
+    ("POST", _CENTRAL_TS.format(device="cx", action="cableTest")): ("disruptive", f"Central spec (cx): {_TDR}."),
+    ("POST", _CENTRAL_TS.format(device="aos-s", action="cableTest")): ("disruptive", f"Central spec (aos-s): {_TDR}."),
+    ("POST", _MIST_DEVICE.format(action="cable_test")): ("disruptive", f"Mist spec: {_TDR}."),
     ("GET", "/network-config/v1alpha1/cnac-named-mpsk-reg/export"): ("config", f"Named MPSK export {_SECRET_TEXT}"),
     ("GET", "/network-config/v1alpha1/cnac-visitor/export"): ("config", f"visitor export {_SECRET_TEXT}"),
     ("GET", "/api/guest/{guest_id}/receipt/{id}"): ("config", f"guest receipt {_SECRET_TEXT}"),
