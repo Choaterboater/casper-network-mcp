@@ -121,12 +121,12 @@ create_aaa_dot1xauth_profile: {kind: config, vendor_category: "Configuration", c
 set_port_auth: {kind: config, vendor_category: "Configuration", checked: "PATCH changes configuration; no reload, delete or account change"}
 update_port_config: {kind: config, vendor_category: "Configuration", checked: "PATCH changes configuration; no reload, delete or account change"}
 gateway_config_interface: {kind: config, vendor_category: "Configuration", checked: "PATCH changes configuration; no reload, delete or account change"}
-gateway_config_static_route: {kind: config, vendor_category: "Configuration", checked: "PUT changes configuration; no reload, delete or account change"}
+gateway_config_static_route: {kind: config, vendor_category: "Routing & Overlays > Static Route", checked: "PUT /network-config/v1alpha1/static-route/{name} replaces one static-route profile (LOCAL at the device scope); no reload, delete or account change"}
 create_gw_cluster: {kind: config, vendor_category: "Configuration", checked: "POST changes configuration; no reload, delete or account change"}
 gateway_join_cluster: {kind: config, vendor_category: "Configuration", checked: "PATCH/POST changes configuration; no reload, delete or account change"}
 create_site: {kind: config, vendor_category: "Configuration", checked: "POST changes configuration; no reload, delete or account change"}
 assign_device_to_site: {kind: config, vendor_category: "Configuration", checked: "POST/PATCH changes configuration; no reload, delete or account change"}
-update_device_settings: {kind: config, vendor_category: "Configuration", checked: "POST/PATCH changes configuration; no reload, delete or account change"}
+update_device_settings: {kind: config, vendor_category: "Monitoring > Devices", checked: "PATCH /network-monitoring/v1/devices/{serial-number} sets the device notes only (the spec body has only notes)"}
 list_roles: {kind: read, vendor_category: "Configuration", checked: "GET calls only (checked in the source)"}
 create_role: {kind: admin, vendor_category: "Configuration", checked: "POST /network-config/v1/roles/{name}; role tools are admin per the plan"}
 update_role: {kind: admin, vendor_category: "Configuration", checked: "PUT /network-config/v1/roles/{name}; role tools are admin per the plan"}

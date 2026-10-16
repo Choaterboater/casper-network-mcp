@@ -119,7 +119,11 @@ def bound_collection_response(
     return out
 
 
-def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
+#: The largest JSON reply (as UTF-8 JSON) that bounded_response_payload returns whole.
+WHOLE_REPLY_MAX_BYTES = 131_072
+
+
+def bounded_response_payload(resp: Any, *, max_bytes: int = WHOLE_REPLY_MAX_BYTES) -> Any:
     """Return JSON, bounded text, or bounded base64 details for an HTTP response.
 
     Secrets are hidden before anything is cut: a JSON reply is redacted as an

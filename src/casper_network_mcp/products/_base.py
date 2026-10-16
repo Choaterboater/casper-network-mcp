@@ -24,7 +24,7 @@ from typing import Any
 
 import httpx
 
-from casper_network_mcp.core.budget import bounded_response_payload
+from casper_network_mcp.core.budget import WHOLE_REPLY_MAX_BYTES, bounded_response_payload
 from casper_network_mcp.core.errors import ToolError
 from casper_network_mcp.core.gate import PRODUCT_NAMES, Gate, LoginMissing, Refused
 from casper_network_mcp.core.http import Http, body_kwargs
@@ -262,6 +262,36 @@ class BaseClient:
         return await self._http.request(
             method, url, headers={**headers, **self._login_headers()}, params=params, **body
         )
+
+    async def preflight(self, method: str, path: str, *, path_args: dict[str, Any] | None = None) -> None:
+        """Run the checks :meth:`request` runs first (gate, path, login, scope) and send nothing.
+
+        For a change that reads before it writes: a change that would be
+        refused is refused before the read.
+        """
+        method = method.upper()
+        self._prepare(method, path, kind=None, path_args=path_args)
+        await self.gate.check_scope(self.product, self, method, path, dict(path_args or {}))
+
+    async def read_unredacted(self, path: str, *, path_args: dict[str, Any] | None = None) -> Any:
+        """GET ``path`` through the gate with secrets kept, for a change that sends the whole object back.
+
+        Only for building a request body: never return the result (or show it in a
+        preview). A reply too large to keep whole is refused.
+        """
+        url = self._prepare("GET", path, kind="read", path_args=path_args)
+        resp = await self._send("GET", url, self._headers(None, {}), None, {})
+        if resp.status_code >= 400 or resp.status_code == 204 or not resp.content:
+            return self._decode(resp, "GET", url)
+        try:
+            whole = resp.json()
+        except ValueError:
+            whole = None
+        # Size, not a comparison with bounded_response_payload: that also hides secrets, so a reply that
+        # holds one would never compare equal even when it is whole.
+        if whole is None or len(jsonlib.dumps(whole, ensure_ascii=False, default=str).encode()) > WHOLE_REPLY_MAX_BYTES:
+            raise ToolError(f"Not sent: GET {path} did not return a whole JSON object.")
+        return whole
 
     async def request(
         self,

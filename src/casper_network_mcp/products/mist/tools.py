@@ -17,7 +17,9 @@ against the bundled Mist OpenAPI document. What changed:
   session-cookie login and the WebSocket result collector are not ported
   (this package has no WebSocket dependency);
 * ``mist_update_wlan`` is new (the plan's preview test), on the spec's
-  ``PUT /sites/{site_id}/wlans/{wlan_id}``.
+  ``PUT /sites/{site_id}/wlans/{wlan_id}``: it reads the WLAN (secrets kept,
+  for the body only) and sends the whole object with the changes merged in,
+  as the spec requires ``ssid``.
 
 The other modules (``sle``, ``alarms``, ``events``, ``inventory``,
 ``marvis``) carry mist-mcp's tools; :func:`backend` registers them all.
@@ -216,15 +218,25 @@ async def mist_list_wlans(site_id: str, limit: int = 100, page: int = 1) -> dict
 
 @mcp.tool()
 async def mist_update_wlan(site_id: str, wlan_id: str, changes: dict[str, Any], dry_run: bool = False) -> Any:
-    """Change one site WLAN: only the fields given in ``changes`` (for example ``{"vlan_id": 30}``).
+    """Change one site WLAN: the fields given in ``changes`` (for example ``{"vlan_id": 30}``).
 
-    Uses ``PUT /api/v1/sites/{site_id}/wlans/{wlan_id}``. With
-    ``dry_run=True`` it returns the request it would send and sends nothing.
+    The spec's ``PUT /api/v1/sites/{site_id}/wlans/{wlan_id}`` takes the
+    whole WLAN (``ssid`` is required), so the current WLAN is read first
+    (``GET`` on the same path) and each top-level field in ``changes``
+    replaces its value; the rest, secrets included, is sent back unchanged.
+    Previews and replies hide secrets. With ``dry_run=True`` it returns the
+    merged request and sends no change.
     """
     if not changes:
         raise ValueError("changes must name at least one WLAN field to change")
     path = f"/api/v1/sites/{seg(site_id)}/wlans/{seg(wlan_id)}"
-    out = await change("PUT", path, body=changes, dry_run=dry_run, site_id=site_id)
+    client = mist_client()
+    if not dry_run:
+        await client.preflight("PUT", path, path_args={"site_id": site_id})
+    current = await client.read_unredacted(path, path_args={"site_id": site_id})
+    if not isinstance(current, dict) or not current.get("ssid"):
+        raise ValueError(f"Not sent: GET {path} did not return the whole WLAN, so it cannot be updated safely.")
+    out = await change("PUT", path, body={**current, **changes}, dry_run=dry_run, site_id=site_id)
     return out if dry_run else {"wlan": out}
 
 
