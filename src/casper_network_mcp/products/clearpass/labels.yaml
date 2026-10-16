@@ -12,6 +12,7 @@ clearpass_find_guest: {kind: read, vendor_category: "Guest Manager > Guest", che
 clearpass_get_insight_endpoint: {kind: read, vendor_category: "Insight > Endpoint", checked: "GET /api/insight/endpoint/mac/{mac}"}
 clearpass_list_onguard_activity: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity"}
 clearpass_get_onguard_activity_by_mac: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity/host_mac/{host_mac}"}
+clearpass_why_denied: {kind: read, vendor_category: "Session Control > Active Session, Identities > Endpoint", checked: "GET /api/session and GET /api/endpoint/mac-address/{mac_address}; bundled 6.12.7 active accounting sessions, not full Access Tracker rejects"}
 clearpass_list_access_tracker_sessions: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session"}
 clearpass_get_access_tracker_session: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session/{id}"}
 clearpass_list_endpoints: {kind: read, vendor_category: "Identities > Endpoint", checked: "GET /api/endpoint"}
