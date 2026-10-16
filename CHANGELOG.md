@@ -13,6 +13,12 @@
   ClearPass session/auth-failure reads. Time filtering is local (the spec declares no range operators), bounded
   to ten pages per call with `next_server_offset` for continuation and a count of unusable timestamps.
 - Added offline validation, summary, redaction, pagination and routing tests; regenerated the router index.
+- `clearpass_create_guest` now sends the body the spec requires: `password` is required and the role is
+  `role_id` (an integer), or `role_name`, which is looked up with `GET /api/role` and refused when no role or
+  more than one role has that name. It used to send `role_name`, which the API does not take.
+- `clearpass_disconnect_session` now sends `{"id": ..., "confirm_disconnect": true}`, which the spec requires.
+- `clearpass_get` refuses a GET that is not a plain read (one listed in `KIND_OVERRIDES`, such as a guest
+  receipt, which can hold a password) and points to that operation's own tool, like `mist_get` already did.
 
 ## 0.1.3
 
