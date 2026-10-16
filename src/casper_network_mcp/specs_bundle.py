@@ -11,7 +11,10 @@ import json
 from dataclasses import dataclass
 from importlib.resources import files
 from importlib.resources.abc import Traversable
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from casper_network_mcp.openapi_gen.ir import SpecParser
 
 __all__ = ["PRODUCTS", "Operation", "documents", "load_document", "manifest", "operations", "product_for", "request_body_properties", "specs_dir"]
 
@@ -152,26 +155,33 @@ def operations(product: str) -> list[Operation]:
     return list(_operations(product))
 
 
+@functools.cache
+def _parser(path: str) -> SpecParser:
+    from casper_network_mcp.openapi_gen.ir import SpecParser
+
+    return SpecParser(load_document(path))
+
+
 def request_body_properties(product: str, method: str, path: str) -> frozenset[str] | None:
     """Top-level property names the bundled spec declares for an operation's JSON body.
 
-    ``None`` means the bundled documents do not describe the path, the method, or a
-    request body for it, so a caller cannot tell a good payload from an unknown
-    endpoint and should not reject anything.
+    Properties from every ``allOf`` member and those declared next to ``allOf``
+    count, as for the generated tools. ``None`` means the bundled documents do
+    not describe the path, the method, or a request body with properties for it,
+    so a caller cannot tell a good payload from an unknown endpoint and should
+    not reject anything.
     """
+    from casper_network_mcp.openapi_gen.ir import OpenApiError
+
     wanted = method.lower()
     for document in documents(product):
         spec = load_document(document["path"])
         item = (spec.get("paths") or {}).get(path)
-        if not isinstance(item, dict):
+        if not isinstance(item, dict) or not isinstance(_resolve(spec, item).get(wanted), dict):
             continue
-        op = _resolve(spec, item).get(wanted)
-        if not isinstance(op, dict):
-            continue
-        body = _resolve(spec, op.get("requestBody"))
-        schema = _resolve(spec, ((body.get("content") or {}).get("application/json") or {}).get("schema"))
-        properties = schema.get("properties") if isinstance(schema, dict) else None
-        if isinstance(properties, dict):
-            return frozenset(str(key) for key in properties)
-        return None
+        try:
+            names = _parser(document["path"]).json_body_properties(path, wanted)
+        except OpenApiError:
+            return None
+        return frozenset(names) if names else None
     return None
