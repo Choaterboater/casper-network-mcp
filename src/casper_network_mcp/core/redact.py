@@ -32,6 +32,11 @@ _SENSITIVE_KEY_EXACT = {
     "v3_community_name",
     "snmp_read",
     "snmp_write",
+    # Mist claim codes: whoever holds one can claim the device into another org.
+    "magic",
+    "claim_code",
+    "claim_codes",
+    "registration_code",
 }
 _SENSITIVE_KEY_SUFFIXES = (
     "api_key",
@@ -184,7 +189,20 @@ def redact_sensitive(value: Any) -> Any:
 ERROR_CREDENTIAL_RE = re.compile(r"(?i)\bbearer\s+[a-z0-9._~+/=\-]{8,}")
 
 
+# Text that did not parse as one JSON value (JSON lines, a body cut short) can
+# still hold "key": "value" pairs; a pair whose key is a secret is hidden.
+_TEXT_PAIR_RE = re.compile(r'"([^"\\]{1,100})"(\s*:\s*)"(?:[^"\\]|\\.)*"')
+
+
+def _hide_text_pair(match: re.Match[str]) -> str:
+    key = match.group(1)
+    if _is_sensitive_key(key):
+        return f'"{key}"{match.group(2)}"{HIDDEN}"'
+    return match.group(0)
+
+
 def redact_tool_error_text(text: str) -> str:
     """Hide credentials in an error string a person or the AI may read."""
     text = redact_sensitive(text)
+    text = _TEXT_PAIR_RE.sub(_hide_text_pair, text)
     return ERROR_CREDENTIAL_RE.sub(HIDDEN, text)

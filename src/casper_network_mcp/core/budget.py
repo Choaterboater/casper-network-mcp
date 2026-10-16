@@ -16,6 +16,8 @@ import secrets
 import time
 from typing import Any
 
+from casper_network_mcp.core.redact import redact_sensitive, redact_tool_error_text
+
 __all__ = [
     "CANONICAL_PAGINATION_KEYS",
     "CURSOR_MAX_LENGTH",
@@ -118,7 +120,13 @@ def bound_collection_response(
 
 
 def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
-    """Return JSON, bounded text, or bounded base64 details for an HTTP response."""
+    """Return JSON, bounded text, or bounded base64 details for an HTTP response.
+
+    Secrets are hidden before anything is cut: a JSON reply is redacted as an
+    object first, so a secret deep in a reply too big to return whole cannot
+    survive into the cut-short text. Text that is not JSON gets the string
+    redaction.
+    """
     raw = getattr(resp, "content", None)
     if raw is None:
         raw = str(getattr(resp, "text", "")).encode("utf-8", errors="replace")
@@ -133,6 +141,7 @@ def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
     except (TypeError, ValueError):
         payload = None
     else:
+        payload = redact_sensitive(payload)
         encoded = json.dumps(payload, ensure_ascii=False, default=str).encode()
         if len(encoded) <= max_bytes:
             return payload
@@ -153,13 +162,16 @@ def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
 
     preview = raw[:max_bytes]
     truncated = size > len(preview)
+    text = preview.decode("utf-8", errors="replace")
+    if payload is None:
+        text = redact_tool_error_text(text)
     if content_type == "application/json" or content_type.endswith("+json"):
         return {
             "content_type": content_type,
             "size_bytes": size,
             "truncated": truncated,
             "sha256": hashlib.sha256(raw).hexdigest(),
-            "text": preview.decode("utf-8", errors="replace"),
+            "text": text,
         }
     if content_type.startswith("text/") or content_type in {
         "application/xml",
@@ -170,7 +182,7 @@ def bounded_response_payload(resp: Any, *, max_bytes: int = 131_072) -> Any:
             "content_type": content_type or "text/plain",
             "size_bytes": size,
             "truncated": truncated,
-            "text": preview.decode("utf-8", errors="replace"),
+            "text": text,
         }
     return {
         "content_type": content_type or "application/octet-stream",

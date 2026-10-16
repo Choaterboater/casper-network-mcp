@@ -159,3 +159,15 @@ def test_secret_settings_blocks_are_walked_or_hidden():
         "shared-secret-config": {"type": "CIPHER_TEXT", "ciphertext": "[hidden]"},
         "auth-key-info": "[hidden]",
     }
+
+
+def test_error_text_hides_quoted_secret_pairs():
+    text = '{"ssid": "Test Site", "psk": "psk-value-0001"}\n{"secret": "radius-\\"value"}'
+    out = redact_tool_error_text(text)
+    assert "psk-value-0001" not in out and "radius" not in out
+    assert '"ssid": "Test Site"' in out and '"psk": "[hidden]"' in out
+
+
+def test_claim_codes_are_hidden():
+    out = redact_sensitive({"magic": "CLAIMCODE0001", "registration_code": "r1", "serial": "S1"})
+    assert out == {"magic": "[hidden]", "registration_code": "[hidden]", "serial": "S1"}
