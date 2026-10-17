@@ -2,7 +2,7 @@
 
 Casper sets these when it starts the server. They are inputs (who to log in
 as), never switches: nothing here turns writes on or off. This module reads
-only these names. The one other environment read in the package is
+only these names and their aliases. The one other environment read in the package is
 ``LOCALAPPDATA`` (the cache folder on Windows). No env files are read.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 
-__all__ = ["LOGIN_VARS", "read_logins"]
+__all__ = ["LOGIN_ALIASES", "LOGIN_VARS", "read_logins"]
 
 LOGIN_VARS: tuple[str, ...] = (
     "MIST_HOST",
@@ -25,6 +25,9 @@ LOGIN_VARS: tuple[str, ...] = (
     "CLEARPASS_CLIENT_SECRET",
 )
 
+# Other names for a login, read only when the main name is unset: MIST_APITOKEN is mistapi's.
+LOGIN_ALIASES: dict[str, str] = {"MIST_APITOKEN": "MIST_API_TOKEN"}
+
 
 def read_logins(environ: Mapping[str, str] | None = None) -> dict[str, str]:
     """The login variables that are set and not blank, stripped."""
@@ -33,5 +36,9 @@ def read_logins(environ: Mapping[str, str] | None = None) -> dict[str, str]:
     for name in LOGIN_VARS:
         value = (env.get(name) or "").strip()
         if value:
+            out[name] = value
+    for alias, name in LOGIN_ALIASES.items():
+        value = (env.get(alias) or "").strip()
+        if value and name not in out:
             out[name] = value
     return out

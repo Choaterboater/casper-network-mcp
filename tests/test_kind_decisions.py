@@ -22,24 +22,34 @@ CABLE_OPERATIONS = [
 ]
 CABLE_CALLS = [
     pytest.param(
-        "cable_test", {"serial_number": "SG12345678", "ports": ["1/1/1"], "device_type": "CX"},
-        CABLE_OPERATIONS[0][1], id="curated-cx",
+        "cable_test",
+        {"serial_number": "SG12345678", "ports": ["1/1/1"], "device_type": "CX"},
+        CABLE_OPERATIONS[0][1],
+        id="curated-cx",
     ),
     pytest.param(
-        "cable_test", {"serial_number": "SG12345678", "ports": ["1"], "device_type": "AOS-S"},
-        CABLE_OPERATIONS[1][1], id="curated-aos-s",
+        "cable_test",
+        {"serial_number": "SG12345678", "ports": ["1"], "device_type": "AOS-S"},
+        CABLE_OPERATIONS[1][1],
+        id="curated-aos-s",
     ),
     pytest.param(
-        "central_initiate_cx_cable_test_v1", {"serial_number": "SG12345678", "body": {"ports": ["1/1/1"]}},
-        CABLE_OPERATIONS[0][1], id="generated-cx",
+        "central_initiate_cx_cable_test_v1",
+        {"serial_number": "SG12345678", "body": {"ports": ["1/1/1"]}},
+        CABLE_OPERATIONS[0][1],
+        id="generated-cx",
     ),
     pytest.param(
-        "central_initiate_pvos_cable_test_v1", {"serial_number": "SG12345678", "body": {"ports": ["1"]}},
-        CABLE_OPERATIONS[1][1], id="generated-aos-s",
+        "central_initiate_pvos_cable_test_v1",
+        {"serial_number": "SG12345678", "body": {"ports": ["1"]}},
+        CABLE_OPERATIONS[1][1],
+        id="generated-aos-s",
     ),
     pytest.param(
-        "mist_cable_test_from_switch", {"site_id": "s1", "device_id": "d1", "body": {"port": "ge-0/0/0"}},
-        CABLE_OPERATIONS[2][1], id="generated-mist",
+        "mist_cable_test_from_switch",
+        {"site_id": "s1", "device_id": "d1", "body": {"port": "ge-0/0/0"}},
+        CABLE_OPERATIONS[2][1],
+        id="generated-mist",
     ),
 ]
 
@@ -106,8 +116,9 @@ async def test_cable_change_route_is_blocked_in_read_only(name, args, path, cabl
 
 @pytest.mark.parametrize("name,args,path", CABLE_CALLS)
 async def test_cable_change_route_sends_when_writes_enabled(name, args, path, cable_server, recording_transport):
-    recording_transport.reply(httpx.Response(202, json={"started": True}, headers={"Location": "/tasks/task-1"}),
-                              "POST", path)
+    recording_transport.reply(
+        httpx.Response(202, json={"started": True}, headers={"Location": "/tasks/task-1"}), "POST", path
+    )
     recording_transport.reply({"status": "COMPLETED"}, "GET", f"{path}/async-operations/task-1")
     server = cable_server(False)
     out = await server.call("invoke_tool", {"name": name, "arguments": args})
@@ -125,9 +136,13 @@ def test_cable_cannot_bypass_read_only_by_declaring_troubleshoot(product, path):
 
 async def test_ping_remains_available_through_read_route(cable_server, recording_transport):
     server = cable_server(True)
-    out = await server.call("invoke_read_tool", {
-        "name": "mist_ping_from_device", "arguments": {"site_id": "s1", "device_id": "d1"},
-    })
+    out = await server.call(
+        "invoke_read_tool",
+        {
+            "name": "mist_ping_from_device",
+            "arguments": {"site_id": "s1", "device_id": "d1"},
+        },
+    )
     assert out == {"ok": True}
     assert [(call.method, call.url.path) for call in recording_transport.calls] == [
         ("POST", "/api/v1/sites/s1/devices/d1/ping")

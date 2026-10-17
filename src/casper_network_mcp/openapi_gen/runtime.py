@@ -428,6 +428,7 @@ def _make_tool(op: dict[str, Any], manifest: Manifest, client: ClientGetter, kin
     if body_type is Any:
         body_type = dict
     changes = kind != "read"
+    declared = frozenset(str(name) for name in rb.get("properties") or [])
     product = manifest.product
     base_path = manifest.base_path
 
@@ -444,7 +445,7 @@ def _make_tool(op: dict[str, Any], manifest: Manifest, client: ClientGetter, kin
         headers = _build_headers(specs, kwargs)
         body = kwargs.get("body")
         if changes and kwargs.get("dry_run"):
-            return {
+            preview: dict[str, Any] = {
                 "would_send": {
                     "method": method,
                     "path": path,
@@ -453,6 +454,14 @@ def _make_tool(op: dict[str, Any], manifest: Manifest, client: ClientGetter, kin
                     "content_type": content_type,
                 }
             }
+            # Named, never refused: a spec can allow keys it does not list.
+            unknown = (
+                sorted(str(key) for key in body if key not in declared) if declared and isinstance(body, dict) else []
+            )
+            if unknown:
+                preview["unknown_body_nodes"] = unknown
+                preview["errors"] = [f"{method} {path} does not declare body node {node!r}." for node in unknown]
+            return preview
         return await send(
             client,
             product=product,

@@ -53,7 +53,7 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 
 | Product | Variables |
 | --- | --- |
-| Juniper Mist | `MIST_API_TOKEN`, and `MIST_HOST` if your cloud is not `api.mist.com` |
+| Juniper Mist | `MIST_API_TOKEN` (or `MIST_APITOKEN`, mistapi's name), and `MIST_HOST` if your cloud is not `api.mist.com` |
 | HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET` |
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
 

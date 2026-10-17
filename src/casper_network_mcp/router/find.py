@@ -136,8 +136,21 @@ _INTENT_WORDS = {
     "delete": frozenset({"delete", "remove", "release", "drop", "purge"}),
     "update": frozenset(
         {
-            "change", "update", "set", "edit", "rename", "modify", "move", "assign", "disable", "enable",
-            "turn", "tag", "extend", "block", "mark",
+            "change",
+            "update",
+            "set",
+            "edit",
+            "rename",
+            "modify",
+            "move",
+            "assign",
+            "disable",
+            "enable",
+            "turn",
+            "tag",
+            "extend",
+            "block",
+            "mark",
         }
     ),
     "act": frozenset({"reboot", "restart", "reload", "upgrade", "downgrade", "bounce", "shut", "re-enable"}),
