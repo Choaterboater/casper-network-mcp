@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.5
+
+Generated tools say what each argument is, dry runs name body keys a spec does not know, and the Mist
+token can use mistapi's name.
+
+- Generated tools describe each argument: path, query and header arguments carry the spec's own words
+  (first paragraph, at most 200 characters); bare ones get generic words (org, site and device IDs, MAC,
+  serial number, limit). The body argument lists its top-level fields, required ones first and marked.
+- A generated change tool's dry run lists top-level body keys its spec does not declare
+  (`unknown_body_nodes`, with one `errors` line each), as the Central firmware tool already did. It only
+  informs: a spec can allow keys it does not list, so a real send is never refused for them.
+- `MIST_APITOKEN` (mistapi's name) is read as the Mist token when `MIST_API_TOKEN` is unset.
+- The code is formatted with `ruff format`.
+
 ## 0.1.4
 
 Secrets stay hidden in large replies, ClearPass logs in by itself, writes send the bodies the specs
