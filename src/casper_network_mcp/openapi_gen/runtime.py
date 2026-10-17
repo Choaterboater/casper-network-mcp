@@ -22,9 +22,10 @@ import inspect
 import keyword
 import re
 from collections.abc import Callable
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from mcp.server.mcpserver import MCPServer
+from pydantic import Field
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.kinds import kind_for_operation, label_for_kind, tool_meta
@@ -90,6 +91,35 @@ _PY_TYPES: dict[str, Any] = {
 }
 
 _MAX_DESC = 200
+_MAX_PARAM_DESC = 200
+_MAX_BODY_FIELDS = 20
+
+# Generic words for common path/query parameters that a spec leaves undescribed
+# (Mist leaves most org_id and site_id parameters bare). A name ending in
+# ``_id`` that is not listed here gets "The <name> ID."
+_FALLBACK_PARAM_DESCRIPTIONS = {
+    "org_id": "The organization ID.",
+    "site_id": "The site ID.",
+    "msp_id": "The MSP ID.",
+    "device_id": "The device ID.",
+    "map_id": "The map ID.",
+    "wlan_id": "The WLAN ID.",
+    "mxedge_id": "The Mist Edge ID.",
+    "device_mac": "The device MAC address.",
+    "client_mac": "The client MAC address.",
+    "guest_mac": "The guest MAC address.",
+    "mac": "The MAC address.",
+    "serial": "The device serial number.",
+    "serial-number": "The device serial number.",
+    "serial_number": "The device serial number.",
+    "site-id": "The site ID.",
+    "site_name": "The site name.",
+    "scope": "The scope the request applies to.",
+    "scope_id": "The ID of the scope the request applies to.",
+    "limit": "The most results to return in one page.",
+    "offset": "How many results to skip before the first one returned.",
+    "next": "The cursor for the next page, from the previous reply.",
+}
 _MAX_ENUM_ERROR_CHOICES = 20
 _MAX_ENUM_LITERAL_VALUES = 20
 
@@ -146,6 +176,50 @@ def _safe_arg_name(name: str, taken: set[str]) -> str:
         i += 1
     taken.add(arg)
     return arg
+
+
+def _short_text(text: str, limit: int) -> str:
+    """The first paragraph of ``text`` on one line, cut at a sentence end to fit ``limit``."""
+    paragraph = re.split(r"\n\s*\n", text.strip(), maxsplit=1)[0]
+    text = " ".join(paragraph.split())
+    if len(text) <= limit:
+        return text
+    head = text[: limit - 1]
+    end = max(head.rfind(". "), head.rfind("? "), head.rfind("! "))
+    if end >= limit // 3:
+        return head[: end + 1]
+    return head.rstrip() + "…"
+
+
+def _param_description(name: str, description: str) -> str:
+    """The spec's description, trimmed, or generic words for a common parameter."""
+    text = _short_text(description, _MAX_PARAM_DESC)
+    if text:
+        return text
+    key = name.strip().lower()
+    if key in _FALLBACK_PARAM_DESCRIPTIONS:
+        return _FALLBACK_PARAM_DESCRIPTIONS[key]
+    if key.endswith(("_id", "-id")) and len(key) > 3:
+        return f"The {key[:-3].replace('_', ' ').replace('-', ' ')} ID."
+    return ""
+
+
+def _body_description(request_body: dict[str, Any]) -> str:
+    """The body's top-level fields (required ones marked), at most ``_MAX_BODY_FIELDS``."""
+    properties = [str(name) for name in request_body.get("properties") or []]
+    if not properties:
+        text = _short_text(str(request_body.get("description") or ""), _MAX_PARAM_DESC)
+        return "" if text.lower().rstrip(".") == "request body" else text
+    required = {str(name) for name in request_body.get("required_properties") or []}
+    ordered = [name for name in properties if name in required] + [name for name in properties if name not in required]
+    shown = [f"{name} (required)" if name in required else name for name in ordered[:_MAX_BODY_FIELDS]]
+    text = "Fields: " + ", ".join(shown)
+    hidden = len(ordered) - len(shown)
+    return text + (f", and {hidden} more." if hidden else ".")
+
+
+def _described(annotation: Any, description: str) -> Any:
+    return Annotated[annotation, Field(description=description)] if description else annotation
 
 
 def _py_type(schema_type: str, item_type: str | None = None) -> Any:
@@ -225,7 +299,7 @@ def _param_specs(op: dict[str, Any]) -> list[_ParamSpec]:
                 py_type=_py_type(raw.get("type", "any"), raw.get("item_type")),
                 required=bool(raw.get("required", location == "path")),
                 default=raw.get("default"),
-                description=str(raw.get("description", "")),
+                description=_param_description(name, str(raw.get("description") or "")),
                 enum=raw.get("enum"),
                 style=raw.get("style"),
                 explode=raw.get("explode"),
@@ -285,6 +359,7 @@ def _build_signature(
     include_dry_run: bool,
     body_type: Any,
     body_required: bool,
+    body_description: str = "",
 ) -> tuple[inspect.Signature, dict[str, Any]]:
     parameters: list[inspect.Parameter] = []
     annotations: dict[str, Any] = {}
@@ -299,16 +374,17 @@ def _build_signature(
             else:
                 annotation = param_type | None if param_type is not Any else Any
             default = None
+        annotation = _described(annotation, spec.description)
         annotations[spec.arg] = annotation
         parameters.append(
             inspect.Parameter(spec.arg, inspect.Parameter.KEYWORD_ONLY, default=default, annotation=annotation)
         )
     if include_body:
         if body_required:
-            annotations["body"] = body_type
-            parameters.append(inspect.Parameter("body", inspect.Parameter.KEYWORD_ONLY, annotation=body_type))
+            annotations["body"] = _described(body_type, body_description)
+            parameters.append(inspect.Parameter("body", inspect.Parameter.KEYWORD_ONLY, annotation=annotations["body"]))
         else:
-            annotations["body"] = body_type | None if body_type is not Any else Any
+            annotations["body"] = _described(body_type | None if body_type is not Any else Any, body_description)
             parameters.append(
                 inspect.Parameter("body", inspect.Parameter.KEYWORD_ONLY, default=None, annotation=annotations["body"])
             )
@@ -396,6 +472,7 @@ def _make_tool(op: dict[str, Any], manifest: Manifest, client: ClientGetter, kin
         include_dry_run=changes,
         body_type=body_type,
         body_required=bool(rb.get("required", False)),
+        body_description=_body_description(rb),
     )
     _tool.__name__ = op["name"]
     _tool.__qualname__ = op["name"]
