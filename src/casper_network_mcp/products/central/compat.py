@@ -74,7 +74,11 @@ class CentralHTTPError(ApiError):
     def __init__(self, response: Reply, method: str = "") -> None:
         self.response = response
         super().__init__(
-            "central", response.status_code, response.data, url=response.url, method=method,
+            "central",
+            response.status_code,
+            response.data,
+            url=response.url,
+            method=method,
             request_id=response.headers.get("x-request-id") or response.headers.get("x-correlation-id"),
             retry_after_seconds=parse_retry_after(response.headers.get("Retry-After", "")),
         )

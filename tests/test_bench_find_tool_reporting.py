@@ -37,10 +37,9 @@ def test_reciprocal_rank_uses_first_acceptable_answer_and_zero_for_absent(monkey
         return [{"name": n} for n in names]
 
     monkeypatch.setattr(find, "find_tool", hits)
-    result = benchmark.bench([
-        {"q": q, "product": "mist", "expect": ["acceptable", "also_acceptable"]}
-        for q in ("present", "absent")
-    ])
+    result = benchmark.bench(
+        [{"q": q, "product": "mist", "expect": ["acceptable", "also_acceptable"]} for q in ("present", "absent")]
+    )
     assert result["top1"] == 0
     assert result["top3"] == result["top10"] == 0.5
     assert result["mrr"] == pytest.approx(1 / 6, abs=0.0001)
@@ -49,7 +48,7 @@ def test_reciprocal_rank_uses_first_acceptable_answer_and_zero_for_absent(monkey
 
 def test_alternate_question_file_is_used_by_cli(tmp_path, monkeypatch, capsys):
     path = tmp_path / "questions.yaml"
-    path.write_text('- q: custom\n  product: mist\n  expect: [right]\n', encoding="utf-8")
+    path.write_text("- q: custom\n  product: mist\n  expect: [right]\n", encoding="utf-8")
     monkeypatch.setattr(find, "find_tool", lambda *args, **kwargs: [{"name": "right"}])
     monkeypatch.setattr(benchmark, "cold_start_ms", lambda: 1.0)
     assert benchmark.main(["--questions", str(path), "--json"]) == 0
@@ -61,8 +60,7 @@ def test_alternate_question_file_is_used_by_cli(tmp_path, monkeypatch, capsys):
 def test_text_report_labels_wrong_first_and_missing_shortlist_separately(tmp_path, monkeypatch, capsys):
     path = tmp_path / "questions.yaml"
     path.write_text(
-        '- q: rank two\n  product: mist\n  expect: [right]\n'
-        '- q: absent\n  product: mist\n  expect: [right]\n',
+        "- q: rank two\n  product: mist\n  expect: [right]\n- q: absent\n  product: mist\n  expect: [right]\n",
         encoding="utf-8",
     )
 

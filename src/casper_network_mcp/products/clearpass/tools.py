@@ -149,12 +149,14 @@ def _listed(items: list[Any], limit: int, offset: int) -> Any:
 
 
 MacFilter = Annotated[
-    str | None, Field(description="Client MAC: 12 hex digits, colon/dash octets or dotted groups; e.g. 02:00:00:00:00:01.")
+    str | None,
+    Field(description="Client MAC: 12 hex digits, colon/dash octets or dotted groups; e.g. 02:00:00:00:00:01."),
 ]
 UsernameFilter = Annotated[str | None, Field(description="Exact session username; must not be blank.")]
 NadFilter = Annotated[str | None, Field(description="Exact NAD IP address (session nasipaddress).")]
 ServiceFilter = Annotated[
-    str | None, Field(description="Exact accounting service type (servicetype), not an Access Tracker policy service name.")
+    str | None,
+    Field(description="Exact accounting service type (servicetype), not an Access Tracker policy service name."),
 ]
 StartFilter = Annotated[
     str | None,
@@ -202,13 +204,15 @@ async def _session_list(
     if lower is not None and upper is not None and lower > upper:
         raise ValueError("start must be before or equal to end.")
     filters = {
-        k: v for k, v in {
+        k: v
+        for k, v in {
             "auth_status": status,
             "mac_address": _session_mac(mac) if mac is not None else None,
             "username": username,
             "nasipaddress": nad,
             "servicetype": service,
-        }.items() if v is not None
+        }.items()
+        if v is not None
     }
     if any(not v.strip() for v in filters.values()):
         raise ValueError("Session filters must not be blank.")
@@ -465,7 +469,8 @@ async def clearpass_why_denied(
             "accounting_state": row.get("state"),
             "termination_cause": row.get("acctterminatecause"),
         }
-        for row in rows if isinstance(row, dict)
+        for row in rows
+        if isinstance(row, dict)
     ]
     out: dict[str, Any] = {
         "sessions": summaries,

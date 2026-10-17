@@ -131,13 +131,16 @@ def test_product_named_restart_ranks_mist_first_without_filter():
     assert all(hit["product"] == "mist" for hit in hits)
 
 
-@pytest.mark.parametrize("query,product", [
-    ("central show guests", "clearpass"),
-    ("aruba show guests", "clearpass"),
-    ("mist show guests", "clearpass"),
-    ("cppm list sites", "mist"),
-    ("clearpass list sites", "central"),
-])
+@pytest.mark.parametrize(
+    "query,product",
+    [
+        ("central show guests", "clearpass"),
+        ("aruba show guests", "clearpass"),
+        ("mist show guests", "clearpass"),
+        ("cppm list sites", "mist"),
+        ("clearpass list sites", "central"),
+    ],
+)
 def test_explicit_filter_overrides_conflicting_product_hint(query, product):
     hits = find.find_tool(query, product=product)
     assert hits
