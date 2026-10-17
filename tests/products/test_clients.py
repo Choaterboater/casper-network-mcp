@@ -46,6 +46,16 @@ def test_login_module_reads_only_login_variables():
     from casper_network_mcp.core import logins
 
     assert set(logins.LOGIN_VARS) == LOGIN_VARS
+    assert logins.LOGIN_ALIASES == {"MIST_APITOKEN": "MIST_API_TOKEN"}
+
+
+def test_mist_apitoken_is_read_when_mist_api_token_is_unset():
+    from casper_network_mcp.core.logins import read_logins
+
+    # The name mistapi and Mist's own examples use.
+    assert read_logins({"MIST_APITOKEN": " abc "}) == {"MIST_API_TOKEN": "abc"}
+    assert read_logins({"MIST_APITOKEN": "old", "MIST_API_TOKEN": "new"}) == {"MIST_API_TOKEN": "new"}
+    assert read_logins({"MIST_APITOKEN": "  "}) == {}
 
 
 async def test_mist_login_from_env(monkeypatch, recording_transport):

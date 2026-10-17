@@ -92,7 +92,9 @@ def test_new_datasets_are_disjoint_and_have_only_existing_correct_product_labels
         assert question["expect"]
         assert all(name in entries and entries[name].product == question["product"] for name in question["expect"])
     assert {p: sum(q["product"] == p for q in evaluation) for p in ("central", "mist", "clearpass")} == {
-        "central": 12, "mist": 12, "clearpass": 12,
+        "central": 12,
+        "mist": 12,
+        "clearpass": 12,
     }
 
 
