@@ -107,6 +107,15 @@ async def test_dry_run_returns_what_would_be_sent_and_sends_nothing():
     assert client.calls == []
 
 
+async def test_dry_run_names_a_body_node_central_would_reject():
+    client = FakeClient()
+    backend = generated_backend("central", client=lambda: client)
+    tool = next(t for t in sdk_compat.tool_registry(backend).values() if t.name == "central_create_device_firmware")
+    out = await tool.fn(body={"issu": True, "version-chart": {"version": "10.16"}}, dry_run=True)
+    assert out["unknown_body_nodes"] == ["version-chart"]
+    assert client.calls == []
+
+
 async def test_path_piece_that_moves_the_request_is_refused_before_sending():
     client = FakeClient()
     backend = generated_backend("mist", client=lambda: client)

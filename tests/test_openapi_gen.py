@@ -509,6 +509,29 @@ async def test_dry_run_hides_secrets_and_sends_nothing():
     assert rec.calls == []
 
 
+async def test_dry_run_names_body_keys_the_spec_does_not_declare():
+    server, _, rec = _register()
+    out = await _tool(server, "demo_create_widget").fn(org_id="o1", body={"a": "x", "zz": 1, "b": 2}, dry_run=True)
+    assert out["unknown_body_nodes"] == ["zz"]
+    assert out["errors"] == ["POST /api/v1/orgs/o1/widgets does not declare body node 'zz'."]
+    assert rec.calls == []
+
+
+async def test_dry_run_with_only_declared_keys_adds_nothing():
+    server, _, rec = _register()
+    out = await _tool(server, "demo_create_widget").fn(org_id="o1", body={"a": "x", "b": 2}, dry_run=True)
+    assert set(out) == {"would_send"}
+    assert rec.calls == []
+
+
+async def test_unknown_body_keys_are_still_sent_without_dry_run():
+    # The check informs a dry run; a spec can allow extra keys, so a real send is never refused for them.
+    server, _, rec = _register()
+    out = await _tool(server, "demo_create_widget").fn(org_id="o1", body={"a": "x", "zz": 1})
+    assert out == {"ok": True}
+    assert rec.calls[0]["json"] == {"a": "x", "zz": 1}
+
+
 async def test_a_list_reply_is_paged():
     class ListReplies(Recorder):
         async def request(self, method, path, **kwargs):
