@@ -106,6 +106,24 @@ every change, showing the tool and what it changes. On top of that:
 The server never asks you to type anything and never treats an argument the AI sets as your approval. Approval is
 Casper's box only.
 
+## Compact Mist discovery diagnostics
+
+For AirPrint, Bonjour or mDNS problems, find `mist_wlan_discovery_summary` with
+`find_tool("AirPrint discovery", product="mist", include_schema=True)`, then call it with
+`{"ssid": "Example"}`. Add `site_id` or `org_id` when known to skip scope lookups.
+It returns exact SSID matches, VLAN, isolation, mDNS/SSDP filtering and Bonjour service evidence,
+including template-derived WLANs, without dumping clients or full site settings. The same evidence helps
+investigate Sonos and AirPlay discovery, but does not verify playback or cross-VLAN reachability.
+
+Automatic scope discovery is limited to 10 sites (at most four concurrent WLAN reads).
+Multiple orgs, larger scopes and duplicate SSIDs require explicit target selection;
+incomplete reads are reported, never treated as a healthy network or an absent SSID.
+This tool only reads: findings do not confirm printer reachability or trigger a change.
+`mist_list_wlans` also includes discovery settings so a separate full WLAN read is often unnecessary.
+
+See [implementation and validation notes](docs/mist-discovery-diagnostics.md) for usage, limitations,
+the two-MCP-call offline regression scenario and Sonos/AirPlay follow-up evidence.
+
 ## Failures and recovery
 
 API failures keep their existing `error`, `status`, `detail`, `request_id` and `url` fields, and add

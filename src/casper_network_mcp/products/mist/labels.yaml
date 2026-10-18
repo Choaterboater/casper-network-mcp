@@ -8,6 +8,7 @@ mist_whoami: {kind: read, vendor_category: "Self", checked: "GET /api/v1/self re
 mist_list_sites: {kind: read, vendor_category: "Orgs > Sites", checked: "GET /api/v1/orgs/{org_id}/sites"}
 mist_get_client: {kind: read, vendor_category: "Sites > Stats - Clients", checked: "GET /api/v1/sites/{site_id}/stats/clients/{client_mac}"}
 mist_list_wlans: {kind: read, vendor_category: "Sites > WLANs", checked: "GET /api/v1/sites/{site_id}/wlans; passphrases hidden"}
+mist_wlan_discovery_summary: {kind: read, vendor_category: "Self, Orgs > Sites, Sites > WLANs", checked: "GET only: optional /self and /orgs/{org_id}/sites, then /sites/{site_id}/wlans/derived; at most 10 sites"}
 mist_update_wlan: {kind: config, vendor_category: "Sites > WLANs", checked: "PUT /api/v1/sites/{site_id}/wlans/{wlan_id} with the given fields"}
 mist_delete_wlan: {kind: delete, vendor_category: "Sites > WLANs", checked: "DELETE /api/v1/sites/{site_id}/wlans/{wlan_id}"}
 mist_list_alarms: {kind: read, vendor_category: "Sites > Alarms", checked: "GET /api/v1/sites/{site_id}/alarms/search"}

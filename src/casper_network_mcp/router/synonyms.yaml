@@ -21,6 +21,11 @@ node: [cluster, server]
 nodes: [cluster, server]
 
 # Wireless
+# Service-discovery questions should find the compact diagnostic, not inventory.
+airprint: [discovery]
+bonjour: [discovery]
+mdns: [discovery]
+printer: [discovery]
 wifi: [wlan, ssid, wireless]
 wi-fi: [wlan, ssid, wireless]
 ssid: [wlan]
