@@ -31,6 +31,21 @@ Behind them:
 - `lookup_api`, which answers exact questions about the vendors' APIs (endpoints, fields, allowed values) from the
   bundled documents, with no network.
 
+## Site-wide answers in one call
+
+`invoke_read_tool` can shape a reply before it reaches the AI, so a question about every AP or every client is one
+call, not a page loop:
+
+| Option | What it does |
+| --- | --- |
+| `all_pages` | Follows the tool's own paging (`next` / `next_cursor`, `offset`, Mist `page`) up to 50 pages or 10,000 items, and joins the pages. `_pages` says how many were read and whether the list is complete. |
+| `fields` | Keeps only these keys of each item; `radio.channel` reaches inside an object. |
+| `group_by` | Returns a count per value of one field instead of the items. |
+
+For example `{"name": "central_get_device_inventory_v1", "arguments": {}, "all_pages": true, "group_by": "status"}`
+answers "how many devices are in each state" for a whole account. Shaping is for reads only,
+so a repeated call never repeats a change.
+
 ## Running it
 
 ```

@@ -129,6 +129,9 @@ def build_server(
         arguments: dict[str, Any] | None = None,
         cursor: str | None = None,
         login: str | None = None,
+        all_pages: bool = False,
+        fields: list[str] | None = None,
+        group_by: str | None = None,
     ) -> Any:
         """Run a tool that only reads, or a non-disruptive troubleshooting check (ping, show). Names come from find_tool.
 
@@ -137,8 +140,14 @@ def build_server(
         A tool that can change something is refused with "not_a_read_tool".
         cursor: the next_cursor from a reply that was cut short, to get the rest.
         login: a named Central login from access_check (default: the main one).
+        all_pages: fetch every page of a list here (up to 50 pages / 10,000 items) instead of one.
+        fields: keep only these keys of each item ("radio.channel" reaches inside); cuts big replies.
+        group_by: return a count per value of this field instead of the items ("firmwareVersion").
+        Together they answer site-wide questions in one call: all_pages + group_by="status".
         """
-        return await dispatch.invoke_read_tool(name, arguments, cursor, login=login)
+        return await dispatch.invoke_read_tool(
+            name, arguments, cursor, login=login, all_pages=all_pages, fields=fields, group_by=group_by
+        )
 
     async def invoke_tool(name: str, arguments: dict[str, Any] | None = None, login: str | None = None) -> Any:
         """Run any tool from find_tool, including ones that change the network.

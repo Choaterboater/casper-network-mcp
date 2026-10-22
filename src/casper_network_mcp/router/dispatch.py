@@ -28,6 +28,7 @@ from casper_network_mcp.core.kinds import READ_POSTS, TROUBLESHOOT_OPS, listed_t
 from casper_network_mcp.core.logins import DEFAULT_LOGIN
 from casper_network_mcp.core.redact import redact_tool_error_text
 from casper_network_mcp.products import _tools
+from casper_network_mcp.router import summarize
 from casper_network_mcp.router.index import Entry, catalog
 
 __all__ = ["invoke_read_tool", "invoke_tool", "is_read_tool"]
@@ -107,33 +108,80 @@ def _argument_problem(name: str, error: ValidationError) -> str:
     return "; ".join(parts) or f"{name} got arguments it cannot use"
 
 
-async def _run(
-    entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok: bool = False, login: str | None = None
-) -> Any:
+async def _call(entry: Entry, args: dict[str, Any]) -> Any:
     try:
-        with _tools.using_login(None if login == DEFAULT_LOGIN else login):
-            result = await sdk_compat.call_tool_raw(entry.server, entry.name, args)
+        return await sdk_compat.call_tool_raw(entry.server, entry.name, args)
     except Exception as exc:  # noqa: BLE001 - every failure comes back as a plain error
         # The SDK hides an unexpected error's text behind "Error executing
         # tool"; the cause says what went wrong. Secrets are hidden either way.
         cause = exc.__cause__ if isinstance(exc.__cause__, Exception) else exc
         if isinstance(cause, ValidationError):
-            result = {"error": _argument_problem(entry.name, cause)}
+            return {"error": _argument_problem(entry.name, cause)}
+        return {"error": f"{type(cause).__name__}: {redact_tool_error_text(str(cause))}"}
+
+
+async def _run(
+    entry: Entry,
+    args: dict[str, Any],
+    *,
+    offset: int = 0,
+    cursor_ok: bool = False,
+    login: str | None = None,
+    shaping: dict[str, Any] | None = None,
+) -> Any:
+    shaping = shaping or {}
+    with _tools.using_login(None if login == DEFAULT_LOGIN else login):
+        if shaping.get("all_pages"):
+            params = set(entry.schema.get("properties", {}))
+            result = await summarize.collect_pages(lambda a: _call(entry, a), args, params)
         else:
-            result = {"error": f"{type(cause).__name__}: {redact_tool_error_text(str(cause))}"}
+            result = await _call(entry, args)
+    result = summarize.shape(result, fields=shaping.get("fields"), group_by=shaping.get("group_by"))
+    binding = _cursor_binding(args, login)
+    if shaping:
+        binding = {"call": binding, "shaping": shaping}
     return bound_router_response(
         result,
         offset=offset,
         enable_cursor=cursor_ok,
         tool_name=entry.name,
-        tool_arguments=_cursor_binding(args, login),
+        tool_arguments=binding,
     )
 
 
+def _shaping(all_pages: bool, fields: list[str] | None, group_by: str | None) -> dict[str, Any] | str:
+    """The shaping options in use (empty when none), or why they can't be used."""
+    clean_fields = [f.strip() for f in fields or [] if isinstance(f, str) and f.strip()]
+    if fields is not None and not clean_fields:
+        return "fields needs at least one field name"
+    if len(clean_fields) > 50:
+        return "fields takes at most 50 names"
+    if group_by is not None and not group_by.strip():
+        return "group_by needs a field name"
+    out: dict[str, Any] = {}
+    if all_pages:
+        out["all_pages"] = True
+    if clean_fields:
+        out["fields"] = clean_fields
+    if group_by:
+        out["group_by"] = group_by.strip()
+    return out
+
+
 async def invoke_read_tool(
-    name: str, arguments: dict[str, Any] | None = None, cursor: str | None = None, *, login: str | None = None
+    name: str,
+    arguments: dict[str, Any] | None = None,
+    cursor: str | None = None,
+    *,
+    login: str | None = None,
+    all_pages: bool = False,
+    fields: list[str] | None = None,
+    group_by: str | None = None,
 ) -> Any:
-    """Run a read tool; anything else is refused with ``not_a_read_tool``."""
+    """Run a read tool; anything else is refused with ``not_a_read_tool``.
+
+    ``all_pages``, ``fields`` and ``group_by`` shape the reply on the server (see ``summarize``).
+    """
     entry = catalog().get(name)
     if entry is None:
         return _unknown(name)
@@ -147,14 +195,20 @@ async def invoke_read_tool(
             "kind": entry.kind,
             "detail": f"{name} can change things ({entry.kind}); call it with invoke_tool.",
         }
+    shaping = _shaping(all_pages, fields, group_by)
+    if isinstance(shaping, str):
+        return {"error": shaping, "tool": name, "status": "bad_shaping"}
     args = _strip_nulls(arguments)
     offset = 0
     if cursor is not None:
+        binding = _cursor_binding(args, login)
         try:
-            offset = decode_cursor(cursor, name=name, arguments=_cursor_binding(args, login))
+            offset = decode_cursor(
+                cursor, name=name, arguments={"call": binding, "shaping": shaping} if shaping else binding
+            )
         except CursorError as exc:
             return {"error": str(exc), "tool": name, "status": "invalid_cursor"}
-    return await _run(entry, args, offset=offset, cursor_ok=True, login=login)
+    return await _run(entry, args, offset=offset, cursor_ok=True, login=login, shaping=shaping)
 
 
 async def invoke_tool(name: str, arguments: dict[str, Any] | None = None, *, login: str | None = None) -> Any:

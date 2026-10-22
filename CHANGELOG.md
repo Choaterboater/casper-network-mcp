@@ -8,6 +8,14 @@
   uses the main login as before. `access_check` lists the named logins and whether each is complete.
   An unknown name, or a name on a Mist or ClearPass tool, is refused before anything is sent, and a
   cursor never resumes under another login.
+- `invoke_read_tool` shapes replies on the server: `all_pages` follows a tool's own paging (`next` /
+  `next_cursor` tokens, `offset`, Mist `page`) up to 50 pages or 10,000 items, `fields` keeps only the
+  named keys of each item (`radio.channel` reaches inside), and `group_by` returns a count per value.
+  "How many APs are offline across 329 APs" is one call instead of seven pages and a script. A page
+  that fails, a tool that ignores its paging, or paging that can't be followed (`search_after`) is
+  reported in `_pages`, never guessed.
+- Generated tools keep the page size the call asked for (up to 200) instead of always cutting to 50;
+  cutting below it dropped the items a `next` token had already moved past.
 - New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
   `gateway_traceroute`; both were already on the read-only check list but had no tool.
 - Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in
