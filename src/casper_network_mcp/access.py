@@ -284,9 +284,22 @@ async def _product(product: str, client: Any, gate: Gate) -> dict[str, Any]:
         return {"product": product, "access": "unknown"}
 
 
-async def access_check(clients: dict[str, Any], gate: Gate) -> dict[str, Any]:
+def _central_login_report(central_logins: dict[str, Any]) -> list[dict[str, Any]]:
+    """Each extra named Central login: its name, and whether all three variables are set."""
+    return [
+        {"name": name, "login": "set" if client.has_login else "missing"} for name, client in central_logins.items()
+    ]
+
+
+async def access_check(
+    clients: dict[str, Any], gate: Gate, *, central_logins: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """The casper/access-check v2 answer for every product."""
     state = "off" if gate.read_only else "on"
     entries = await asyncio.gather(*(_product(p, clients[p], gate) for p in PRODUCTS))
     products = [{**entry, "server_gate": {"flag": "--read-only", "state": state}} for entry in entries]
+    if central_logins:
+        for entry in products:
+            if entry["product"] == "central":
+                entry["named_logins"] = _central_login_report(central_logins)
     return {"contract": CONTRACT, "products": products}

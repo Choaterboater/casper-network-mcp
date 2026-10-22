@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+A second Central account without a second server, site-wide answers in one call, faster checks, and
+show commands that explain a refusal.
+
+- Named Central logins: `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID` and
+  `CENTRAL_<NAME>_CLIENT_SECRET` add a login called `<name>` (for example a temporary key for one
+  customer). `invoke_read_tool` and `invoke_tool` take `login="<name>"` for one call; leaving it out
+  uses the main login as before. `access_check` lists the named logins and whether each is complete.
+  An unknown name, or a name on a Mist or ClearPass tool, is refused before anything is sent, and a
+  cursor never resumes under another login.
+- `invoke_read_tool` shapes replies on the server: `all_pages` follows a tool's own paging (`next` /
+  `next_cursor` tokens, `offset`, Mist `page`) up to 50 pages or 10,000 items, `fields` keeps only the
+  named keys of each item (`radio.channel` reaches inside), and `group_by` returns a count per value.
+  "How many APs are offline across 329 APs" is one call instead of seven pages and a script. A page
+  that fails, a tool that ignores its paging, or paging that can't be followed (`search_after`) is
+  reported in `_pages`, never guessed.
+- Generated tools keep the page size the call asked for (up to 200) instead of always cutting to 50;
+  cutting below it dropped the items a `next` token had already moved past.
+- New `busy_hours`: an hour-by-hour profile over 1-31 days in a local time zone and the quietest
+  window, from site client counts or a switch interface's traffic, one call per day (Central only
+  gives 5-minute samples for a day or less), four days at a time. On Windows, time zones come from the
+  `tzdata` package, now a Windows-only dependency.
+- New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
+  `gateway_traceroute`; both were already on the read-only check list but had no tool.
+- Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in
+  about a second instead of five. Pings, iperf and ping sweeps keep polling for as long as their count
+  or duration needs, and a check still running at the end says so (`still_running`, `poll_path`).
+- When Central refuses a show command (`1/5/49`, `vlan 144`), `cx_show`, `aos_s_show`, `gateway_show`
+  and `ap_show` add `allowed_commands`: the device's catalog entries that start the same way, so the
+  next try uses an accepted form. The catalog is read only after a refusal and kept 15 minutes.
+- `find_tool` knows "downtime", "maintenance window", "quiet(est)", "peak hours" and "show command".
+
 ## 0.1.5
 
 Generated tools say what each argument is, dry runs name body keys a spec does not know, and the Mist

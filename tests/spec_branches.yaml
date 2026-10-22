@@ -30,6 +30,7 @@ x-profiles: &profiles
   - {profile_type: vsf-template}
 
 defaults:
+  busy_hours: {site_id: "1001", days: 1}
   clear_alerts: {reason: Problem was resolved}
   set_alert_priority: {priority: High}
   get_network_profile: {profile_type: bgp}
@@ -52,6 +53,8 @@ defaults:
   run_firmware_compliance_campaign: {targets: [{scope_id: "1001", device_function: ACCESS_SWITCH}]}
 
 branches:
+  busy_hours:
+    - {source: switch_interface, serial_number: SN1, interface_id: "1/1/1"}
   reboot_device:
     - {device_type: AP}
     - {device_type: CX}

@@ -42,6 +42,9 @@ __all__ = [
     "IDENTITY_STORES_PATH",
     "MAC_ADDRESS_STORE_NAME",
     "MAX_LIST_LIMIT",
+    "POLL_BUDGET_SECONDS",
+    "POLL_DONE",
+    "POLL_FIRST",
     "POLL_INTERVAL",
     "POLL_MAX",
     "CentralHTTPError",
@@ -288,9 +291,14 @@ def resp_json(resp: Any) -> dict[str, Any]:
 
 # ── troubleshooting ─────────────────────────────────────────────────────────
 
-#: Seconds between polls of a troubleshooting task, and how many polls (about a minute).
+#: Polling a troubleshooting task: the first wait, doubling up to ``POLL_INTERVAL``, until the task
+#: finishes, ``POLL_BUDGET_SECONDS`` have been waited (a tool may pass more) or ``POLL_MAX`` polls.
+POLL_FIRST: float = 1
 POLL_INTERVAL: float = 5
-POLL_MAX = 12
+POLL_BUDGET_SECONDS: float = 60
+POLL_MAX = 60
+#: Task statuses that mean it is finished (the bundled documents use COMPLETED and FAILED).
+POLL_DONE = frozenset({"COMPLETED", "FAILED", "SUCCEEDED", "TIMEOUT", "CANCELLED"})
 _TROUBLESHOOTING_VERSION = "v1"
 
 
@@ -312,18 +320,30 @@ def troubleshooting_endpoint_candidates(segment: str, serial_number: str, action
     return [f"/network-troubleshooting/{_TROUBLESHOOTING_VERSION}/" + "/".join(parts)]
 
 
-async def atroubleshoot_poll(central: CentralShim, poll_url: str) -> dict[str, Any]:
-    """Poll a troubleshooting task without blocking the event loop."""
+async def atroubleshoot_poll(central: CentralShim, poll_url: str, budget: float | None = None) -> dict[str, Any]:
+    """Poll a troubleshooting task without blocking the event loop.
+
+    Waits ``POLL_FIRST`` seconds, then twice as long each time up to ``POLL_INTERVAL``, so a quick
+    check answers in about a second. A task still running when the budget is spent comes back with
+    ``still_running`` and the ``poll_path`` to read it again.
+    """
+    limit = POLL_BUDGET_SECONDS if budget is None else max(budget, POLL_BUDGET_SECONDS)
     result: dict[str, Any] = {}
+    delay = min(POLL_FIRST, POLL_INTERVAL)
+    waited = 0.0
     for _ in range(POLL_MAX):
-        await asyncio.sleep(POLL_INTERVAL)
+        await asyncio.sleep(delay)
+        waited += delay
         try:
             result = await central.aget(poll_url)
         except Exception as exc:
             return {"status": "ERROR", "error": str(exc)}
-        if result.get("status", "") in ("COMPLETED", "FAILED"):
+        if str(result.get("status", "")).upper() in POLL_DONE:
             return result
-    return result
+        if waited >= limit:
+            break
+        delay = min(delay * 2, POLL_INTERVAL)
+    return {**result, "still_running": True, "waited_seconds": round(waited, 1), "poll_path": poll_url}
 
 
 def _async_response_location(resp: Any) -> str:
@@ -347,8 +367,9 @@ async def atroubleshoot_async(
     errors: list[str],
     *,
     diagnostic: bool = False,
+    poll_budget: float | None = None,
 ) -> dict[str, Any]:
-    """Start a troubleshooting task and poll it.
+    """Start a troubleshooting task and poll it (for at least a minute, or ``poll_budget`` seconds).
 
     ``diagnostic=True`` declares a hand-checked check (ping, show ...) on
     ``TROUBLESHOOT_OPS``; a disruptive action (cable test, PoE or port bounce,
@@ -381,7 +402,7 @@ async def atroubleshoot_async(
         errors.append("no working troubleshooting endpoint among candidates")
         return {"status": None, "errors": errors}
 
-    result = await atroubleshoot_poll(central, poll_url)
+    result = await atroubleshoot_poll(central, poll_url, poll_budget)
     result["errors"] = errors
     result["endpoint_used"] = candidate
     return result

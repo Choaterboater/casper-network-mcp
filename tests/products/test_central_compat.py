@@ -176,3 +176,116 @@ def test_no_pipeline_imports():
         assert not any(
             m and ("pipeline" in m or "stages" in m or "vlan_loader" in m or "state_store" in m) for m in mods
         ), p.name
+
+
+@pytest.fixture
+def sleeps(monkeypatch):
+    """Record each poll wait instead of sleeping."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(compat.asyncio, "sleep", fake_sleep)
+    return waits
+
+
+def _running_then(done_after: int):
+    polls = {"n": 0}
+
+    def answer(request):
+        polls["n"] += 1
+        return {"status": "COMPLETED" if polls["n"] >= done_after else "RUNNING"}
+
+    return answer
+
+
+async def test_troubleshoot_poll_starts_quick_and_backs_off(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t1"}), "POST", PING)
+    recording_transport.reply(_running_then(5), "GET", f"{PING}/async-operations/t1")
+    out = await compat.atroubleshoot_async(central, [PING], {"destination": "192.0.2.1"}, [], diagnostic=True)
+    assert out["status"] == "COMPLETED" and "still_running" not in out
+    assert sleeps == [1, 2, 4, 5, 5]
+
+
+async def test_troubleshoot_poll_reports_a_task_still_running(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t2"}), "POST", PING)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{PING}/async-operations/t2")
+    out = await compat.atroubleshoot_async(central, [PING], {"destination": "192.0.2.1"}, [], diagnostic=True)
+    assert out["still_running"] is True and out["status"] == "RUNNING"
+    assert out["poll_path"] == f"{PING}/async-operations/t2"
+    assert sum(sleeps) == out["waited_seconds"] >= compat.POLL_BUDGET_SECONDS
+    assert sum(sleeps) < compat.POLL_BUDGET_SECONDS + compat.POLL_INTERVAL
+
+
+async def test_troubleshoot_poll_budget_grows_but_never_shrinks(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t3"}), "POST", PING)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{PING}/async-operations/t3")
+    long = await compat.atroubleshoot_async(central, [PING], {}, [], diagnostic=True, poll_budget=180)
+    assert long["waited_seconds"] >= 180
+    sleeps.clear()
+    short = await compat.atroubleshoot_async(central, [PING], {}, [], diagnostic=True, poll_budget=5)
+    assert short["waited_seconds"] >= compat.POLL_BUDGET_SECONDS
+
+
+async def test_gateway_ping_sends_the_vlan_and_polls_for_a_big_count(central, recording_transport, sleeps):
+    from casper_network_mcp.products.central import ops
+
+    gw_ping = "/network-troubleshooting/v1/gateways/GW1/ping"
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/g1"}), "POST", gw_ping)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{gw_ping}/async-operations/g1")
+    out = await ops.gateway_ping("GW1", "192.0.2.53", count=100, vlan=144)
+    assert body_of(recording_transport.calls[0]) == {"destination": "192.0.2.53", "count": 100, "vlan": 144}
+    assert out["waited_seconds"] >= 30 + 1.5 * 100
+
+
+CX_SHOW = "/network-troubleshooting/v1/cx/CORE1/showCommands"
+CX_CATALOG = "/network-troubleshooting/v1/cx/CORE1/show-commands"
+CATALOG = [
+    {
+        "categoryName": "Interfaces",
+        "count": 2,
+        "commands": [{"command": "show interface statistics"}, {"command": "show interface brief"}],
+    },
+    {"categoryName": "System", "count": 1, "commands": [{"command": "show version"}]},
+]
+
+
+@pytest.fixture
+def fresh_catalog(monkeypatch):
+    from casper_network_mcp.products.central import ops
+
+    monkeypatch.setattr(ops, "_catalog_cache", {})
+    return ops
+
+
+async def test_rejected_show_command_comes_back_with_the_accepted_forms(
+    central, recording_transport, sleeps, fresh_catalog
+):
+    recording_transport.reply(
+        (400, {"message": "Command contains invalid characters in token: 1/5/49"}), "POST", CX_SHOW
+    )
+    recording_transport.reply(CATALOG, "GET", CX_CATALOG)
+    out = await fresh_catalog.cx_show("CORE1", ["show interface 1/5/49"])
+    hint = out["allowed_commands"]
+    assert hint["similar_allowed"] == ["show interface statistics", "show interface brief"]
+    assert hint["catalog_size"] == 3 and "filter" in hint["note"]
+    assert "invalid characters" in out["errors"][0]
+
+
+async def test_catalog_is_fetched_once_and_never_on_success(central, recording_transport, sleeps, fresh_catalog):
+    recording_transport.reply((400, {"message": "not allowed"}), "POST", CX_SHOW)
+    recording_transport.reply(CATALOG, "GET", CX_CATALOG)
+    await fresh_catalog.cx_show("CORE1", ["show bogus thing"])
+    out = await fresh_catalog.cx_show("CORE1", ["show bogus thing"])
+    assert out["allowed_commands"]["similar_allowed"] == []
+    assert out["allowed_commands"]["examples"][0] == "show interface statistics"
+    catalog_reads = [c for c in recording_transport.calls if c.url.path == CX_CATALOG]
+    assert len(catalog_reads) == 1
+
+    recording_transport.calls.clear()
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/s1"}), "POST", CX_SHOW)
+    recording_transport.reply({"status": "COMPLETED", "output": {}}, "GET", f"{CX_SHOW}/async-operations/s1")
+    ok = await fresh_catalog.cx_show("CORE1", ["show version"])
+    assert ok["status"] == "COMPLETED" and "allowed_commands" not in ok
+    assert all(c.url.path != CX_CATALOG for c in recording_transport.calls)

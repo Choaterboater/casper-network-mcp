@@ -51,6 +51,7 @@ list_switch_ports: {kind: read, vendor_category: "Monitoring & Reporting", check
 get_switch_details: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_switch_vlans: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_switch_interface_poe: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
+busy_hours: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET clients-trend or switch interface-trends only, one call per day; reports, changes nothing"}
 get_switch_interface_trends: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_ap_radios: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_ap_ports: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
@@ -195,6 +196,8 @@ run_speed_test: {kind: config, vendor_category: "Troubleshooting", checked: "POS
 run_troubleshooting_bundle: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../getArpTable, ping and showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 update_device_notes: {kind: config, vendor_category: "Troubleshooting", checked: "PATCH the device's notes field"}
 delete_device_notes: {kind: delete, vendor_category: "Troubleshooting", checked: "PATCH that clears the device's notes (delete per the plan)"}
+gateway_ping: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../ping only (on TROUBLESHOOT_OPS); reports, changes nothing"}
+gateway_traceroute: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../traceroute only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 gateway_iperf: {kind: config, vendor_category: "Troubleshooting", checked: "POST .../iperf loads the link between gateways; not a read-only check"}
 gateway_ping_sweep: {kind: config, vendor_category: "Troubleshooting", checked: "POST .../pingSweep scans a subnet; not on the read-only check list"}
 gateway_halt: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST /network-troubleshooting/v1/gateways/{serial}/halt stops the gateway"}
