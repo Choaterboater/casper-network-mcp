@@ -38,7 +38,7 @@ def parse_samples(reply: Any) -> tuple[list[str], list[tuple[datetime, float]]]:
     body = reply.get("graph") if isinstance(reply, dict) and isinstance(reply.get("graph"), dict) else reply
     if not isinstance(body, dict):
         return [], []
-    # ``keys`` names the series; the secret filter may have hidden it (a string), so only a list counts.
+    # ``keys`` names the series; only a list counts.
     raw_keys = body.get("keys")
     keys = [str(k) for k in raw_keys if isinstance(k, (str, int))] if isinstance(raw_keys, list) else []
     out: list[tuple[datetime, float]] = []
