@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Named Central logins: `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID` and
+  `CENTRAL_<NAME>_CLIENT_SECRET` add a login called `<name>` (for example a temporary key for one
+  customer). `invoke_read_tool` and `invoke_tool` take `login="<name>"` for one call; leaving it out
+  uses the main login as before. `access_check` lists the named logins and whether each is complete.
+  An unknown name, or a name on a Mist or ClearPass tool, is refused before anything is sent, and a
+  cursor never resumes under another login.
 - New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
   `gateway_traceroute`; both were already on the read-only check list but had no tool.
 - Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in

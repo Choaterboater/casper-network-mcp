@@ -73,9 +73,13 @@ def body_of(request: httpx.Request) -> Any:
 @pytest.fixture(autouse=True)
 def _no_real_logins(monkeypatch):
     """No test sees a real login from the shell, so nothing can reach a real product."""
-    from casper_network_mcp.core.logins import LOGIN_VARS
+    import os
+
+    from casper_network_mcp.core.logins import LOGIN_VARS, is_named_central_var
 
     for name in LOGIN_VARS:
+        monkeypatch.delenv(name, raising=False)
+    for name in [var for var in os.environ if is_named_central_var(var)]:
         monkeypatch.delenv(name, raising=False)
 
 

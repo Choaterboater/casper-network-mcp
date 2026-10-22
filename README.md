@@ -54,13 +54,19 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | Product | Variables |
 | --- | --- |
 | Juniper Mist | `MIST_API_TOKEN` (or `MIST_APITOKEN`, mistapi's name), and `MIST_HOST` if your cloud is not `api.mist.com` |
-| HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET` |
+| HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET`; more accounts as `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID`, `CENTRAL_<NAME>_CLIENT_SECRET` |
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
 
 For ClearPass, an API client is best: the server logs in with it and gets a new token before the old one runs out.
 In ClearPass Guest, open Administration > API Services > API Clients, create a client with grant type Client
 Credentials and an operator profile that allows what you want Casper to do, and set its client ID and secret. If
 `CLEARPASS_API_TOKEN` is set it is used as is and the client ID and secret are ignored.
+
+A second Central account (a customer's temporary key, a lab) needs no second server. Set
+`CENTRAL_TEMP_BASE_URL`, `CENTRAL_TEMP_CLIENT_ID` and `CENTRAL_TEMP_CLIENT_SECRET` and the login is called `temp`.
+`access_check` lists it under Central's `named_logins`, and `invoke_read_tool` or `invoke_tool` with `"login":
+"temp"` runs that one call as it; without `login` the main account answers. Names are letters and digits. The
+`--read-only` pin covers every login. Remove the variables when the key is retired.
 
 ClearPass API tokens expire (the API client's token lifetime in ClearPass sets when); a pasted token is not renewed.
 When a product turns a login away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a

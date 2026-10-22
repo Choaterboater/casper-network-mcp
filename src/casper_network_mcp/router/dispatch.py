@@ -7,6 +7,10 @@ stays: the call goes through the owning backend's tool manager (so arguments
 are checked and coerced), a raised error comes back as ``{"error": ...}`` with
 secrets hidden, and every result is bounded (with a signed cursor for reads).
 
+``login`` picks a named Central login for one call: it is checked against the
+logins the server was started with, held only for that call, and bound into
+any cursor so a cursor never resumes under another login.
+
 Nothing here decides whether a change may be sent: the product client's gate
 does that (the read-only pin, and the login's scopes), so ``invoke_tool``
 and a direct call take the same road.
@@ -21,7 +25,9 @@ from pydantic import ValidationError
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.budget import CursorError, bound_router_response, decode_cursor
 from casper_network_mcp.core.kinds import READ_POSTS, TROUBLESHOOT_OPS, listed_template
+from casper_network_mcp.core.logins import DEFAULT_LOGIN
 from casper_network_mcp.core.redact import redact_tool_error_text
+from casper_network_mcp.products import _tools
 from casper_network_mcp.router.index import Entry, catalog
 
 __all__ = ["invoke_read_tool", "invoke_tool", "is_read_tool"]
@@ -37,6 +43,32 @@ def _unknown(name: str) -> dict[str, Any]:
         "tool": name,
         "status": "unknown_tool",
     }
+
+
+def _login_problem(entry: Entry, login: str | None) -> dict[str, Any] | None:
+    """Why ``login`` can't be used for ``entry``, or ``None`` when it can."""
+    if login is None or login == DEFAULT_LOGIN:
+        return None
+    names = _tools.login_names("central")
+    if entry.product != "central":
+        return {
+            "error": f"login names a Central login; {entry.name} is a {entry.product} tool. Leave login out.",
+            "tool": entry.name,
+            "status": "login_not_for_product",
+        }
+    if login not in names:
+        known = ", ".join((DEFAULT_LOGIN, *names))
+        return {
+            "error": f"No Central login named '{login}'. Known logins: {known}.",
+            "tool": entry.name,
+            "status": "unknown_login",
+        }
+    return None
+
+
+def _cursor_binding(args: dict[str, Any], login: str | None) -> dict[str, Any]:
+    """What a cursor is bound to: the arguments, plus the login when one is named."""
+    return args if login in (None, DEFAULT_LOGIN) else {"arguments": args, "login": login}
 
 
 def is_read_tool(entry: Entry) -> bool:
@@ -75,9 +107,12 @@ def _argument_problem(name: str, error: ValidationError) -> str:
     return "; ".join(parts) or f"{name} got arguments it cannot use"
 
 
-async def _run(entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok: bool = False) -> Any:
+async def _run(
+    entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok: bool = False, login: str | None = None
+) -> Any:
     try:
-        result = await sdk_compat.call_tool_raw(entry.server, entry.name, args)
+        with _tools.using_login(None if login == DEFAULT_LOGIN else login):
+            result = await sdk_compat.call_tool_raw(entry.server, entry.name, args)
     except Exception as exc:  # noqa: BLE001 - every failure comes back as a plain error
         # The SDK hides an unexpected error's text behind "Error executing
         # tool"; the cause says what went wrong. Secrets are hidden either way.
@@ -91,15 +126,20 @@ async def _run(entry: Entry, args: dict[str, Any], *, offset: int = 0, cursor_ok
         offset=offset,
         enable_cursor=cursor_ok,
         tool_name=entry.name,
-        tool_arguments=args,
+        tool_arguments=_cursor_binding(args, login),
     )
 
 
-async def invoke_read_tool(name: str, arguments: dict[str, Any] | None = None, cursor: str | None = None) -> Any:
+async def invoke_read_tool(
+    name: str, arguments: dict[str, Any] | None = None, cursor: str | None = None, *, login: str | None = None
+) -> Any:
     """Run a read tool; anything else is refused with ``not_a_read_tool``."""
     entry = catalog().get(name)
     if entry is None:
         return _unknown(name)
+    problem = _login_problem(entry, login)
+    if problem:
+        return problem
     if not is_read_tool(entry):
         return {
             "error": "not_a_read_tool",
@@ -111,15 +151,18 @@ async def invoke_read_tool(name: str, arguments: dict[str, Any] | None = None, c
     offset = 0
     if cursor is not None:
         try:
-            offset = decode_cursor(cursor, name=name, arguments=args)
+            offset = decode_cursor(cursor, name=name, arguments=_cursor_binding(args, login))
         except CursorError as exc:
             return {"error": str(exc), "tool": name, "status": "invalid_cursor"}
-    return await _run(entry, args, offset=offset, cursor_ok=True)
+    return await _run(entry, args, offset=offset, cursor_ok=True, login=login)
 
 
-async def invoke_tool(name: str, arguments: dict[str, Any] | None = None) -> Any:
+async def invoke_tool(name: str, arguments: dict[str, Any] | None = None, *, login: str | None = None) -> Any:
     """Run any inner tool. The product client's gate decides whether a change is sent."""
     entry = catalog().get(name)
     if entry is None:
         return _unknown(name)
-    return await _run(entry, _strip_nulls(arguments))
+    problem = _login_problem(entry, login)
+    if problem:
+        return problem
+    return await _run(entry, _strip_nulls(arguments), login=login)

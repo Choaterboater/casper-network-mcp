@@ -40,7 +40,7 @@ ENV_NAMES = {"environ", "environb", "getenv", "getenvb", "putenv", "unsetenv", "
 # Every environment read in the package, by file. The login module reads the logins; the only
 # other read is where Windows keeps per-user app data, in the cache folder helper.
 ENV_READS = {
-    "core/logins.py": ["read_logins: os.environ"],
+    "core/logins.py": ["read_logins: os.environ", "read_central_logins: os.environ"],
     "specs_index.py": ["cache_dir: os.environ.get('LOCALAPPDATA')"],
 }
 
