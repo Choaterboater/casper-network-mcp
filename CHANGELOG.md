@@ -7,6 +7,9 @@
 - Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in
   about a second instead of five. Pings, iperf and ping sweeps keep polling for as long as their count
   or duration needs, and a check still running at the end says so (`still_running`, `poll_path`).
+- When Central refuses a show command (`1/5/49`, `vlan 144`), `cx_show`, `aos_s_show`, `gateway_show`
+  and `ap_show` add `allowed_commands`: the device's catalog entries that start the same way, so the
+  next try uses an accepted form. The catalog is read only after a refusal and kept 15 minutes.
 
 ## 0.1.5
 

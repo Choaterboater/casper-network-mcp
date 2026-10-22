@@ -237,3 +237,55 @@ async def test_gateway_ping_sends_the_vlan_and_polls_for_a_big_count(central, re
     out = await ops.gateway_ping("GW1", "10.15.144.1", count=100, vlan=144)
     assert body_of(recording_transport.calls[0]) == {"destination": "10.15.144.1", "count": 100, "vlan": 144}
     assert out["waited_seconds"] >= 30 + 1.5 * 100
+
+
+CX_SHOW = "/network-troubleshooting/v1/cx/CORE1/showCommands"
+CX_CATALOG = "/network-troubleshooting/v1/cx/CORE1/show-commands"
+CATALOG = [
+    {
+        "categoryName": "Interfaces",
+        "count": 2,
+        "commands": [{"command": "show interface statistics"}, {"command": "show interface brief"}],
+    },
+    {"categoryName": "System", "count": 1, "commands": [{"command": "show version"}]},
+]
+
+
+@pytest.fixture
+def fresh_catalog(monkeypatch):
+    from casper_network_mcp.products.central import ops
+
+    monkeypatch.setattr(ops, "_catalog_cache", {})
+    return ops
+
+
+async def test_rejected_show_command_comes_back_with_the_accepted_forms(
+    central, recording_transport, sleeps, fresh_catalog
+):
+    recording_transport.reply(
+        (400, {"message": "Command contains invalid characters in token: 1/5/49"}), "POST", CX_SHOW
+    )
+    recording_transport.reply(CATALOG, "GET", CX_CATALOG)
+    out = await fresh_catalog.cx_show("CORE1", ["show interface 1/5/49"])
+    hint = out["allowed_commands"]
+    assert hint["similar_allowed"] == ["show interface statistics", "show interface brief"]
+    assert hint["catalog_size"] == 3 and "filter" in hint["note"]
+    assert "invalid characters" in out["errors"][0]
+
+
+async def test_catalog_is_fetched_once_and_never_on_success(central, recording_transport, sleeps, fresh_catalog):
+    recording_transport.reply((400, {"message": "not allowed"}), "POST", CX_SHOW)
+    recording_transport.reply(CATALOG, "GET", CX_CATALOG)
+    await fresh_catalog.cx_show("CORE1", ["show bogus thing"])
+    out = await fresh_catalog.cx_show("CORE1", ["show bogus thing"])
+    assert out["allowed_commands"]["similar_allowed"] == []
+    assert out["allowed_commands"]["examples"][0] == "show interface statistics"
+    catalog_reads = [c for c in recording_transport.calls if c.url.path == CX_CATALOG]
+    assert len(catalog_reads) == 1
+
+    recording_transport.calls.clear()
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/s1"}), "POST", CX_SHOW)
+    recording_transport.reply({"status": "COMPLETED", "output": {}}, "GET", f"{CX_SHOW}/async-operations/s1")
+    ok = await fresh_catalog.cx_show("CORE1", ["show version"])
+    assert ok["status"] == "COMPLETED" and "allowed_commands" not in ok
+    assert all(c.url.path != CX_CATALOG for c in recording_transport.calls)
