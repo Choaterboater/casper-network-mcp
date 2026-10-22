@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6
 
 A second Central account without a second server, site-wide answers in one call, faster checks, and
 show commands that explain a refusal.

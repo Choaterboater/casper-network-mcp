@@ -51,7 +51,7 @@ so a repeated call never repeats a change.
 ## Running it
 
 ```
-uvx --from casper-network-mcp==0.1.5 casper-network-mcp --read-only
+uvx --from casper-network-mcp==0.1.6 casper-network-mcp --read-only
 ```
 
 | Option | Meaning |
