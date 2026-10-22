@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Mist AirPrint/Bonjour questions find a compact, read-only SSID discovery diagnostic. It resolves
+  small login scopes, includes template-derived WLANs, and reports filtering/isolation evidence without
+  dumping client inventories or full site settings. Ambiguous, large or incomplete scopes are explicit.
+- WLAN lists include mDNS/SSDP, multicast filtering, isolation and Bonjour settings, avoiding an extra full read.
+- Document the compact diagnostic's limits, offline call/response-size regression and separate Sonos/AirPlay
+  follow-up in `docs/mist-discovery-diagnostics.md`; no production latency or exact token savings are claimed.
+
 ## 0.1.6
 
 A second Central account without a second server, site-wide answers in one call, faster checks, and
