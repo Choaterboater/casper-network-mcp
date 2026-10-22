@@ -51,6 +51,7 @@ list_switch_ports: {kind: read, vendor_category: "Monitoring & Reporting", check
 get_switch_details: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_switch_vlans: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_switch_interface_poe: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
+busy_hours: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET clients-trend or switch interface-trends only, one call per day; reports, changes nothing"}
 get_switch_interface_trends: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_ap_radios: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_ap_ports: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}

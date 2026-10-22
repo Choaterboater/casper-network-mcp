@@ -30,6 +30,8 @@ Behind them:
   a scan, including an empty page. The service filter is not an Access Tracker policy service name;
 - `lookup_api`, which answers exact questions about the vendors' APIs (endpoints, fields, allowed values) from the
   bundled documents, with no network.
+- `busy_hours` profiles a site hour by hour over up to a month (client counts, or a switch uplink's traffic) in your
+  time zone and names the quietest window for planned downtime.
 
 ## Site-wide answers in one call
 
