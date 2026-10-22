@@ -89,6 +89,11 @@ async def _cx_show_commands(serial_number: str, commands: list[str]) -> dict[str
     )
 
 
+def _probe_budget(count: int | None, per_probe: float = 1.5) -> float:
+    """Seconds to keep polling a probe test: about a minute, longer for a big ``count``."""
+    return 30 + per_probe * count if count else 0
+
+
 # ── CX Troubleshooting ────────────────────────────────────────────────────────
 
 
@@ -120,6 +125,7 @@ async def cx_ping(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count),
     )
 
 
@@ -710,6 +716,67 @@ def delete_device_notes(serial_number: str, dry_run: bool = False) -> dict[str, 
 
 
 @mcp.tool()
+async def gateway_ping(
+    serial_number: str,
+    destination: str,
+    count: int | None = None,
+    packet_size: int | None = None,
+    vlan: int | None = None,
+    source_interface: str | None = None,
+    dont_fragment: bool | None = None,
+    include_raw_output: bool | None = None,
+) -> dict[str, Any]:
+    """Ping a destination from an Aruba gateway and return the result (async; polls longer for a big count).
+
+    count: 1-100 probes. packet_size: 10-2000 bytes. vlan: send from that VLAN's interface (1-4095),
+    so the probe takes a client VLAN's path instead of the management one.
+    """
+    payload: dict[str, Any] = {"destination": destination}
+    for key, value in (
+        ("count", count),
+        ("packetSize", packet_size),
+        ("vlan", vlan),
+        ("sourceInterface", source_interface),
+        ("dontFragmentFlag", dont_fragment),
+        ("includeRawOutput", include_raw_output),
+    ):
+        if value is not None:
+            payload[key] = value
+    errors: list[str] = []
+    return await atroubleshoot_async(
+        get_client(),
+        troubleshooting_endpoint_candidates("gateways", serial_number, "ping"),
+        payload,
+        errors,
+        diagnostic=True,
+        poll_budget=_probe_budget(count),
+    )
+
+
+@mcp.tool()
+async def gateway_traceroute(
+    serial_number: str,
+    destination: str,
+    vlan_ip: str | None = None,
+    include_raw_output: bool | None = None,
+) -> dict[str, Any]:
+    """Run a traceroute from an Aruba gateway (async, polls ~60s). vlan_ip: source it from that VLAN interface IP."""
+    payload: dict[str, Any] = {"destination": destination}
+    if vlan_ip is not None:
+        payload["vlanIp"] = vlan_ip
+    if include_raw_output is not None:
+        payload["includeRawOutput"] = include_raw_output
+    errors: list[str] = []
+    return await atroubleshoot_async(
+        get_client(),
+        troubleshooting_endpoint_candidates("gateways", serial_number, "traceroute"),
+        payload,
+        errors,
+        diagnostic=True,
+    )
+
+
+@mcp.tool()
 async def gateway_iperf(
     serial_number: str,
     iperf_server_address: str,
@@ -746,6 +813,7 @@ async def gateway_iperf(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=30 + (duration or 10) * (2 if include_reverse else 1),
     )
 
 
@@ -779,6 +847,7 @@ async def gateway_ping_sweep(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count * (1 + (end_packet_size - start_packet_size) // max(1, sweep_interval))),
     )
 
 
@@ -843,6 +912,7 @@ async def ap_ping(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count),
     )
 
 

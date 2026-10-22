@@ -176,3 +176,64 @@ def test_no_pipeline_imports():
         assert not any(
             m and ("pipeline" in m or "stages" in m or "vlan_loader" in m or "state_store" in m) for m in mods
         ), p.name
+
+
+@pytest.fixture
+def sleeps(monkeypatch):
+    """Record each poll wait instead of sleeping."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(compat.asyncio, "sleep", fake_sleep)
+    return waits
+
+
+def _running_then(done_after: int):
+    polls = {"n": 0}
+
+    def answer(request):
+        polls["n"] += 1
+        return {"status": "COMPLETED" if polls["n"] >= done_after else "RUNNING"}
+
+    return answer
+
+
+async def test_troubleshoot_poll_starts_quick_and_backs_off(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t1"}), "POST", PING)
+    recording_transport.reply(_running_then(5), "GET", f"{PING}/async-operations/t1")
+    out = await compat.atroubleshoot_async(central, [PING], {"destination": "192.0.2.1"}, [], diagnostic=True)
+    assert out["status"] == "COMPLETED" and "still_running" not in out
+    assert sleeps == [1, 2, 4, 5, 5]
+
+
+async def test_troubleshoot_poll_reports_a_task_still_running(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t2"}), "POST", PING)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{PING}/async-operations/t2")
+    out = await compat.atroubleshoot_async(central, [PING], {"destination": "192.0.2.1"}, [], diagnostic=True)
+    assert out["still_running"] is True and out["status"] == "RUNNING"
+    assert out["poll_path"] == f"{PING}/async-operations/t2"
+    assert sum(sleeps) == out["waited_seconds"] >= compat.POLL_BUDGET_SECONDS
+    assert sum(sleeps) < compat.POLL_BUDGET_SECONDS + compat.POLL_INTERVAL
+
+
+async def test_troubleshoot_poll_budget_grows_but_never_shrinks(central, recording_transport, sleeps):
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/t3"}), "POST", PING)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{PING}/async-operations/t3")
+    long = await compat.atroubleshoot_async(central, [PING], {}, [], diagnostic=True, poll_budget=180)
+    assert long["waited_seconds"] >= 180
+    sleeps.clear()
+    short = await compat.atroubleshoot_async(central, [PING], {}, [], diagnostic=True, poll_budget=5)
+    assert short["waited_seconds"] >= compat.POLL_BUDGET_SECONDS
+
+
+async def test_gateway_ping_sends_the_vlan_and_polls_for_a_big_count(central, recording_transport, sleeps):
+    from casper_network_mcp.products.central import ops
+
+    gw_ping = "/network-troubleshooting/v1/gateways/GW1/ping"
+    recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/g1"}), "POST", gw_ping)
+    recording_transport.reply({"status": "RUNNING"}, "GET", f"{gw_ping}/async-operations/g1")
+    out = await ops.gateway_ping("GW1", "10.15.144.1", count=100, vlan=144)
+    assert body_of(recording_transport.calls[0]) == {"destination": "10.15.144.1", "count": 100, "vlan": 144}
+    assert out["waited_seconds"] >= 30 + 1.5 * 100

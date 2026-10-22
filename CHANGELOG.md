@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
+  `gateway_traceroute`; both were already on the read-only check list but had no tool.
+- Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in
+  about a second instead of five. Pings, iperf and ping sweeps keep polling for as long as their count
+  or duration needs, and a check still running at the end says so (`still_running`, `poll_path`).
+
 ## 0.1.5
 
 Generated tools say what each argument is, dry runs name body keys a spec does not know, and the Mist
