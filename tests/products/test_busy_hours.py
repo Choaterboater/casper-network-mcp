@@ -51,8 +51,7 @@ async def test_a_week_of_client_counts_finds_the_quiet_local_hours(central, reco
         "busiest_hour": "10:00",
         "busiest_avg": 300.0,
     }
-    # The secret filter hides any field named "keys", so the series names don't survive; the totals do.
-    assert out["series_summed"] == [] and out["samples"] == 7 * 288
+    assert out["series_summed"] == ["Wired", "Wireless"] and out["samples"] == 7 * 288
     assert {c.url.params["site-id"] for c in recording_transport.calls} == {"S1"}
     assert out["to"] == "2026-10-21T17:00:00Z" and out["from"] == "2026-10-14T17:00:00Z"
 

@@ -147,11 +147,24 @@ def serialize_stringified_container(parsed: Any, dialect: str) -> str:
     return repr(parsed)
 
 
+def _is_trend_series_names(record: dict[Any, Any], key: Any, item: Any) -> bool:
+    """Central trend replies name their series in ``keys`` beside ``samples``; those names are not secrets."""
+    return (
+        key == "keys"
+        and isinstance(record.get("samples"), list)
+        and isinstance(item, list)
+        and all(isinstance(name, str) and len(name) <= 64 for name in item)
+    )
+
+
 def redact_sensitive(value: Any) -> Any:
     """Return a copy of ``value`` with likely secrets replaced by ``[hidden]``."""
     if isinstance(value, dict):
         out: dict[Any, Any] = {}
         for key, item in value.items():
+            if _is_trend_series_names(value, key, item):
+                out[key] = list(item)
+                continue
             # bound_collection_response's "_pagination.list_key" trips the
             # "_key" rule; keep only that one field as is.
             if key == "_pagination" and isinstance(item, dict):

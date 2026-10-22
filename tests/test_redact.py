@@ -52,6 +52,15 @@ def test_pagination_list_key_survives():
     assert out["_pagination"] == {"list_key": "items", "token": "[hidden]"}
 
 
+def test_trend_series_names_survive():
+    out = redact_sensitive({"keys": ["Wired", "Wireless"], "samples": [{"data": [1, 2]}]})
+    assert out["keys"] == ["Wired", "Wireless"]
+    # Without samples beside it, or holding anything but names, "keys" is still hidden.
+    assert redact_sensitive({"keys": ["k1"]})["keys"] == "[hidden]"
+    assert redact_sensitive({"keys": [{"wep": "k1"}], "samples": []})["keys"] == "[hidden]"
+    assert redact_sensitive({"keys": "k1", "samples": []})["keys"] == "[hidden]"
+
+
 def test_error_text_masks_bearer_mid_string():
     text = "Error executing tool x: 401 with Bearer abcdefgh12345678 sent"
     assert "abcdefgh12345678" not in redact_tool_error_text(text)
