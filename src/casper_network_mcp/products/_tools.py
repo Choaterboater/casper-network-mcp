@@ -5,7 +5,8 @@
   tool's annotation and ``_meta["casper/change-kind"]`` come only from its
   product's ``labels.yaml`` row (checked by hand), so a label can't drift.
 * :func:`use_client` / :func:`client` hold the one client getter per product
-  that the tools call at call time (a missing login shows up when a tool runs,
+  that the tools call at call time; :func:`using_login` picks which named
+  login (Central only) that getter answers with for the call in progress (a missing login shows up when a tool runs,
   not when the server starts). Until the server sets one, the getter builds a
   client from the login variables behind a read-only gate, so nothing changes
   by accident.
@@ -18,9 +19,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextvars import ContextVar
 from typing import Any
 
 import httpx
@@ -31,12 +34,27 @@ from casper_network_mcp.core.gate import PRODUCT_NAMES, Gate
 from casper_network_mcp.core.kinds import tool_labels
 from casper_network_mcp.core.redact import redact_sensitive, redact_tool_error_text
 
-__all__ = ["ClientGetter", "ToolSet", "client", "guarded", "unknown_body_nodes", "use_client", "would_send"]
+__all__ = [
+    "ClientGetter",
+    "ToolSet",
+    "active_login",
+    "client",
+    "guarded",
+    "login_names",
+    "unknown_body_nodes",
+    "use_client",
+    "using_login",
+    "would_send",
+]
 
 ClientGetter = Callable[[], Any]
 
 _getters: dict[str, ClientGetter] = {}
 _defaults: dict[str, Any] = {}
+_login_names: dict[str, tuple[str, ...]] = {}
+#: The named login for the call in progress (``None`` is the default login). Copied into the
+#: worker thread a sync tool runs on, so every request the call makes uses the same login.
+_active_login: ContextVar[str | None] = ContextVar("casper_active_login", default=None)
 
 
 def _default_client(product: str) -> Any:
@@ -59,9 +77,33 @@ def _default_client(product: str) -> Any:
     return _defaults[product]
 
 
-def use_client(product: str, getter: ClientGetter) -> None:
-    """Make ``getter`` the client every ``product`` tool calls from now on."""
+def use_client(product: str, getter: ClientGetter, *, logins: tuple[str, ...] = ()) -> None:
+    """Make ``getter`` the client every ``product`` tool calls from now on.
+
+    ``logins`` names the extra logins ``getter`` can answer with (see :func:`using_login`).
+    """
     _getters[product] = getter
+    _login_names[product] = tuple(logins)
+
+
+def login_names(product: str) -> tuple[str, ...]:
+    """The extra named logins set for ``product`` (the default login is always there too)."""
+    return _login_names.get(product, ())
+
+
+def active_login() -> str | None:
+    """The named login for the call in progress, or ``None`` for the default one."""
+    return _active_login.get()
+
+
+@contextlib.contextmanager
+def using_login(name: str | None) -> Iterator[None]:
+    """Run the enclosed call with the named login (``None``: the default login)."""
+    token = _active_login.set(name)
+    try:
+        yield
+    finally:
+        _active_login.reset(token)
 
 
 def client(product: str) -> Any:

@@ -36,7 +36,7 @@ translated to an approximate starting cursor.
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 from casper_network_mcp.core.scope_ids import normalize_scope_id
@@ -3806,3 +3806,113 @@ async def delete_notification_rule(
     if response.status_code not in (200, 202, 204):
         return {"error": compact_http_error(response, endpoint), "endpoint_used": endpoint}
     return _json_response(response) | {"endpoint_used": endpoint, "deleted": True}
+
+
+# ── Busy hours (maintenance windows) ─────────────────────────────────────────
+
+_BUSY_DAY_CONCURRENCY = 4
+
+
+@mcp.tool()
+async def busy_hours(
+    site_id: str | None = None,
+    days: int = 7,
+    timezone: str = "UTC",
+    source: Literal["clients", "switch_interface"] = "clients",
+    serial_number: str | None = None,
+    interface_id: str | None = None,
+    window_hours: int = 3,
+    end_time: str | None = None,
+) -> dict[str, Any]:
+    """Hour-by-hour profile over several days, and the quietest window, for scheduling downtime.
+
+    Fetches one day at a time (Central only gives 5-minute samples for a window of a day or less),
+    up to four days at once, and averages by local hour in ``timezone`` (an IANA name such as
+    "America/Chicago").
+
+    source "clients": connected clients at site_id (wired + wireless). Phones stay connected
+    overnight, so counts barely dip; "switch_interface" on the internet or gateway uplink
+    (serial_number + interface_id, e.g. "1/1/49") shows when people are actually using the
+    network, and is usually the better guide. days: 1-31. window_hours: length of the quiet
+    window to find (1-12). end_time: RFC 3339, default now.
+    """
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+    from casper_network_mcp.products.central.trends import hourly_profile, parse_samples, quietest_window
+
+    try:
+        zone = ZoneInfo(timezone)
+    except (ZoneInfoNotFoundError, ValueError):
+        return {"error": f"Unknown time zone '{timezone}'; use an IANA name such as 'America/Chicago'."}
+    if not 1 <= days <= 31:
+        return {"error": "days must be 1-31"}
+    if not 1 <= window_hours <= 12:
+        return {"error": "window_hours must be 1-12"}
+    if source == "clients" and not site_id:
+        return {"error": "source 'clients' needs site_id"}
+    if source == "switch_interface" and not (serial_number and interface_id):
+        return {"error": "source 'switch_interface' needs serial_number and interface_id"}
+    try:
+        end = datetime.fromisoformat(end_time) if end_time else datetime.now(UTC)
+    except ValueError:
+        return {"error": "end_time must be an RFC 3339 date-time"}
+    end = (end if end.tzinfo else end.replace(tzinfo=UTC)).astimezone(UTC).replace(microsecond=0)
+
+    def stamp(value: datetime) -> str:
+        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    if source == "clients":
+        endpoint = "/network-monitoring/v1/clients-trend"
+
+        def params(start: datetime, stop: datetime) -> dict[str, Any]:
+            return {"site-id": site_id, "start-at": stamp(start), "end-at": stamp(stop)}
+
+    else:
+        endpoint = f"/network-monitoring/v1/switches/{seg(serial_number)}/interface-trends"
+
+        def params(start: datetime, stop: datetime) -> dict[str, Any]:
+            out: dict[str, Any] = {
+                "filter": f"timestamp gt {stamp(start)} and timestamp lt {stamp(stop)}",
+                "interface-id": interface_id,
+            }
+            if site_id:
+                out["site-id"] = site_id
+            return out
+
+    client = get_client()
+    gate = asyncio.Semaphore(_BUSY_DAY_CONCURRENCY)
+    windows = [(end - timedelta(days=d + 1), end - timedelta(days=d)) for d in reversed(range(days))]
+
+    async def one_day(start: datetime, stop: datetime) -> tuple[str, Any]:
+        async with gate:
+            reply = await client._arequest("GET", endpoint, params=params(start, stop))
+        if reply.status_code != 200:
+            return stamp(start), {"error": compact_http_error(reply, endpoint)}
+        return stamp(start), _json_response(reply)
+
+    results = await asyncio.gather(*(one_day(a, b) for a, b in windows))
+    samples: list[tuple[datetime, float]] = []
+    keys: list[str] = []
+    failed: list[dict[str, Any]] = []
+    for day_start, reply in results:
+        if isinstance(reply, dict) and "error" in reply:
+            failed.append({"day_starting": day_start, "error": reply["error"]})
+            continue
+        day_keys, day_samples = parse_samples(reply)
+        keys = keys or day_keys
+        samples.extend(day_samples)
+
+    profile = hourly_profile(samples, zone)
+    return {
+        "source": source,
+        "series_summed": keys,
+        "timezone": timezone,
+        "from": stamp(windows[0][0]),
+        "to": stamp(end),
+        "days_fetched": days - len(failed),
+        "samples": len(samples),
+        "quietest_window": quietest_window(profile["hours"], window_hours),
+        **profile,
+        "failed_days": failed,
+        "endpoint_used": endpoint,
+    }

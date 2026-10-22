@@ -20,6 +20,7 @@ safe).
 """
 
 import asyncio
+import time
 from typing import Any, Literal
 from urllib.parse import quote
 
@@ -77,16 +78,101 @@ def _request_troubleshooting(
     raise RuntimeError("no troubleshooting endpoint candidates provided")
 
 
-async def _cx_show_commands(serial_number: str, commands: list[str]) -> dict[str, Any]:
+#: The show-command catalog per (client, platform, serial), kept briefly so a rejected run explains itself cheaply.
+_CATALOG_TTL_SECONDS = 900
+_CATALOG_MAX = 64
+_catalog_cache: dict[tuple[int, str, str], tuple[float, list[str]]] = {}
+
+
+def _show_problem(commands: list[str], max_commands: int | None = 20) -> str | None:
+    if not commands:
+        return "commands list cannot be empty"
+    if max_commands is not None and len(commands) > max_commands:
+        return f"commands list cannot exceed {max_commands} items (got {len(commands)})"
+    for i, cmd in enumerate(commands):
+        if not cmd.strip().lower().startswith("show "):
+            return f"Command {i} must start with 'show ': '{cmd}'"
+    return None
+
+
+def _catalog_strings(payload: Any) -> list[str]:
+    """The command strings in a show-commands catalog (categories of ``{"command": ...}``)."""
+    found: list[str] = []
+    categories = payload if isinstance(payload, list) else (payload or {}).get("items", [])
+    for category in categories if isinstance(categories, list) else []:
+        for item in (category or {}).get("commands", []) if isinstance(category, dict) else []:
+            command = item.get("command") if isinstance(item, dict) else item
+            if isinstance(command, str) and command.strip():
+                found.append(command.strip())
+    return found
+
+
+async def _show_catalog(segment: str, serial_number: str) -> list[str] | None:
     client = get_client()
+    key = (id(getattr(client, "_gated", client)), segment, serial_number)
+    cached = _catalog_cache.get(key)
+    if cached and time.monotonic() - cached[0] < _CATALOG_TTL_SECONDS:
+        return cached[1]
+    try:
+        response, _ = await _arequest_troubleshooting("GET", segment, serial_number, "show-commands")
+    except Exception:  # the hint is best effort; the run's own error still comes back
+        return None
+    if response.status_code != 200:
+        return None
+    commands = _catalog_strings(resp_json(response))
+    if len(_catalog_cache) >= _CATALOG_MAX:
+        _catalog_cache.pop(next(iter(_catalog_cache)))
+    _catalog_cache[key] = (time.monotonic(), commands)
+    return commands
+
+
+def _show_failed(result: dict[str, Any]) -> bool:
+    status = str(result.get("status") or "").upper()
+    return status in ("", "FAILED", "ERROR") or bool(result.get("failReason")) or bool(result.get("errors"))
+
+
+def _show_hint(requested: list[str], catalog: list[str]) -> dict[str, Any]:
+    """Catalog commands that start like the rejected ones, so the next try uses an accepted form."""
+    prefixes = {" ".join(cmd.lower().split()[:2]) for cmd in requested}
+    close = [c for c in catalog if " ".join(c.lower().split()[:2]) in prefixes]
+    hint: dict[str, Any] = {
+        "note": (
+            "Central runs only commands from this device's catalog. Arguments such as '1/5/49' or "
+            "'vlan 144' are refused unless the catalog lists that form: run the whole-table command "
+            "and filter the output instead."
+        ),
+        "catalog_size": len(catalog),
+        "similar_allowed": close[:40],
+    }
+    if not close:
+        hint["examples"] = catalog[:25]
+    return hint
+
+
+async def _run_show(segment: str, serial_number: str, commands: list[str]) -> dict[str, Any]:
+    """Run show commands; when Central rejects them, add the catalog's nearest accepted forms."""
     errors: list[str] = []
-    return await atroubleshoot_async(
-        client,
-        troubleshooting_endpoint_candidates("cx", serial_number, "showCommands"),
+    result = await atroubleshoot_async(
+        get_client(),
+        troubleshooting_endpoint_candidates(segment, serial_number, "showCommands"),
         {"commands": commands},
         errors,
         diagnostic=True,
     )
+    if _show_failed(result):
+        catalog = await _show_catalog(segment, serial_number)
+        if catalog:
+            result["allowed_commands"] = _show_hint(commands, catalog)
+    return result
+
+
+async def _cx_show_commands(serial_number: str, commands: list[str]) -> dict[str, Any]:
+    return await _run_show("cx", serial_number, commands)
+
+
+def _probe_budget(count: int | None, per_probe: float = 1.5) -> float:
+    """Seconds to keep polling a probe test: about a minute, longer for a big ``count``."""
+    return 30 + per_probe * count if count else 0
 
 
 # ── CX Troubleshooting ────────────────────────────────────────────────────────
@@ -120,6 +206,7 @@ async def cx_ping(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count),
     )
 
 
@@ -155,15 +242,10 @@ async def cx_show(
 ) -> dict[str, Any]:
     """Run 'show' commands on a CX switch (all must start with 'show ', max 20,
     async polls ~60s)."""
-    if not commands:
-        return {"status": None, "errors": ["commands list cannot be empty"]}
-    if len(commands) > 20:
-        return {"status": None, "errors": [f"commands list cannot exceed 20 items (got {len(commands)})"]}
-    for i, cmd in enumerate(commands):
-        if not cmd.strip().lower().startswith("show "):
-            return {"status": None, "errors": [f"Command {i} must start with 'show ': '{cmd}'"]}
-
-    return await _cx_show_commands(serial_number, commands)
+    problem = _show_problem(commands)
+    if problem:
+        return {"status": None, "errors": [problem]}
+    return await _run_show("cx", serial_number, commands)
 
 
 # ── AOS-S Troubleshooting ─────────────────────────────────────────────────────
@@ -200,40 +282,20 @@ async def aos_s_traceroute(serial_number: str, destination: str) -> dict[str, An
 @mcp.tool()
 async def aos_s_show(serial_number: str, commands: list[str]) -> dict[str, Any]:
     """Run 'show' commands on an AOS-S switch (all must start with 'show ', async polls ~60s)."""
-    if not commands:
-        return {"status": None, "errors": ["commands list cannot be empty"]}
-    for i, cmd in enumerate(commands):
-        if not cmd.strip().lower().startswith("show "):
-            return {"status": None, "errors": [f"Command {i} must start with 'show ': '{cmd}'"]}
-    client = get_client()
-    errors: list[str] = []
-    return await atroubleshoot_async(
-        client,
-        troubleshooting_endpoint_candidates("aos-s", serial_number, "showCommands"),
-        {"commands": commands},
-        errors,
-        diagnostic=True,
-    )
+    problem = _show_problem(commands, max_commands=None)
+    if problem:
+        return {"status": None, "errors": [problem]}
+    return await _run_show("aos-s", serial_number, commands)
 
 
 @mcp.tool()
 async def gateway_show(serial_number: str, commands: list[str]) -> dict[str, Any]:
     """Run 'show' commands on an Aruba gateway via async troubleshooting API.
     Each must start with 'show '."""
-    if not commands:
-        return {"status": None, "errors": ["commands list cannot be empty"]}
-    for i, cmd in enumerate(commands):
-        if not cmd.strip().lower().startswith("show "):
-            return {"status": None, "errors": [f"Command {i} must start with 'show ': '{cmd}'"]}
-    client = get_client()
-    errors: list[str] = []
-    return await atroubleshoot_async(
-        client,
-        troubleshooting_endpoint_candidates("gateways", serial_number, "showCommands"),
-        {"commands": commands},
-        errors,
-        diagnostic=True,
-    )
+    problem = _show_problem(commands, max_commands=None)
+    if problem:
+        return {"status": None, "errors": [problem]}
+    return await _run_show("gateways", serial_number, commands)
 
 
 @mcp.tool()
@@ -710,6 +772,67 @@ def delete_device_notes(serial_number: str, dry_run: bool = False) -> dict[str, 
 
 
 @mcp.tool()
+async def gateway_ping(
+    serial_number: str,
+    destination: str,
+    count: int | None = None,
+    packet_size: int | None = None,
+    vlan: int | None = None,
+    source_interface: str | None = None,
+    dont_fragment: bool | None = None,
+    include_raw_output: bool | None = None,
+) -> dict[str, Any]:
+    """Ping a destination from an Aruba gateway and return the result (async; polls longer for a big count).
+
+    count: 1-100 probes. packet_size: 10-2000 bytes. vlan: send from that VLAN's interface (1-4095),
+    so the probe takes a client VLAN's path instead of the management one.
+    """
+    payload: dict[str, Any] = {"destination": destination}
+    for key, value in (
+        ("count", count),
+        ("packetSize", packet_size),
+        ("vlan", vlan),
+        ("sourceInterface", source_interface),
+        ("dontFragmentFlag", dont_fragment),
+        ("includeRawOutput", include_raw_output),
+    ):
+        if value is not None:
+            payload[key] = value
+    errors: list[str] = []
+    return await atroubleshoot_async(
+        get_client(),
+        troubleshooting_endpoint_candidates("gateways", serial_number, "ping"),
+        payload,
+        errors,
+        diagnostic=True,
+        poll_budget=_probe_budget(count),
+    )
+
+
+@mcp.tool()
+async def gateway_traceroute(
+    serial_number: str,
+    destination: str,
+    vlan_ip: str | None = None,
+    include_raw_output: bool | None = None,
+) -> dict[str, Any]:
+    """Run a traceroute from an Aruba gateway (async, polls ~60s). vlan_ip: source it from that VLAN interface IP."""
+    payload: dict[str, Any] = {"destination": destination}
+    if vlan_ip is not None:
+        payload["vlanIp"] = vlan_ip
+    if include_raw_output is not None:
+        payload["includeRawOutput"] = include_raw_output
+    errors: list[str] = []
+    return await atroubleshoot_async(
+        get_client(),
+        troubleshooting_endpoint_candidates("gateways", serial_number, "traceroute"),
+        payload,
+        errors,
+        diagnostic=True,
+    )
+
+
+@mcp.tool()
 async def gateway_iperf(
     serial_number: str,
     iperf_server_address: str,
@@ -746,6 +869,7 @@ async def gateway_iperf(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=30 + (duration or 10) * (2 if include_reverse else 1),
     )
 
 
@@ -779,6 +903,7 @@ async def gateway_ping_sweep(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count * (1 + (end_packet_size - start_packet_size) // max(1, sweep_interval))),
     )
 
 
@@ -843,6 +968,7 @@ async def ap_ping(
         payload,
         errors,
         diagnostic=True,
+        poll_budget=_probe_budget(count),
     )
 
 
@@ -950,21 +1076,10 @@ async def ap_show(serial_number: str, commands: list[str]) -> dict[str, Any]:
     — runapshowcommandsv1 confirms APs now support the same showCommands
     convention.
     """
-    if not commands:
-        return {"status": None, "errors": ["commands list cannot be empty"]}
-    if len(commands) > 20:
-        return {"status": None, "errors": [f"commands list cannot exceed 20 items (got {len(commands)})"]}
-    for i, cmd in enumerate(commands):
-        if not cmd.strip().lower().startswith("show "):
-            return {"status": None, "errors": [f"Command {i} must start with 'show ': '{cmd}'"]}
-    errors: list[str] = []
-    return await atroubleshoot_async(
-        get_client(),
-        troubleshooting_endpoint_candidates("aps", serial_number, "showCommands"),
-        {"commands": commands},
-        errors,
-        diagnostic=True,
-    )
+    problem = _show_problem(commands)
+    if problem:
+        return {"status": None, "errors": [problem]}
+    return await _run_show("aps", serial_number, commands)
 
 
 # ── Show-Command Catalog Validation ──────────────────────────────────────────

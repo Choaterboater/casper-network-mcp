@@ -38,10 +38,15 @@ class ProductClient(Protocol):
     ) -> Any: ...
 
 
-def _shaped(data: Any) -> dict[str, Any]:
+def _shaped(data: Any, limit: Any = None) -> dict[str, Any]:
+    """The reply with its main list cut to the ``limit`` the call asked the API for (default 50, at most 200).
+
+    Cutting below the asked-for page would drop items a ``next`` token has already moved past.
+    """
     if data is None:
         return {"ok": True}
-    bounded = bound_collection_response(data, limit=clamp_limit(None), offset=0)
+    asked = limit if isinstance(limit, int) and not isinstance(limit, bool) else None
+    bounded = bound_collection_response(data, limit=clamp_limit(asked), offset=0)
     return bounded if isinstance(bounded, dict) else {"result": bounded}
 
 
@@ -114,4 +119,4 @@ async def send(
     fields = query.get("fields") if isinstance(query, dict) else None
     if isinstance(fields, str) and fields.strip():
         data = _project_fields(data, fields)
-    return _shaped(data)
+    return _shaped(data, query.get("limit") if isinstance(query, dict) else None)
