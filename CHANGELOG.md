@@ -23,6 +23,9 @@ show commands that explain a refusal.
   window, from site client counts or a switch interface's traffic, one call per day (Central only
   gives 5-minute samples for a day or less), four days at a time. On Windows, time zones come from the
   `tzdata` package, now a Windows-only dependency.
+- Central trend replies keep their series names (`keys` beside `samples`, such as `["Wired",
+  "Wireless"]`); the secret filter used to hide them because of the field name. A `keys` field
+  anywhere else, or one holding anything but short names, is still hidden.
 - New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
   `gateway_traceroute`; both were already on the read-only check list but had no tool.
 - Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in
