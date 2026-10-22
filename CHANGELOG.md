@@ -21,7 +21,8 @@ show commands that explain a refusal.
   cutting below it dropped the items a `next` token had already moved past.
 - New `busy_hours`: an hour-by-hour profile over 1-31 days in a local time zone and the quietest
   window, from site client counts or a switch interface's traffic, one call per day (Central only
-  gives 5-minute samples for a day or less), four days at a time.
+  gives 5-minute samples for a day or less), four days at a time. On Windows, time zones come from the
+  `tzdata` package, now a Windows-only dependency.
 - New `gateway_ping` (with `vlan`, so a probe can take a client VLAN's path) and
   `gateway_traceroute`; both were already on the read-only check list but had no tool.
 - Troubleshooting checks poll after 1, 2 and 4 seconds, then every 5, so a quick check answers in

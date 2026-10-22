@@ -234,8 +234,8 @@ async def test_gateway_ping_sends_the_vlan_and_polls_for_a_big_count(central, re
     gw_ping = "/network-troubleshooting/v1/gateways/GW1/ping"
     recording_transport.reply(httpx.Response(202, headers={"Location": "/a/async-operations/g1"}), "POST", gw_ping)
     recording_transport.reply({"status": "RUNNING"}, "GET", f"{gw_ping}/async-operations/g1")
-    out = await ops.gateway_ping("GW1", "10.15.144.1", count=100, vlan=144)
-    assert body_of(recording_transport.calls[0]) == {"destination": "10.15.144.1", "count": 100, "vlan": 144}
+    out = await ops.gateway_ping("GW1", "192.0.2.53", count=100, vlan=144)
+    assert body_of(recording_transport.calls[0]) == {"destination": "192.0.2.53", "count": 100, "vlan": 144}
     assert out["waited_seconds"] >= 30 + 1.5 * 100
 
 
