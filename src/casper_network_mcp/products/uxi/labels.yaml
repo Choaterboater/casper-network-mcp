@@ -1,0 +1,21 @@
+# Change kinds for UXI's hand-written tools.
+# kind: Casper's change kind. vendor_category: the UXI API reference section, a reference only.
+# checked: why this kind, one line, from reading the tool's requests by hand.
+
+uxi_list_sensors: {kind: read, vendor_category: "sensors", checked: "GET /networking-uxi/v1alpha1/sensors"}
+uxi_list_agents: {kind: read, vendor_category: "agents", checked: "GET /networking-uxi/v1alpha1/agents"}
+uxi_get_status: {kind: read, vendor_category: "sensor_status", checked: "GET /networking-uxi/v1alpha1/sensors/{id}/status (agents too)"}
+uxi_status_overview: {kind: read, vendor_category: "sensors, agents, sensor_status", checked: "GETs only: the sensor and agent lists, then one status GET each, at most 50"}
+uxi_list_groups: {kind: read, vendor_category: "groups", checked: "GET /networking-uxi/v1alpha1/groups"}
+uxi_list_service_tests: {kind: read, vendor_category: "service-tests", checked: "GET /networking-uxi/v1alpha1/service-tests"}
+uxi_list_wireless_networks: {kind: read, vendor_category: "wireless-networks", checked: "GET /networking-uxi/v1alpha1/wireless-networks"}
+uxi_list_wired_networks: {kind: read, vendor_category: "wired-networks", checked: "GET /networking-uxi/v1alpha1/wired-networks"}
+uxi_list_group_assignments: {kind: read, vendor_category: "*-group-assignments", checked: "GET one of the four group-assignment lists"}
+uxi_update_sensor: {kind: config, vendor_category: "sensors", checked: "PATCH /sensors/{id} (merge patch): name, notes, address note, pcap mode"}
+uxi_update_agent: {kind: config, vendor_category: "agents", checked: "PATCH /agents/{id} (merge patch): name, notes, pcap mode"}
+uxi_delete_agent: {kind: delete, vendor_category: "agents", checked: "DELETE /agents/{id} removes the agent from UXI"}
+uxi_create_group: {kind: config, vendor_category: "groups", checked: "POST /groups adds one group under a parent"}
+uxi_rename_group: {kind: config, vendor_category: "groups", checked: "PATCH /groups/{id} (merge patch) with a new name"}
+uxi_delete_group: {kind: delete, vendor_category: "groups", checked: "DELETE /groups/{id} also deletes child groups and their assignments"}
+uxi_assign_to_group: {kind: config, vendor_category: "*-group-assignments", checked: "POST a sensor, agent, network or service-test group assignment; changes what a sensor tests"}
+uxi_remove_group_assignment: {kind: delete, vendor_category: "*-group-assignments", checked: "DELETE one group assignment by id"}

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- New products: HPE Aruba Networking UXI (sensors, agents, sensor/agent status and issues, groups, networks,
+  service tests, group assignments; rename, group and assignment changes) and HPE OpsRamp (alert, incident and
+  resource searches, alert and resource details, an overview; acknowledge / suppress / close / heal an alert).
+  Each change tool has a `dry_run`, a change kind in its `labels.yaml`, and is refused by `--read-only`.
+  `access_check` reports both as `unknown` (neither API says what a login may change).
+
 ## 0.1.6
 
 A second Central account without a second server, site-wide answers in one call, faster checks, and

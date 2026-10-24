@@ -16,11 +16,15 @@ import typing
 import pytest
 from spec_check import NOT_CHECKED, VALIDATE_FIRST, all_hand_written_tools, calls_for, match, problems, record_requests
 
+from casper_network_mcp.specs_bundle import PRODUCTS as BUNDLED
+
 
 @pytest.mark.parametrize("tool", all_hand_written_tools(), ids=lambda t: t.name)
 async def test_every_tool_calls_an_endpoint_in_the_spec(tool):
     if tool.name in NOT_CHECKED:
         pytest.skip(NOT_CHECKED[tool.name])
+    if tool.product not in BUNDLED:
+        pytest.skip(f"no bundled {tool.product} spec; its paths are checked in test_uxi_opsramp_tools.py")
     found = []
     for args in calls_for(tool):
         for failing in (False, True):

@@ -73,6 +73,8 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | Juniper Mist | `MIST_API_TOKEN` (or `MIST_APITOKEN`, mistapi's name), and `MIST_HOST` if your cloud is not `api.mist.com` |
 | HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET`; more accounts as `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID`, `CENTRAL_<NAME>_CLIENT_SECRET` |
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
+| HPE Aruba Networking UXI | `UXI_CLIENT_ID`, `UXI_CLIENT_SECRET` (a GreenLake personal API client for the UXI service); `UXI_BASE_URL` only if not `https://api.capenetworks.com` |
+| HPE OpsRamp | `OPSRAMP_BASE_URL` (`https://<tenant>.api.opsramp.com`), `OPSRAMP_TENANT_ID`, `OPSRAMP_CLIENT_ID`, `OPSRAMP_CLIENT_SECRET` (a custom integration's OAuth2 key and secret) |
 
 For ClearPass, an API client is best: the server logs in with it and gets a new token before the old one runs out.
 In ClearPass Guest, open Administration > API Services > API Clients, create a client with grant type Client

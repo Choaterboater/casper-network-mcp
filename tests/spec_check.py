@@ -181,6 +181,17 @@ def _client(product: str, transport: httpx.MockTransport) -> Any:
         return CentralClient(
             gate=gate, base_url=CENTRAL_BASE, client_id="test-id", client_secret="test-secret", transport=transport
         )
+    if product == "uxi":
+        from casper_network_mcp.products.uxi.client import UxiClient
+
+        return UxiClient(gate=gate, client_id="test-id", client_secret="test-secret", transport=transport)
+    if product == "opsramp":
+        from casper_network_mcp.products.opsramp.client import OpsRampClient
+
+        return OpsRampClient(
+            gate=gate, base_url="https://acme.api.opsramp.com", tenant_id="client_00001", client_id="test-id",
+            client_secret="test-secret", transport=transport,
+        )  # fmt: skip
     from casper_network_mcp.products.clearpass.client import ClearPassClient
 
     return ClearPassClient(gate=gate, base_url=CLEARPASS_BASE, token="test-token", transport=transport)

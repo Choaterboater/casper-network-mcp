@@ -327,6 +327,8 @@ async def test_mist_login_missing_after_all(server_with_replies):
         "central": "missing",
         "mist": "missing",
         "clearpass": "missing",
+        "uxi": "missing",
+        "opsramp": "missing",
     }
 
 
