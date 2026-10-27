@@ -64,7 +64,10 @@ _CLIENT_FIELDS = (
     "rssi", "snr", "band", "channel", "tx_rate", "rx_rate", "tx_bps", "rx_bps", "uptime", "last_seen",
     "health", "score", "connected", "assoc_time", "device", "os", "model",
 )  # fmt: skip
-_WLAN_FIELDS = ("id", "name", "ssid", "enabled", "auth", "auth_servers", "vlan_id", "wlan_id", "template_id", "site_id")
+_WLAN_FIELDS = (
+    "id", "name", "ssid", "enabled", "auth", "auth_servers", "vlan_id", "wlan_id", "template_id", "site_id",
+    "isolation", "l2_isolation", "limit_bcast", "allow_mdns", "allow_ssdp", "bonjour",
+)  # fmt: skip
 _ALARM_FIELDS = (
     "id", "type", "group", "severity", "timestamp", "last_seen", "count", "acked", "text", "reason",
     "device", "device_name", "ap", "client", "site_id",
@@ -202,7 +205,7 @@ async def mist_get_client(site_id: str, mac_address: str) -> dict[str, Any]:
 
 @mcp.tool()
 async def mist_list_wlans(site_id: str, limit: int = 100, page: int = 1) -> dict[str, Any]:
-    """List a site's WLANs (SSID, on/off, security, VLAN). Passphrases are hidden.
+    """List site WLANs: SSID, security, VLAN, isolation and mDNS filtering; passphrases hidden.
 
     Uses ``GET /api/v1/sites/{site_id}/wlans``; Mist pages by ``page``.
     """
@@ -966,7 +969,7 @@ def backend(client: ClientGetter | None = None) -> MCPServer:
     ``client`` is the getter the tools call at call time (the server passes
     one with its gate; tests pass one on a recording fake).
     """
-    from casper_network_mcp.products.mist import alarms, events, inventory, marvis, sle  # noqa: F401
+    from casper_network_mcp.products.mist import alarms, discovery, events, inventory, marvis, sle  # noqa: F401
 
     if client is not None:
         use_client("mist", client)

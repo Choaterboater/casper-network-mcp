@@ -48,6 +48,7 @@ defaults:
   clearpass_create_guest: {role_id: 2, role_name: null}
   marvis_troubleshoot: {site_id: x1}
   mist_update_wlan: {changes: {vlan_id: 30}}
+  mist_wlan_discovery_summary: {site_id: x1, org_id: null}
   gateway_config_static_route: {routes: [{prefix: 198.51.100.0/24, nexthop: 192.0.2.1}]}
   gateway_join_cluster: {gateways: [{ip: 192.0.2.10, mac: "00:00:5e:00:53:01", priority: 128}]}
   run_firmware_compliance_campaign: {targets: [{scope_id: "1001", device_function: ACCESS_SWITCH}]}
@@ -55,6 +56,9 @@ defaults:
 branches:
   busy_hours:
     - {source: switch_interface, serial_number: SN1, interface_id: "1/1/1"}
+  mist_wlan_discovery_summary:
+    - {site_id: null, org_id: x1}
+    - {site_id: null, org_id: null}
   reboot_device:
     - {device_type: AP}
     - {device_type: CX}
@@ -108,6 +112,16 @@ branches:
     - {full_list: true}
 
 replies:
+  mist_wlan_discovery_summary:
+    - method: GET
+      path: /api/v1/self
+      reply: {privileges: [{scope: org, org_id: x1, role: observer}]}
+    - method: GET
+      path: /api/v1/orgs/x1/sites
+      reply: [{id: x1, name: Example}]
+    - method: GET
+      path: /api/v1/sites/x1/wlans/derived
+      reply: [{id: w1, ssid: x1, allow_mdns: false, limit_bcast: true}]
   clearpass_create_guest:
     - method: GET
       path: /api/role
