@@ -144,3 +144,5 @@ replies:
 validate_first:
   get_config_rollback_status: "answers from built-in notes about Central's checkpoint feature; sends nothing"
   list_central_get_prefixes: "lists the paths central_get accepts; sends nothing"
+  uxi_update_sensor: "needs at least one field to change; with only the sensor id it refuses before sending"
+  uxi_update_agent: "needs at least one field to change; with only the agent id it refuses before sending"

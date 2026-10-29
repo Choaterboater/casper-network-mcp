@@ -25,6 +25,13 @@ LOGIN_VARS: tuple[str, ...] = (
     "CLEARPASS_API_TOKEN",
     "CLEARPASS_CLIENT_ID",
     "CLEARPASS_CLIENT_SECRET",
+    "UXI_BASE_URL",
+    "UXI_CLIENT_ID",
+    "UXI_CLIENT_SECRET",
+    "OPSRAMP_BASE_URL",
+    "OPSRAMP_TENANT_ID",
+    "OPSRAMP_CLIENT_ID",
+    "OPSRAMP_CLIENT_SECRET",
 )
 
 # Other names for a login, read only when the main name is unset: MIST_APITOKEN is mistapi's.

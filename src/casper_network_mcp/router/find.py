@@ -91,6 +91,8 @@ _PRODUCT_WORDS = {
     "aruba": "central",
     "clearpass": "clearpass",
     "cppm": "clearpass",
+    "uxi": "uxi",
+    "opsramp": "opsramp",
 }
 
 

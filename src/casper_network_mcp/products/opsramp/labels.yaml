@@ -1,0 +1,11 @@
+# Change kinds for OpsRamp's hand-written tools.
+# kind: Casper's change kind. vendor_category: the OpsRamp API reference section, a reference only.
+# checked: why this kind, one line, from reading the tool's requests by hand.
+
+opsramp_overview: {kind: read, vendor_category: "Alerts, Tickets, Resource Management", checked: "four searches, GETs only, one row each, for their totals"}
+opsramp_search_alerts: {kind: read, vendor_category: "Alerts", checked: "GET /api/v2/tenants/{tenantId}/alerts/search"}
+opsramp_get_alert: {kind: read, vendor_category: "Alerts", checked: "GET /api/v2/tenants/{tenantId}/alerts/{alertId}"}
+opsramp_search_incidents: {kind: read, vendor_category: "Tickets", checked: "GET /api/v2/tenants/{tenantId}/incidents/search"}
+opsramp_search_resources: {kind: read, vendor_category: "Resource Management", checked: "GET /api/v2/tenants/{tenantId}/resources/search"}
+opsramp_get_resource: {kind: read, vendor_category: "Resource Management", checked: "GET /api/v2/tenants/{tenantId}/resources/{resourceId}"}
+opsramp_alert_action: {kind: config, vendor_category: "Alerts", checked: "POST /alerts/{alertId}/actions/{action}: acknowledge, suppress, close... changes one alert's state, not the network"}

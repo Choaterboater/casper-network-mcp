@@ -25,12 +25,14 @@ MIST_BASE = "https://api.mist.com"
 CENTRAL_BASE = "https://de1.api.central.arubanetworks.com"
 CLEARPASS_BASE = "https://198.51.100.20"
 TOKEN_URL = "https://sso.common.cloud.hpe.com/as/token.oauth2"
+#: OpsRamp's login is on the tenant's own host, so it is matched by path.
+OPSRAMP_TOKEN_PATH = "/tenancy/auth/oauth/token"
 
 
 class RecordingTransport(httpx.MockTransport):
     """A fake product API: replies by (method, path), records every product request.
 
-    Login traffic (the Central token endpoint) is answered but kept out of
+    Login traffic (the GreenLake and OpsRamp token endpoints) is answered but kept out of
     ``calls``, so ``calls == []`` means nothing reached the product.
     """
 
@@ -49,7 +51,7 @@ class RecordingTransport(httpx.MockTransport):
             self.routes[((method or "GET").upper(), path or "/")] = payload
 
     def _handle(self, request: httpx.Request) -> httpx.Response:
-        if str(request.url).startswith(TOKEN_URL):
+        if str(request.url).startswith(TOKEN_URL) or request.url.path == OPSRAMP_TOKEN_PATH:
             self.token_calls.append(request)
             return httpx.Response(200, json={"access_token": f"tok-{len(self.token_calls)}", "expires_in": 7200})
         self.calls.append(request)
