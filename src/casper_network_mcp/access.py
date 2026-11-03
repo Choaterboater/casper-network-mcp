@@ -15,7 +15,9 @@ with or without ``--read-only``; the pin is reported separately in
 * ClearPass: ``GET /api/oauth/me`` and ``/api/oauth/privileges``; a privilege
   starting with ``#`` is read-only. ClearPass has no org or site scopes.
 * Central: ``unknown`` with no lists and no call (Decision 6: no GreenLake in
-  0.1.0, so there is no role answer to read). UXI and OpsRamp: the same, since
+  0.1.0, so there is no role answer to read), and ``reaches``: new Central
+  only, since Classic Central's API gateway does not accept GreenLake tokens.
+  UXI and OpsRamp: ``unknown`` with no lists and no call, since
   neither API has a call that says what the login may change.
 
 A list is left out whole when any name or id is not plain
@@ -44,6 +46,9 @@ PRODUCTS = ("central", "mist", "clearpass", "uxi", "opsramp")
 MAX_SCOPES = 64
 _PLAIN = re.compile(r"^[A-Za-z0-9 _.@:/+-]{1,64}$")
 _PER_PRODUCT_TIMEOUT_S = 10.0
+
+#: Central logins are GreenLake API clients; Classic Central's API gateway does not take their tokens.
+CENTRAL_REACHES = "new Central only: Classic Central's API does not accept GreenLake tokens, so Classic is not visible"
 
 MIST_WRITE_ROLES = frozenset({"admin", "write"})
 MIST_READ_ROLES = frozenset({"read", "helpdesk", "installer"})
@@ -272,8 +277,10 @@ async def _clearpass(client: Any) -> dict[str, Any]:
 async def _product(product: str, client: Any, gate: Gate) -> dict[str, Any]:
     if not client.has_login:
         return {"product": product, "access": "unknown", "login": "missing"}
-    if product in ("central", "uxi", "opsramp"):
-        # No role answer to read for these logins: "unknown", and no call.
+    if product == "central":
+        # No role answer to read: "unknown", and no call.
+        return {"product": product, "access": "unknown", "reaches": CENTRAL_REACHES}
+    if product in ("uxi", "opsramp"):
         return {"product": product, "access": "unknown"}
     try:
         check = _mist(client, gate) if product == "mist" else _clearpass(client)

@@ -1,6 +1,9 @@
 # Change kinds for Central's hand-written tools (ported in Task 8).
 # kind: Casper's change kind. vendor_category: the developer site's category, a reference only.
 # checked: why this kind, one line, from reading the tool's requests by hand.
+# label: read (troubleshoot rows only): a show-only check is a read, so Casper shows no box for it; the kind stays
+# troubleshoot so the read-only gate still lets its POST through. Ping, traceroute and other checks that send
+# traffic from the device set no label (diagnostic), so Casper still asks.
 
 # monitoring.py
 central_get: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
@@ -41,6 +44,7 @@ get_device_trends: {kind: read, vendor_category: "Monitoring & Reporting", check
 get_device_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 get_device_config_issues: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 list_devices_config_health: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
+get_device_config_management: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET device-inventory and config-health/devices only (checked in the source); changes nothing"}
 resync_device_config: {kind: config, vendor_category: "Monitoring & Reporting", checked: "POST /network-config/v1alpha1/config-health/devices-resync re-pushes Central's config"}
 plan_config_health_remediation: {kind: read, vendor_category: "Monitoring & Reporting", checked: "GET calls only (checked in the source)"}
 execute_config_health_remediation: {kind: config, vendor_category: "Monitoring & Reporting", checked: "reads config health, then POSTs devices-resync for the chosen devices"}
@@ -174,24 +178,24 @@ run_firmware_compliance_campaign: {kind: firmware, vendor_category: "Configurati
 # ops.py
 cx_ping: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../ping only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 cx_traceroute: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../traceroute only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-cx_show: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
+cx_show: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); refuses anything but one-line show commands before sending; a read: changes nothing, sends no traffic"}
 aos_s_ping: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../ping only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 aos_s_traceroute: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../traceroute only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-aos_s_show: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-gateway_show: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-aos_s_arp: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../getArpTable only (on TROUBLESHOOT_OPS); reports, changes nothing"}
+aos_s_show: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); refuses anything but one-line show commands before sending; a read: changes nothing, sends no traffic"}
+gateway_show: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); refuses anything but one-line show commands before sending; a read: changes nothing, sends no traffic"}
+aos_s_arp: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../getArpTable only (on TROUBLESHOOT_OPS); reads the ARP table: changes nothing, sends no traffic"}
 poe_bounce: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../poeBounce cuts PoE power to the port, the powered device restarts"}
 port_bounce: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../portBounce takes the port down and up"}
 cable_test: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../cableTest; a TDR test briefly takes the tested port's link down, so it requires the change route"}
 reboot_device: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../reboot reloads the device"}
 disconnect_client: {kind: disruptive, vendor_category: "Troubleshooting", checked: "POST .../disconnectUserByMacAddress drops the client"}
-get_lldp_neighbors: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-get_cx_arp_table: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-get_cx_mac_table: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-find_mac_on_switch: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-get_switch_port_errors: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-get_switch_spanning_tree: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-get_switch_interface_counters: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
+get_lldp_neighbors: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+get_cx_arp_table: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+get_cx_mac_table: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+find_mac_on_switch: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+get_switch_port_errors: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+get_switch_spanning_tree: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
+get_switch_interface_counters: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands with a fixed one-line show command (on TROUBLESHOOT_OPS); a read: changes nothing, sends no traffic"}
 run_speed_test: {kind: config, vendor_category: "Troubleshooting", checked: "POST .../speedtest loads the AP uplink; not a read-only check"}
 run_troubleshooting_bundle: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../getArpTable, ping and showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 update_device_notes: {kind: config, vendor_category: "Troubleshooting", checked: "PATCH the device's notes field"}
@@ -208,7 +212,7 @@ ap_tcp: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST 
 ap_nslookup: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../nslookup only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 ap_http: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../http only (on TROUBLESHOOT_OPS); reports, changes nothing"}
 ap_https: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../https only (on TROUBLESHOOT_OPS); reports, changes nothing"}
-ap_show: {kind: troubleshoot, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); reports, changes nothing"}
+ap_show: {kind: troubleshoot, label: read, vendor_category: "Troubleshooting", checked: "POST .../showCommands only (on TROUBLESHOOT_OPS); refuses anything but one-line show commands before sending; a read: changes nothing, sends no traffic"}
 list_show_commands: {kind: read, vendor_category: "Troubleshooting", checked: "GET .../show-commands, the catalog of allowed show commands"}
 locate_ap: {kind: config, vendor_category: "Troubleshooting", checked: "POST .../locate turns on the AP's locator LED (device state)"}
 locate_cx_switch: {kind: config, vendor_category: "Troubleshooting", checked: "POST .../locate turns on the switch's locator LED (device state)"}

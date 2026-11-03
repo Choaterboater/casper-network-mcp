@@ -120,6 +120,13 @@ login failures: [auth, failure]
 rejected: [auth, failure]
 reject: [auth, failure]
 
+# Who manages a device's configuration (new Central, Classic Central or the device)
+managed by: [config, management]
+classic: [config, management]
+configured in: [config, management]
+device group of: [config, management]
+management mode: [config, management]
+
 # Records and logs
 who changed: [audit, log]
 changed: [audit]

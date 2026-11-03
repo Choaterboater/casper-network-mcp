@@ -312,6 +312,8 @@ async def test_central_is_unknown_and_makes_no_call(server_with_replies, recordi
     central = next(p for p in (await s.call("access_check", {}))["products"] if p["product"] == "central")
     assert central["access"] == "unknown" and "login" not in central
     assert recording_transport.calls == [] and recording_transport.token_calls == []
+    # A GreenLake login reaches new Central only; the AI can tell the person why Classic is out of sight.
+    assert "Classic Central" in central["reaches"] and "GreenLake" in central["reaches"]
 
 
 async def test_access_check_never_returns_a_token(server_with_replies):

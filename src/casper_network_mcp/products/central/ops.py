@@ -85,6 +85,10 @@ _catalog_cache: dict[tuple[int, str, str], tuple[float, list[str]]] = {}
 
 
 def _show_problem(commands: list[str], max_commands: int | None = 20) -> str | None:
+    """Why ``commands`` are not all one-line ``show`` commands, or None.
+
+    The show tools are labelled reads, so anything else is refused before a request is sent.
+    """
     if not commands:
         return "commands list cannot be empty"
     if max_commands is not None and len(commands) > max_commands:
@@ -92,6 +96,8 @@ def _show_problem(commands: list[str], max_commands: int | None = 20) -> str | N
     for i, cmd in enumerate(commands):
         if not cmd.strip().lower().startswith("show "):
             return f"Command {i} must start with 'show ': '{cmd}'"
+        if any(ord(ch) < 32 or ord(ch) == 127 for ch in cmd):
+            return f"Command {i} must be one show command on one line (no line breaks or control characters)"
     return None
 
 
@@ -151,6 +157,9 @@ def _show_hint(requested: list[str], catalog: list[str]) -> dict[str, Any]:
 
 async def _run_show(segment: str, serial_number: str, commands: list[str]) -> dict[str, Any]:
     """Run show commands; when Central rejects them, add the catalog's nearest accepted forms."""
+    problem = _show_problem(commands, max_commands=None)
+    if problem:
+        return {"status": None, "errors": [problem]}
     errors: list[str] = []
     result = await atroubleshoot_async(
         get_client(),

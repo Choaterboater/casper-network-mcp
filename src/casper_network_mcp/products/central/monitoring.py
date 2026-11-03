@@ -244,6 +244,9 @@ def list_devices(
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """List devices, optionally filtered by device_type (SWITCH/AP) or site_id.
 
+    Provisioned, device function and site are inventory labels, not proof new Central manages the
+    config; call get_device_config_management.
+
     device-inventory paginates with a `next` cursor, not offset — pass
     next_cursor from a prior response's _pagination.next_cursor to page
     forward. offset is accepted for backward compatibility and translated
@@ -283,7 +286,11 @@ def list_devices(
 
 @mcp.tool()
 def find_device(serial_number: str) -> dict[str, Any] | None:
-    """Find a single device by serial number. Returns the device record or None."""
+    """Find a single device by serial number. Returns the device record or None.
+
+    Provisioned, device function and site are inventory labels, not proof new Central manages the
+    config; call get_device_config_management.
+    """
     result = get_mcp_client().get_device_by_serial(serial_number)
     if result:
         dt = (result.get("deviceType") or "").upper()
@@ -1348,6 +1355,9 @@ def list_scope_devices(
 ) -> dict[str, Any]:
     """List devices associated with a site/scope ID using known Central scope fields.
 
+    Provisioned, device function and site are inventory labels, not proof new Central manages the
+    config; call get_device_config_management.
+
     Sweeps device-inventory pages using the server-issued `next` cursor
     (device-inventory does not support offset-based paging) and filters
     client-side; the returned limit/offset only bound the final result page.
@@ -1451,6 +1461,9 @@ def list_inventory(
     next_cursor: str | None = None,
 ) -> dict[str, Any]:
     """List claimed/unprovisioned devices via server-side filtering.
+
+    Provisioned, device function and site are inventory labels, not proof new Central manages the
+    config; call get_device_config_management.
 
     status: "YES"=provisioned, "NO"=claimed-only (case-insensitive; common
     aliases accepted). device_type: ACCESS_POINT/SWITCH/GATEWAY ("AP" is
@@ -1710,6 +1723,144 @@ def list_devices_config_health(
     if search:
         params["search"] = search
     return get_client().get("/network-config/v1alpha1/config-health/devices", params=params)
+
+
+# ── Which system manages a device's configuration ────────────────────────────
+
+_INVENTORY_PATH = "/network-monitoring/v1/device-inventory"
+_CONFIG_HEALTH_PATH = "/network-config/v1alpha1/config-health/devices"
+#: This server's Central logins are GreenLake API clients. Classic Central's API gateway
+#: (apigw-*.central.arubanetworks.com) has its own tokens and does not accept GreenLake ones.
+CLASSIC_CENTRAL_REACHABLE = False
+_NOT_PROOF = "inventory labels only, not proof of config management"
+
+
+def _same_serial(item: Any, serial: str, *keys: str) -> bool:
+    return isinstance(item, dict) and any(str(item.get(k) or "").lower() == serial.lower() for k in keys)
+
+
+def _config_management_sentence(
+    managed: bool | None, group: dict[str, Any] | None, tracked: bool | None, status: Any, why_unknown: str
+) -> str:
+    if managed is None:
+        return f"Unknown: {why_unknown}. Do not say new Central does or does not manage this device's configuration."
+    if not managed:
+        return (
+            "Not managed by new Central: the device is in no device group and config health does not track it. "
+            "New Central's profiles, device function and site assignment do not configure this device, so no "
+            "new Central fix steps apply."
+        )
+    reasons = []
+    if group:
+        reasons.append(f"it is in device group '{group.get('name') or group.get('scope_id')}'")
+    if tracked:
+        reasons.append(f"config health tracks it (status {status or 'unknown'})")
+    sentence = f"New Central manages this device's configuration: {' and '.join(reasons)}."
+    if tracked is False:
+        sentence += " Config health does not track it yet; get_device_config_issues shows why."
+    return sentence
+
+
+@mcp.tool()
+def get_device_config_management(serial_number: str) -> dict[str, Any]:
+    """Say which system manages one device's configuration: new Central, or not new Central.
+
+    Call this before saying anything about a device's new Central config (its profiles,
+    device function, site, or a fix there). Inventory labels (provisioned "Yes", a device
+    function, a site name) do not prove new Central configures a device; a device group or
+    config health tracking it does. When neither, the configuration comes from
+    Classic Central or the device itself, and the answer says whether this server can see
+    which. GET reads only: the device's inventory record, config health for this serial,
+    and the account's config-health count when the device is not tracked.
+    """
+    serial = serial_number.strip()
+    if not serial:
+        raise ValueError("serial_number must be a non-empty string")
+    client = get_client()
+    errors: list[str] = []
+    quoted = _odata_string(serial)
+
+    record: dict[str, Any] | None = None
+    inventory_read = False
+    try:
+        data = client.get(_INVENTORY_PATH, params={"filter": f"serialNumber eq '{quoted}'", "limit": 1})
+        items = data.get("items", data.get("devices", [])) if isinstance(data, dict) else []
+        record = next((i for i in items or [] if _same_serial(i, serial, "serialNumber", "serial")), None)
+        inventory_read = True
+    except Exception as exc:
+        errors.append(f"device-inventory: {exc}")
+
+    tracked: bool | None = None
+    health: dict[str, Any] | None = None
+    fleet_total: int | None = None
+    try:
+        data = client.get(_CONFIG_HEALTH_PATH, params={"filter": f"serial eq '{quoted}'", "limit": 10, "offset": 0})
+        devices = data.get("devices", data.get("items", [])) if isinstance(data, dict) else []
+        health = next((d for d in devices or [] if _same_serial(d, serial, "serial", "serialNumber")), None)
+        tracked = health is not None
+    except Exception as exc:
+        errors.append(f"config-health: {exc}")
+    if tracked is False:
+        try:
+            data = client.get(_CONFIG_HEALTH_PATH, params={"limit": 1, "offset": 0})
+            total = data.get("total") if isinstance(data, dict) else None
+            fleet_total = total if isinstance(total, int) and not isinstance(total, bool) else None
+        except Exception as exc:
+            errors.append(f"config-health count: {exc}")
+
+    group_name = (record or {}).get("deviceGroupName") or (health or {}).get("deviceGroupName")
+    group_id = (record or {}).get("deviceGroupId")
+    group = {"name": group_name, "scope_id": group_id} if group_name or group_id else None
+
+    managed: bool | None
+    why_unknown = ""
+    if group or tracked:
+        managed = True
+    elif inventory_read and tracked is False and record is not None:
+        managed = False
+    else:
+        managed = None
+        if errors:
+            why_unknown = "a read failed (see errors)"
+        else:
+            why_unknown = "the device is not in this login's inventory and config health does not track it"
+
+    status = (health or {}).get("configStatus")
+    out: dict[str, Any] = {
+        "managed_by": _config_management_sentence(managed, group, tracked, status, why_unknown),
+        "managed_by_new_central": managed,
+    }
+    if managed is False:
+        out["classic_central_reachable"] = CLASSIC_CENTRAL_REACHABLE
+        out["next_step"] = (
+            "Look in Classic Central next: the device's configuration is there or on the device itself."
+            if CLASSIC_CENTRAL_REACHABLE
+            else "This server can't see where it is configured (Classic Central or the device itself): its "
+            "Central login is a GreenLake API client, and Classic Central does not accept GreenLake tokens. "
+            "Check Classic Central or the device directly."
+        )
+    out["serial_number"] = serial
+    out["evidence"] = {
+        "device_group": group,
+        "config_health": {
+            "tracked": tracked,
+            "config_status": status,
+            "devices_tracked_in_account": fleet_total,
+        },
+        "inventory_labels": (
+            {
+                "provisioned": record.get("isProvisioned"),
+                "device_function": record.get("deviceFunction"),
+                "site": record.get("siteName"),
+                "note": _NOT_PROOF,
+            }
+            if record
+            else None
+        ),
+    }
+    out["endpoints_used"] = [_INVENTORY_PATH, _CONFIG_HEALTH_PATH]
+    out["errors"] = errors
+    return out
 
 
 # Schema max for one devices-resync call (resyncCfgDevices: maxItems 50 in the

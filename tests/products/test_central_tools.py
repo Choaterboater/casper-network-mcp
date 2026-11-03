@@ -214,6 +214,48 @@ async def test_cx_show_checks_commands_before_sending(recording_transport, centr
     assert recording_transport.calls == [] and "error" in str(out).lower()
 
 
+@pytest.mark.parametrize("name", ["cx_show", "aos_s_show", "gateway_show", "ap_show"])
+@pytest.mark.parametrize("command", ["configure terminal", "reload", "showversion", "show version\nreload", "show\tx"])
+async def test_show_tools_refuse_anything_but_one_show_command_before_sending(
+    name, command, recording_transport, central_backends
+):
+    out = await central_backends.call(name, {"serial_number": "SN1", "commands": ["show version", command]})
+    assert recording_transport.calls == [], (name, command)
+    assert out["errors"] and "show" in out["errors"][0], out
+
+
+@pytest.mark.parametrize(
+    ("name", "args"),
+    [
+        ("get_switch_port_errors", {"interface": "1/1/1\nreload"}),
+        ("get_cx_mac_table", {"interface": "1/1/1\r\nconfigure terminal"}),
+        ("get_switch_spanning_tree", {"interface": "1/1/1\nreload"}),
+        ("get_switch_interface_counters", {"interface": "1/1/1\nreload"}),
+        ("find_mac_on_switch", {"mac_address": "02:00:00:00:00:01\nreload"}),
+    ],
+)
+async def test_fixed_show_tools_refuse_a_second_line_before_sending(name, args, recording_transport, central_backends):
+    out = await central_backends.call(name, {"serial_number": "SN1", **args})
+    assert recording_transport.calls == [], name
+    assert out["errors"], out
+
+
+async def test_read_only_pin_still_runs_a_show_only_check(recording_transport, central_client_factory):
+    client = central_client_factory(gate=Gate(read_only=True), transport=recording_transport)
+    backends = CentralBackends(central.backends(client=lambda: client))
+    import httpx
+
+    recording_transport.reply(
+        httpx.Response(202, headers={"Location": "/x/async-operations/t1"}), "POST", f"{TS}/cx/SN1/showCommands"
+    )
+    recording_transport.reply(
+        {"status": "COMPLETED", "output": "ok"}, "GET", f"{TS}/cx/SN1/showCommands/async-operations/t1"
+    )
+    out = await backends.call("get_lldp_neighbors", {"serial_number": "SN1"})
+    assert out["status"] == "COMPLETED"
+    assert body_of(recording_transport.calls[0]) == {"commands": ["show lldp neighbors"]}
+
+
 async def test_bounces_refuse_access_points_before_sending(recording_transport, central_backends):
     for name in ("poe_bounce", "port_bounce"):
         out = await central_backends.call(name, {"serial_number": "SN1", "ports": ["1"], "device_type": "AP"})

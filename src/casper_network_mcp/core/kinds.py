@@ -3,7 +3,9 @@
 ``read | troubleshoot | config | disruptive | firmware | delete | admin``.
 
 Hand-written tools take their kind from their product's ``labels.yaml``
-(checked by hand, one note per tool). Generated tools take it from
+(checked by hand, one note per tool); a show-only check's row adds
+``label: read``, so it is labelled a read while its kind stays
+``troubleshoot``. Generated tools take it from
 :func:`kind_for_operation`, first match wins:
 
 0. ``KIND_OVERRIDES`` (hand-checked operations the word rules get wrong).
@@ -43,6 +45,7 @@ __all__ = [
     "READ_POSTS",
     "TROUBLESHOOT_OPS",
     "ChangeKind",
+    "check_label_rows",
     "kind_for_operation",
     "label_for_kind",
     "labels",
@@ -387,22 +390,38 @@ def kind_for_operation(method: str, path: str, operation_id: str = "") -> Change
 # ── labels.yaml for hand-written tools ──────────────────────────────────────
 
 
-@functools.cache
-def labels(product: str) -> dict[str, dict[str, str]]:
-    """``{tool_name: {kind, vendor_category, checked}}`` from ``products/<product>/labels.yaml``."""
-    resource = files("casper_network_mcp") / "products" / product / "labels.yaml"
-    data = yaml.safe_load(resource.read_text(encoding="utf-8")) or {}
+#: The one label a ``labels.yaml`` row may set: a show-only check (fixed or validated ``show``
+#: commands, table reads) is a read, while its kind stays ``troubleshoot`` so the gate still lets
+#: its POST through on ``TROUBLESHOOT_OPS``. Checks that send traffic (ping, traceroute) set none.
+ROW_LABELS: dict[str, ToolAnnotations] = {"read": READ_ONLY}
+
+
+def check_label_rows(product: str, data: Any) -> dict[str, dict[str, str]]:
+    """``data`` when every row has a known kind and a checked note, and any ``label`` is ``read`` on a check."""
     if not isinstance(data, dict):
         raise TypeError(f"{product} labels.yaml must be a mapping")
     for name, row in data.items():
         if not isinstance(row, dict) or row.get("kind") not in CHANGE_KINDS or not row.get("checked"):
             raise ValueError(f"{product} labels.yaml row {name!r} needs a known kind and a checked note")
+        if "label" in row and (row["label"] not in ROW_LABELS or row["kind"] != "troubleshoot"):
+            raise ValueError(f"{product} labels.yaml row {name!r}: label may only be 'read', on a troubleshoot row")
     return data
 
 
+@functools.cache
+def labels(product: str) -> dict[str, dict[str, str]]:
+    """``{tool_name: {kind, vendor_category, checked[, label]}}`` from ``products/<product>/labels.yaml``."""
+    resource = files("casper_network_mcp") / "products" / product / "labels.yaml"
+    return check_label_rows(product, yaml.safe_load(resource.read_text(encoding="utf-8")) or {})
+
+
 def tool_labels(product: str, name: str) -> tuple[ToolAnnotations, dict[str, Any]]:
-    """``(annotations, meta)`` for a hand-written tool, from its ``labels.yaml`` row."""
+    """``(annotations, meta)`` for a hand-written tool, from its ``labels.yaml`` row.
+
+    A row's ``label: read`` gives the read annotation; the meta keeps the row's kind.
+    """
     row = labels(product).get(name)
     if row is None:
         raise KeyError(f"{product} tool {name!r} has no labels.yaml row")
-    return label_for_kind(row["kind"]), tool_meta(row["kind"])
+    annotations = ROW_LABELS[row["label"]] if "label" in row else label_for_kind(row["kind"])
+    return annotations, tool_meta(row["kind"])
