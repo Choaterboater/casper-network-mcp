@@ -11,7 +11,7 @@ You normally never install this yourself: Casper sets it up, pins the exact vers
 | Tool | What it is for |
 | --- | --- |
 | `find_tool` | Finds the right tool for what you asked ("bounce port 7 on the closet switch") and says what kind of change it makes: read, troubleshoot, config, disruptive, firmware, delete or admin. |
-| `invoke_read_tool` | Runs a tool that only reads, or a non-disruptive troubleshooting check (ping, show). Anything else is refused. |
+| `invoke_read_tool` | Runs a tool that only reads, or a non-disruptive troubleshooting check (ping, show). Anything else is refused. Show-only checks are labelled `read`; ping and traceroute are labelled `diagnostic`. |
 | `invoke_tool` | Runs any tool, including ones that change your network. Casper asks you first. |
 | `access_check` | Says, for each product, whether a login is set and where that login can change things. |
 
@@ -30,6 +30,9 @@ Behind them:
   a scan, including an empty page. The service filter is not an Access Tracker policy service name;
 - `lookup_api`, which answers exact questions about the vendors' APIs (endpoints, fields, allowed values) from the
   bundled documents, with no network.
+- `get_device_config_management` says in one read whether new Central manages a device's configuration (a device
+  group, config health tracking it) or not; inventory labels such as provisioned, device function and site are not
+  proof, and the answer shows which evidence it used;
 - `busy_hours` profiles a site hour by hour over up to a month (client counts, or a switch uplink's traffic) in your
   time zone and names the quietest window for planned downtime.
 
@@ -87,6 +90,9 @@ A second Central account (a customer's temporary key, a lab) needs no second ser
 "temp"` runs that one call as it; without `login` the main account answers. Names are letters and digits. The
 `--read-only` pin covers every login. Remove the variables when the key is retired.
 
+A Central login here is a GreenLake API client, so it reaches new Central only: Classic Central's API
+(`apigw-*.central.arubanetworks.com`) does not accept GreenLake tokens, and `access_check` says so.
+
 ClearPass API tokens expire (the API client's token lifetime in ClearPass sets when); a pasted token is not renewed.
 When a product turns a login away (HTTP 401), `access_check` reports that product with `"login": "expired"` and a
 call to one of its tools returns `{"error": "login_expired", "product": ...}`, so the client can ask you for a new one.
@@ -103,6 +109,10 @@ every change, showing the tool and what it changes. On top of that:
 - tools that disrupt the network (cable tests, reboots, port and PoE bounces, disconnects) require `invoke_tool`
   and are labelled disruptive, so Casper
   asks every time;
+- show-only checks (LLDP neighbours, ARP and MAC tables, port counters, spanning tree, `cx_show` and the other
+  show tools, which refuse anything but one-line `show` commands) are reads: kind `troubleshoot`, label `read`,
+  no box in Casper. Ping, traceroute and other checks that send traffic from the device keep the `diagnostic`
+  label, so Casper still asks;
 - tokens, passwords and pre-shared keys are hidden in replies and errors.
 
 The server never asks you to type anything and never treats an argument the AI sets as your approval. Approval is

@@ -7,7 +7,8 @@ import re
 import pytest
 
 from casper_network_mcp import sdk_compat
-from casper_network_mcp.core.kinds import CHANGE_KINDS, label_for_kind, labels
+from casper_network_mcp.core.annotations import DIAGNOSTIC, READ_ONLY
+from casper_network_mcp.core.kinds import CHANGE_KINDS, check_label_rows, label_for_kind, labels, tool_labels
 from casper_network_mcp.openapi_gen.runtime import generated_backend
 from casper_network_mcp.products import hand_written_backends
 
@@ -142,6 +143,90 @@ def test_central_table_follows_the_plan():
         assert central[name]["kind"] == kind, name
 
 
+# ── Show-only checks: read label, troubleshoot kind ─────────────────────────
+
+#: Fixed or validated show commands and table reads: they change nothing and send no traffic.
+SHOW_ONLY_READS = {
+    "get_lldp_neighbors",
+    "get_cx_arp_table",
+    "get_cx_mac_table",
+    "find_mac_on_switch",
+    "get_switch_port_errors",
+    "get_switch_spanning_tree",
+    "get_switch_interface_counters",
+    "aos_s_arp",
+    "cx_show",
+    "aos_s_show",
+    "gateway_show",
+    "ap_show",
+}
+#: Checks that send traffic from the device: they keep the diagnostic label, so Casper still asks.
+LINK_CHECKS = {
+    "cx_ping",
+    "cx_traceroute",
+    "aos_s_ping",
+    "aos_s_traceroute",
+    "gateway_ping",
+    "gateway_traceroute",
+    "ap_ping",
+    "ap_traceroute",
+    "ap_tcp",
+    "ap_nslookup",
+    "ap_http",
+    "ap_https",
+    "run_troubleshooting_bundle",
+}
+#: Casper treats a troubleshoot hit labelled read as a read unless its name has one of these words.
+LINK_CHECK_WORDS = {"ping", "traceroute", "iperf", "speedtest", "cable", "nslookup", "blink"}
+
+
+def test_show_only_checks_are_reads_that_keep_the_troubleshoot_kind():
+    central = labels("central")
+    for name in SHOW_ONLY_READS:
+        assert central[name]["kind"] == "troubleshoot", name
+        assert central[name].get("label") == "read", name
+        annotations, meta = tool_labels("central", name)
+        assert annotations == READ_ONLY, name
+        assert meta == {"casper/change-kind": "troubleshoot"}, name
+
+
+def test_checks_that_send_traffic_still_ask():
+    central = labels("central")
+    for name in LINK_CHECKS:
+        assert central[name]["kind"] == "troubleshoot", name
+        assert "label" not in central[name], name
+        assert tool_labels("central", name)[0] == DIAGNOSTIC, name
+
+
+def test_only_the_listed_checks_carry_a_read_label():
+    for product in PRODUCTS:
+        for name, row in labels(product).items():
+            if "label" in row:
+                assert (product, name) in {("central", n) for n in SHOW_ONLY_READS}, (product, name)
+                assert not set(tool_words(name)) & LINK_CHECK_WORDS, name
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"kind": "read", "label": "read"},
+        {"kind": "config", "label": "read"},
+        {"kind": "disruptive", "label": "read"},
+        {"kind": "troubleshoot", "label": "diagnostic"},
+        {"kind": "troubleshoot", "label": "write"},
+        {"kind": "troubleshoot", "label": ""},
+    ],
+)
+def test_a_label_is_only_read_on_a_troubleshoot_row(row):
+    with pytest.raises(ValueError):
+        check_label_rows("central", {"some_tool": {**row, "vendor_category": "x", "checked": "a checked note"}})
+
+
+def test_a_troubleshoot_row_with_a_read_label_is_accepted():
+    row = {"kind": "troubleshoot", "label": "read", "vendor_category": "x", "checked": "a checked note"}
+    assert check_label_rows("central", {"some_tool": row}) == {"some_tool": row}
+
+
 # ── Registered tools ────────────────────────────────────────────────────────
 
 
@@ -155,7 +240,8 @@ def test_every_hand_written_tool_has_a_row_and_its_label():
     for product, tool in _registered():
         row = labels(product).get(tool.name)
         assert row is not None, f"{product}: {tool.name} has no labels.yaml row"
-        assert tool.annotations == label_for_kind(row["kind"]), tool.name
+        expected = READ_ONLY if row.get("label") == "read" else label_for_kind(row["kind"])
+        assert tool.annotations == expected, tool.name
         assert (tool.meta or {}).get("casper/change-kind") == row["kind"], tool.name
         if tool.annotations.destructive_hint:
             assert row["kind"] in ("disruptive", "delete"), tool.name

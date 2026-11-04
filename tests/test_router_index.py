@@ -90,3 +90,18 @@ def test_plurals_fold_to_one_word():
     assert index.fold("switches") == "switch"
     assert index.fold("access") == "access"
     assert index.fold("ap") == "ap"
+
+
+def test_show_only_checks_are_found_with_a_read_label_and_run_as_reads():
+    from casper_network_mcp.router import dispatch
+
+    hits = {h["name"]: h for h in find.find_tool("show the lldp neighbors on the core switch", product="central")}
+    assert hits["get_lldp_neighbors"]["kind"] == "troubleshoot"
+    assert hits["get_lldp_neighbors"]["label"] == "read"
+    for name in ("get_lldp_neighbors", "cx_show", "aos_s_arp"):
+        entry = index.catalog().get(name)
+        assert entry is not None and (entry.kind, entry.label) == ("troubleshoot", "read"), name
+        assert dispatch.is_read_tool(entry), name
+    ping = index.catalog().get("cx_ping")
+    assert ping is not None and (ping.kind, ping.label) == ("troubleshoot", "diagnostic")
+    assert dispatch.is_read_tool(ping)

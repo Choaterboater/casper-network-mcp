@@ -122,7 +122,8 @@ def build_server(
         closet switch") or an exact API call ("GET /api/v1/sites/{site_id}").
         product: central, mist, clearpass, uxi, opsramp or specs (the API document lookup).
         Each hit has name, product, summary, kind (read, troubleshoot, config,
-        disruptive, firmware, delete or admin) and label. Pass include_schema
+        disruptive, firmware, delete or admin) and label (read, diagnostic, write
+        or destructive; a show-only check is troubleshoot with label read). Pass include_schema
         to get the arguments a tool takes. Then call invoke_read_tool (kind
         read or troubleshoot) or invoke_tool.
         """

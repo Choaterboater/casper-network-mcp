@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Show-only Central checks are reads: `get_lldp_neighbors`, `get_cx_arp_table`, `get_cx_mac_table`,
+  `find_mac_on_switch`, `get_switch_port_errors`, `get_switch_spanning_tree`, `get_switch_interface_counters`,
+  `aos_s_arp`, `cx_show`, `aos_s_show`, `gateway_show` and `ap_show` keep kind `troubleshoot` (the read-only gate
+  still lets their POST through) but carry the `read` label, so Casper shows no box for them. Ping, traceroute and
+  the other checks that send traffic keep the `diagnostic` label and still ask. A `labels.yaml` row may set
+  `label: read` only on a troubleshoot row. Every show tool now refuses a command that is not one `show` line
+  (a line break or control character) before anything is sent.
+- New `get_device_config_management`: one read that says whether new Central manages a device's configuration
+  (device group, config health) or not, with the evidence it used. Provisioned, device function and site are
+  inventory labels, not proof; when new Central does not manage the device it says no new Central fix applies
+  and that this server can't see Classic Central. `find_tool` finds it for "managed by new Central or classic",
+  "device group of", "config management mode".
+- `access_check` says what a Central login reaches: new Central only, since Classic Central's API does not accept
+  GreenLake tokens.
 - New products: HPE Aruba Networking UXI (sensors, agents, sensor/agent status and issues, groups, networks,
   service tests, group assignments; rename, group and assignment changes) and HPE OpsRamp (alert, incident and
   resource searches, alert and resource details, an overview; acknowledge / suppress / close / heal an alert).

@@ -232,3 +232,20 @@ def test_flapping_is_not_bounce_and_collection_stays_distinct_from_one_resource(
         assert hits[0]["name"] != "port_bounce"
     assert find.find_tool("mist list sites", top_k=1)[0]["name"] == "mist_list_sites"
     assert find.find_tool("mist get site Branch-1", top_k=1)[0]["name"] == "mist_get_site"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "is this AP managed by new Central or classic",
+        "what manages this device's config",
+        "device group of AP",
+        "config management mode",
+        "is the AP configured in new Central",
+    ],
+)
+@pytest.mark.parametrize("product", ["central", None])
+def test_config_management_questions_find_the_one_read_that_answers_them(query, product):
+    hits = find.find_tool(query, top_k=3, product=product)
+    assert hits[0]["name"] == "get_device_config_management", [h["name"] for h in hits]
+    assert (hits[0]["kind"], hits[0]["label"]) == ("read", "read")
