@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.1.7
+
+Show-only Central checks that run without a box in Casper, one read that says what manages a device's config,
+and UXI and OpsRamp.
 
 - Show-only Central checks are reads: `get_lldp_neighbors`, `get_cx_arp_table`, `get_cx_mac_table`,
   `find_mac_on_switch`, `get_switch_port_errors`, `get_switch_spanning_tree`, `get_switch_interface_counters`,
