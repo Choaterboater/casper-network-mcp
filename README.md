@@ -228,6 +228,13 @@ again and confirms every hash. See `NOTICE.md` and `THIRD_PARTY_NOTICES.md`.
 
 The package has no install step, downloads nothing when it starts and never updates itself.
 
+## Agent skill
+
+`skills/device-troubleshoot/SKILL.md` is an agent skill for asking about one device or user ("why can't this MAC
+connect?"). It checks Mist or Central first, then ClearPass, using only this server's read tools, and answers with
+a timeline and root cause. Copy the folder into your agent's skills directory (for example `~/.agents/skills/`).
+It is not part of the Python package.
+
 ## Working on it
 
 ```
