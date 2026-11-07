@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+Access Tracker reject reasons, read from ClearPass's own database.
+
+- New `clearpass_access_tracker`: for one MAC (any format) or username, the newest Access Tracker records with
+  login status (ACCEPT, REJECT, TIMEOUT), service, user, MAC, NAD, auth type, roles, enforcement profiles, error
+  code and its text, and alerts, with `hours` (1-720, default 24), `limit` (1-100, default 10), and optional
+  `status` and `service` filters. No ClearPass API exposes Access Tracker (`/api/session` holds active accounting
+  sessions only), so it reads ClearPass's database as the built-in read-only `appexternal` user: `tipsLogDb` on
+  port 5433 for records, `tipsdb` on port 5432 for error-code text (best effort). Fixed parameterised `SELECT`s
+  only, a read-only session, a 15 s statement timeout and a 10 s connect timeout; TLS first, plain only when the
+  server refuses TLS. Labelled `read`. `find_tool` finds it for "access tracker", "reject reason", "auth failure
+  reason".
+- New optional logins: `CLEARPASS_DB_PASSWORD` turns it on; `CLEARPASS_DB_HOST`, `CLEARPASS_DB_USER`,
+  `CLEARPASS_DB_LOGS_PORT` and `CLEARPASS_DB_CONFIG_PORT` override the defaults. Without the password the tool
+  answers `login_missing` with what to set and where ClearPass sets the `appexternal` password; `access_check`
+  reports ClearPass's `access_tracker` as `set` or `missing`. The password is never returned.
+- `clearpass_why_denied` adds the latest Access Tracker records under `access_tracker` when that login is set (and
+  still answers from them if the session API fails); without it, its `limitation` names the new tool and variable.
+- New dependency: `pg8000` (pure-Python PostgreSQL driver, BSD-3-Clause), which brings `scramp` (MIT-0),
+  `asn1crypto` (MIT), `python-dateutil` (BSD-3-Clause) and, through it, `tzdata` on every system.
+
 ## 0.1.7
 
 Show-only Central checks that run without a box in Casper, one read that says what manages a device's config,

@@ -21,7 +21,12 @@ ClearPass documents (served under ``/api``). What changed:
   from ``_embedded.items``, a new guest gets the ``role_id`` and password the
   spec requires, and a disconnect sends ``id`` and ``confirm_disconnect``;
 * new: ``clearpass_who_am_i`` (``GET /api/oauth/me``), the login's own
-  identity, which ``access_check`` builds on.
+  identity, which ``access_check`` builds on;
+* new: ``clearpass_access_tracker`` reads Access Tracker (accept/reject, error
+  code and text, alerts, roles, enforcement profiles) from ClearPass's own
+  database as the read-only ``appexternal`` user, since no API exposes it
+  (see ``access_tracker.py``); ``clearpass_why_denied`` adds those records
+  when that login is set.
 """
 
 from __future__ import annotations
@@ -32,14 +37,17 @@ import re
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
+import httpx
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.budget import bound_collection_response, clamp_limit
+from casper_network_mcp.core.errors import ToolError
 from casper_network_mcp.core.kinds import KIND_OVERRIDES, kind_for_operation, listed_template
 from casper_network_mcp.core.paths import path_segment, safe_api_path
 from casper_network_mcp.products._tools import ClientGetter, ToolSet, client, use_client, would_send
+from casper_network_mcp.products.clearpass import access_tracker
 
 __all__ = ["backend", "backend_tools"]
 
@@ -414,6 +422,70 @@ async def clearpass_list_access_tracker_sessions(
     return {"sessions": await _session_list(status, limit, offset, mac, username, nad, service, start, end)}
 
 
+def _tracker_args(mac: str | None, username: str | None, status: str | None, service: str | None) -> dict[str, Any]:
+    if (mac is None) == (username is None):
+        raise ValueError("Provide exactly one of mac or username.")
+    if username is not None and not username.strip():
+        raise ValueError("username must not be blank.")
+    if service is not None and not service.strip():
+        raise ValueError("service must not be blank.")
+    wanted = status.strip().upper() if status is not None else None
+    if wanted is not None and wanted not in access_tracker.STATUSES:
+        raise ValueError(f"status must be one of {', '.join(access_tracker.STATUSES)}.")
+    return {
+        "mac": _session_mac(mac.strip()) if mac is not None else None,
+        "username": username,
+        "status": wanted,
+        "service": service,
+    }
+
+
+async def _access_tracker(login: access_tracker.DbLogin, args: dict[str, Any], hours: int, limit: int) -> Any:
+    return await asyncio.to_thread(access_tracker.read_access_tracker, login, hours=hours, limit=limit, **args)
+
+
+@mcp.tool()
+async def clearpass_access_tracker(
+    mac: MacFilter = None,
+    username: Annotated[str | None, Field(description="Exact Access Tracker username; must not be blank.")] = None,
+    hours: Annotated[int, Field(description="How far back to look, in hours; clamped to 1..720.")] = 24,
+    limit: Annotated[int, Field(description="Newest records to return; clamped to 1..100.")] = 10,
+    status: Annotated[str | None, Field(description="Only this login status: ACCEPT, REJECT or TIMEOUT.")] = None,
+    service: Annotated[
+        str | None, Field(description="Exact ClearPass service name, e.g. a Corp 802.1X service.")
+    ] = None,
+) -> dict[str, Any]:
+    """ClearPass Access Tracker: why was this client rejected or accepted? Reject reason, error code, alerts and policy result per authentication.
+
+    Provide exactly one of mac or username. Returns each RADIUS/TACACS
+    authentication, newest first: time, login status (ACCEPT, REJECT,
+    TIMEOUT), service, user, MAC, NAD name and IP, auth type (EAP-TLS, PEAP,
+    MAC auth), roles, enforcement profiles, the error code with its text
+    (for example 206 Access denied by policy, 215 TLS session error) and the
+    alerts (for example an expired client certificate), with the session id.
+    Use it for auth failure reasons and reject reasons that the API cannot
+    give. Reads ClearPass's own database as the read-only appexternal user
+    (SELECT only); needs CLEARPASS_DB_PASSWORD, and says what to set when it is missing.
+    """
+    args = _tracker_args(mac, username, status, service)
+    cp = _cp()
+    login = getattr(cp, "db_login", None)
+    if login is None:
+        return access_tracker.not_configured(list(getattr(cp, "db_missing", []) or []))
+    return await _access_tracker(login, args, hours, limit)
+
+
+_API_FAILURES = (ToolError, httpx.HTTPError, RuntimeError)
+
+
+def _hours_since(start: str | None) -> int:
+    lower = _iso_time(start, "start")
+    if lower is None:
+        return access_tracker.DEFAULT_HOURS
+    seconds = (datetime.now(lower.tzinfo) - lower).total_seconds()
+    return access_tracker.clamp_hours(int(seconds // 3600) + 1)
+
+
 @mcp.tool()
 async def clearpass_why_denied(
     mac: MacFilter = None,
@@ -432,12 +504,37 @@ async def clearpass_why_denied(
     active accounting sessions, not full Access Tracker rejects: missing auth
     result, failure reason or enforcement profile is unknown, never inferred
     from accounting state or termination cause. Service is the accounting type.
+    When the Access Tracker database login (CLEARPASS_DB_PASSWORD) is set, the
+    latest Access Tracker records (status, error code and text, alerts) are
+    added under access_tracker, as clearpass_access_tracker returns them.
     For a username, endpoint details describe only the latest session's MAC.
     Time windows scan at most ten pages; next_server_offset continues the scan.
     """
     if (mac is None) == (username is None):
         raise ValueError("Provide exactly one of mac or username.")
-    page = await _session_list(None, limit, offset, mac, username, nad, service, start, end)
+    db_login = getattr(_cp(), "db_login", None)
+    tracker: Any = None
+    sessions_error: Any = None
+    if db_login is None:
+        page = await _session_list(None, limit, offset, mac, username, nad, service, start, end)
+    else:
+        job = asyncio.ensure_future(
+            _access_tracker(
+                db_login, _tracker_args(mac, username, None, None), _hours_since(start), access_tracker.DEFAULT_ROWS
+            )
+        )
+        try:
+            page = await _session_list(None, limit, offset, mac, username, nad, service, start, end)
+        except ValueError:
+            job.cancel()
+            raise
+        except _API_FAILURES as exc:
+            # Access Tracker can still answer when the API can't.
+            from casper_network_mcp.products._tools import _as_error
+
+            sessions_error = _as_error("clearpass", exc)
+            page = {"items": [], "filter": {}, "server_offset": max(0, offset)}
+        tracker = await job
     rows = page["items"]
     normalized = _session_mac(mac) if mac is not None else None
     if normalized is None and rows:
@@ -478,10 +575,26 @@ async def clearpass_why_denied(
         "endpoint": endpoint,
         "filter": page["filter"],
         "server_offset": page["server_offset"],
-        "degraded": _failed(endpoint),
-        "limitation": "The bundled API exposes active accounting sessions, not full Access Tracker rejects. "
-        "Missing auth results, reject reasons and enforcement profiles are unknown; no denial is inferred.",
+        "degraded": _failed(endpoint) or sessions_error is not None or _failed(tracker),
     }
+    if sessions_error is not None:
+        out["sessions_error"] = sessions_error
+    if tracker is None:
+        out["limitation"] = (
+            "The bundled API exposes active accounting sessions, not full Access Tracker rejects. "
+            "Missing auth results, reject reasons and enforcement profiles are unknown; no denial is inferred. "
+            "For the reject reason, set CLEARPASS_DB_PASSWORD (ClearPass's read-only appexternal database login) "
+            "and use clearpass_access_tracker."
+        )
+    else:
+        out["access_tracker"] = tracker
+        out["limitation"] = (
+            "sessions are active accounting sessions from the API; reject reasons, error codes and alerts are in "
+            "access_tracker (Access Tracker records from ClearPass's database)."
+            if not _failed(tracker)
+            else "sessions are active accounting sessions from the API, and Access Tracker could not be read (see "
+            "access_tracker), so reject reasons are unknown; no denial is inferred."
+        )
     for key in ("next_server_offset", "time_window"):
         if key in page:
             out[key] = page[key]

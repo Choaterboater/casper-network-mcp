@@ -14,6 +14,9 @@ with or without ``--read-only``; the pin is reported separately in
   role makes Mist ``unknown`` and lists nothing.
 * ClearPass: ``GET /api/oauth/me`` and ``/api/oauth/privileges``; a privilege
   starting with ``#`` is read-only. ClearPass has no org or site scopes.
+  ``access_tracker`` says whether the separate, read-only database login for
+  Access Tracker (``CLEARPASS_DB_PASSWORD``) is ``set`` or ``missing``; it is
+  not tried here.
 * Central: ``unknown`` with no lists and no call (Decision 6: no GreenLake in
   0.1.0, so there is no role answer to read), and ``reaches``: new Central
   only, since Classic Central's API gateway does not accept GreenLake tokens.
@@ -307,6 +310,9 @@ async def access_check(
     state = "off" if gate.read_only else "on"
     entries = await asyncio.gather(*(_product(p, clients[p], gate) for p in PRODUCTS))
     products = [{**entry, "server_gate": {"flag": "--read-only", "state": state}} for entry in entries]
+    for entry in products:
+        if entry["product"] == "clearpass":
+            entry["access_tracker"] = "set" if getattr(clients["clearpass"], "db_login", None) else "missing"
     if central_logins:
         for entry in products:
             if entry["product"] == "central":

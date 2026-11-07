@@ -24,7 +24,13 @@ Behind them:
   health, device counts and the top alarms in one read;
 - `clearpass_why_denied` summarizes recent sessions, endpoint status/profile, NAD and applied roles for exactly
   one MAC or username. The bundled 6.12.7 API exposes active accounting sessions, not full Access Tracker
-  rejects; missing auth results, reject reasons and enforcement profiles remain unknown;
+  rejects; without the Access Tracker database login, missing auth results, reject reasons and enforcement
+  profiles remain unknown. With it, the latest Access Tracker records are added;
+- `clearpass_access_tracker` reads Access Tracker itself for one MAC or username: accept or reject, the error code
+  and its text (206 Access denied by policy, 215 TLS session error), alerts, auth type, roles, enforcement
+  profiles and NAD, newest first, over the last `hours` (1-720, default 24) with up to `limit` records (1-100,
+  default 10). No ClearPass API has Access Tracker, so it reads ClearPass's own database as its read-only
+  `appexternal` user (see Logins); it only ever runs fixed `SELECT`s;
 - ClearPass session and auth-failure reads accept MAC, username, NAD IP, accounting service type and ISO 8601
   start/end times (with timezone). Time windows scan at most ten pages locally; `next_server_offset` continues
   a scan, including an empty page. The service filter is not an Access Tracker policy service name;
@@ -76,6 +82,7 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | Juniper Mist | `MIST_API_TOKEN` (or `MIST_APITOKEN`, mistapi's name), and `MIST_HOST` if your cloud is not `api.mist.com` |
 | HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET`; more accounts as `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID`, `CENTRAL_<NAME>_CLIENT_SECRET` |
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
+| ClearPass Access Tracker (optional) | `CLEARPASS_DB_PASSWORD`; and only if not the defaults: `CLEARPASS_DB_HOST` (the host in `CLEARPASS_BASE_URL`), `CLEARPASS_DB_USER` (`appexternal`), `CLEARPASS_DB_LOGS_PORT` (5433), `CLEARPASS_DB_CONFIG_PORT` (5432) |
 | HPE Aruba Networking UXI | `UXI_CLIENT_ID`, `UXI_CLIENT_SECRET` (a GreenLake personal API client for the UXI service); `UXI_BASE_URL` only if not `https://api.capenetworks.com` |
 | HPE OpsRamp | `OPSRAMP_BASE_URL` (`https://<tenant>.api.opsramp.com`), `OPSRAMP_TENANT_ID`, `OPSRAMP_CLIENT_ID`, `OPSRAMP_CLIENT_SECRET` (a custom integration's OAuth2 key and secret) |
 
@@ -83,6 +90,17 @@ For ClearPass, an API client is best: the server logs in with it and gets a new 
 In ClearPass Guest, open Administration > API Services > API Clients, create a client with grant type Client
 Credentials and an operator profile that allows what you want Casper to do, and set its client ID and secret. If
 `CLEARPASS_API_TOKEN` is set it is used as is and the client ID and secret are ignored.
+
+Access Tracker is not in any ClearPass API, so `clearpass_access_tracker` reads it from ClearPass's database as
+`appexternal`, ClearPass's built-in read-only database user. Set its password in ClearPass under Administration >
+Server Manager > Server Configuration > Change Password (user `appexternal`) and put the same value in
+`CLEARPASS_DB_PASSWORD`. Records come from the logs database (`tipsLogDb`, port 5433) and error-code text from the
+config database (`tipsdb`, port 5432); both ports must be reachable from where the server runs. If the error-code
+text can't be read, records keep the numeric code. Each call opens its own connections and closes them, marks the
+session read-only and stops any query after 15 seconds. TLS is tried first; only a server that refuses TLS is read
+over a plain connection, and the reply's `transport` says which. ClearPass's database certificate is its own, so
+it is not checked. Without the password the tool answers `login_missing` with what to set, and `access_check`
+reports ClearPass's `access_tracker` as `missing`.
 
 A second Central account (a customer's temporary key, a lab) needs no second server. Set
 `CENTRAL_TEMP_BASE_URL`, `CENTRAL_TEMP_CLIENT_ID` and `CENTRAL_TEMP_CLIENT_SECRET` and the login is called `temp`.
@@ -113,7 +131,9 @@ every change, showing the tool and what it changes. On top of that:
   show tools, which refuse anything but one-line `show` commands) are reads: kind `troubleshoot`, label `read`,
   no box in Casper. Ping, traceroute and other checks that send traffic from the device keep the `diagnostic`
   label, so Casper still asks;
-- tokens, passwords and pre-shared keys are hidden in replies and errors.
+- tokens, passwords and pre-shared keys are hidden in replies and errors;
+- the ClearPass Access Tracker database is only read: fixed `SELECT`s with every value passed as a parameter, as
+  the read-only `appexternal` user, in a read-only session.
 
 The server never asks you to type anything and never treats an argument the AI sets as your approval. Approval is
 Casper's box only.
