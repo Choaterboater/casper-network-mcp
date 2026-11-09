@@ -93,6 +93,8 @@ _PRODUCT_WORDS = {
     "cppm": "clearpass",
     "uxi": "uxi",
     "opsramp": "opsramp",
+    "aos8": "aos8",
+    "arubaos": "aos8",
 }
 
 
@@ -235,6 +237,27 @@ def synonyms(product: str | None = None) -> tuple[tuple[re.Pattern[str], frozens
     )
     if product == "clearpass":
         raw.update({"connected": ["client", "session"], "online": ["session"], "switch": ["network", "device"]})
+    if product == "aos8":
+        # On a controller, auth questions are about the auth trace and the AAA setup, not Access Tracker.
+        raw.update(
+            {
+                "authentication": ["auth", "trace"],
+                "authenticate": ["auth", "trace"],
+                "fail": ["auth", "trace"],
+                "failed": ["auth", "trace"],
+                "reject": ["auth", "trace"],
+                "rejected": ["auth", "trace"],
+                "radius": ["aaa", "server"],
+                "radius server": ["aaa", "server"],
+                "server group": ["aaa", "server"],
+                "controller": ["aos8"],
+                "user table": ["client"],
+                "derived": ["detail"],
+                "derivation": ["detail"],
+                "roam": ["history"],
+                "cli": ["command"],
+            }
+        )
     folded: dict[str, set[str]] = {}
     for key, values in raw.items():
         folded.setdefault(_folded_text(str(key)), set()).update(fold(str(w).lower()) for w in values)

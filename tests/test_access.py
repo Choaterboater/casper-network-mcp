@@ -331,7 +331,37 @@ async def test_mist_login_missing_after_all(server_with_replies):
         "clearpass": "missing",
         "uxi": "missing",
         "opsramp": "missing",
+        "aos8": "missing",
     }
+
+
+AOS8_LOGIN = {"AOS8_BASE_URL": "https://198.51.100.40:4343", "AOS8_USERNAME": "casper-ro", "AOS8_PASSWORD": "pw-x9"}
+
+
+async def test_aos8_reads_once_and_reports_the_gate(server_with_replies, recording_transport):
+    s = server_with_replies(
+        {("GET", "/v1/configuration/showcommand"): {"_data": ["Aruba Operating System Software."]}},
+        read_only=True,
+        environ=AOS8_LOGIN,
+    )
+    out = await s.call("access_check", {})
+    aos8 = next(p for p in out["products"] if p["product"] == "aos8")
+    assert aos8 == {
+        "product": "aos8",
+        "access": "unknown",
+        "reads": "ok",
+        "identity": "casper-ro",
+        "server_gate": {"flag": "--read-only", "state": "off"},
+    }
+    [call] = recording_transport.calls
+    assert call.url.params["command"] == "show version"
+    assert "pw-x9" not in str(out) and "uid-" not in str(out)
+
+
+async def test_aos8_401_reports_login_expired(server_with_replies):
+    s = server_with_replies({("GET", "/v1/configuration/showcommand"): 401}, environ=AOS8_LOGIN)
+    aos8 = next(p for p in (await s.call("access_check", {}))["products"] if p["product"] == "aos8")
+    assert aos8["access"] == "unknown" and aos8["login"] == "expired"
 
 
 async def test_mist_401_reports_login_expired(server_with_replies):

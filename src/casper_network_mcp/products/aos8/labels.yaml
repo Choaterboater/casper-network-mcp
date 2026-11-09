@@ -1,0 +1,14 @@
+# Change kinds for AOS 8's hand-written tools. Every one only sends GET (the showcommand API or a config object).
+# kind: Casper's change kind. vendor_category: the AOS 8 REST API area, a reference only.
+# checked: why this kind, one line, from reading the tool's requests by hand.
+
+aos8_find_client: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show user-table mac|ip|name <checked value>, then show global-user-table list when nothing matched"}
+aos8_list_clients: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show user-table"}
+aos8_get_client_detail: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show user-table verbose mac (or show user-table mac), then show user mac; MAC checked to 12 hex digits"}
+aos8_get_client_history: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show ap client trail-info <mac>, or show ap association client-mac <mac>"}
+aos8_auth_trace: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show auth-tracebuf mac <mac>"}
+aos8_list_user_roles: {kind: read, vendor_category: "configuration object", checked: "GET /v1/configuration/object/role with a checked config_path"}
+aos8_get_config_object: {kind: read, vendor_category: "configuration object", checked: "GET /v1/configuration/object/<one of 11 role and auth objects> with a checked config_path"}
+aos8_list_aaa_profiles: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show aaa profile [checked name]"}
+aos8_list_aaa_servers: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand: show aaa server-group [checked name] and show aaa authentication-server radius"}
+aos8_show_command: {kind: read, vendor_category: "showcommand", checked: "GET /v1/configuration/showcommand with one allow-listed show command; no ; | or new lines; running config and secrets refused"}

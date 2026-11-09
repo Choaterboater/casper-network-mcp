@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+New product: AOS 8 (ArubaOS 8 Mobility Conductor and Mobility Controller), read only.
+
+- Tools: `aos8_find_client` (exactly one of MAC, IP or username; `show user-table`, then the Conductor's
+  `show global-user-table list`), `aos8_list_clients`, `aos8_get_client_detail` (role and its derivation, VLAN and
+  its derivation, auth method, protocol and server, ESSID, AP, BSSID, phy, RSSI), `aos8_get_client_history`
+  (`show ap client trail-info`), `aos8_auth_trace` (`show auth-tracebuf mac`, newest last, with a summary of
+  RADIUS accepts, rejects and timeouts and EAP results), `aos8_list_user_roles`, `aos8_get_config_object` (11 role
+  and auth objects), `aos8_list_aaa_profiles`, `aos8_list_aaa_servers` and `aos8_show_command` (allow-listed `show`
+  commands only). All `kind: read`; every one sends only `GET`.
+- Logins: `AOS8_BASE_URL`, `AOS8_USERNAME`, `AOS8_PASSWORD`. One session is reused, renewed once on 401 and ended
+  with `GET /v1/api/logout` when the server stops (pooled clients now run close hooks first). `access_check`
+  reports `aos8` after one `show version`.
+- The secret filter also hides `UIDARUBA` and cookie values, and `UIDARUBA=` / `SESSION=` in error text.
+- `find_tool` knows `aos8` and `arubaos`, and with `product="aos8"` reads "authentication", "reject" and "radius" as
+  the auth trace and AAA tools.
+- The device-troubleshoot skill checks AOS 8 as the network view when its login is set.
+
 Access Tracker reject reasons, read from ClearPass's own database.
 
 - New `clearpass_access_tracker`: for one MAC (any format) or username, the newest Access Tracker records with

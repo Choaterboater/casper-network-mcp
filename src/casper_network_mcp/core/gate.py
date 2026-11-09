@@ -42,7 +42,14 @@ from casper_network_mcp.core.kinds import (
 
 __all__ = ["PRODUCT_NAMES", "Gate", "LoginMissing", "Refused", "ScopeLoader", "ScopeMap", "Scopes", "is_write"]
 
-PRODUCT_NAMES = {"central": "Central", "mist": "Mist", "clearpass": "ClearPass", "uxi": "UXI", "opsramp": "OpsRamp"}
+PRODUCT_NAMES = {
+    "central": "Central",
+    "mist": "Mist",
+    "clearpass": "ClearPass",
+    "uxi": "UXI",
+    "opsramp": "OpsRamp",
+    "aos8": "AOS 8",
+}
 
 
 class Scopes(Protocol):

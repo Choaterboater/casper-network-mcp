@@ -110,6 +110,18 @@ branches:
   list_visitors:
     - {offset: 10}
     - {full_list: true}
+  aos8_find_client:
+    - {mac: "00:00:5e:00:53:01"}
+    - {ip: "192.0.2.10"}
+    - {username: user1}
+  aos8_get_client_detail:
+    - {mac: "00:00:5e:00:53:01"}
+  aos8_get_client_history:
+    - {mac: "00:00:5e:00:53:01"}
+  aos8_auth_trace:
+    - {mac: "00:00:5e:00:53:01"}
+  aos8_show_command:
+    - {command: "show user-table"}
 
 replies:
   mist_wlan_discovery_summary:
@@ -147,3 +159,8 @@ validate_first:
   clearpass_access_tracker: "reads ClearPass's database (SELECTs, see test_clearpass_access_tracker.py), never the API; sends no HTTP request"
   uxi_update_sensor: "needs at least one field to change; with only the sensor id it refuses before sending"
   uxi_update_agent: "needs at least one field to change; with only the agent id it refuses before sending"
+  aos8_find_client: "needs exactly one of mac, ip or username; with none it refuses before sending"
+  aos8_get_client_detail: "the MAC must have 12 hex digits; a placeholder is refused before sending"
+  aos8_get_client_history: "the MAC must have 12 hex digits; a placeholder is refused before sending"
+  aos8_auth_trace: "the MAC must have 12 hex digits; a placeholder is refused before sending"
+  aos8_show_command: "runs only allow-listed show commands; a placeholder is refused before sending"

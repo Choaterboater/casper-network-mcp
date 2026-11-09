@@ -18,7 +18,7 @@ def test_tool_names_are_unique_across_every_backend():
     assert not [n for n, count in names.items() if count > 1]
 
 
-def test_hand_written_backends_cover_five_products():
+def test_hand_written_backends_cover_six_products():
     products = [product for product, _ in hand_written_backends()]
-    assert set(products) == {"central", "mist", "clearpass", "uxi", "opsramp"}
+    assert set(products) == {"central", "mist", "clearpass", "uxi", "opsramp", "aos8"}
     assert products.count("central") == 4

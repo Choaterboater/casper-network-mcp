@@ -22,6 +22,9 @@ with or without ``--read-only``; the pin is reported separately in
   only, since Classic Central's API gateway does not accept GreenLake tokens.
   UXI and OpsRamp: ``unknown`` with no lists and no call, since
   neither API has a call that says what the login may change.
+* AOS 8: ``unknown`` too (the API has no call that says what the login may
+  change), after one read, ``show version``, which logs in: ``reads`` is ``ok``
+  when it answered, and a refused login is ``"login": "expired"``.
 
 A list is left out whole when any name or id is not plain
 (``^[A-Za-z0-9 _.@:/+-]{1,64}$``), when it holds more than 64 scopes, or
@@ -45,7 +48,7 @@ from casper_network_mcp.products._base import ApiError
 __all__ = ["CONTRACT", "MistScopes", "access_check", "load_mist_scopes", "mist_scopes_from_self"]
 
 CONTRACT = "casper/access-check v2"
-PRODUCTS = ("central", "mist", "clearpass", "uxi", "opsramp")
+PRODUCTS = ("central", "mist", "clearpass", "uxi", "opsramp", "aos8")
 MAX_SCOPES = 64
 _PLAIN = re.compile(r"^[A-Za-z0-9 _.@:/+-]{1,64}$")
 _PER_PRODUCT_TIMEOUT_S = 10.0
@@ -277,6 +280,16 @@ async def _clearpass(client: Any) -> dict[str, Any]:
     return entry
 
 
+async def _aos8(client: Any) -> dict[str, Any]:
+    from casper_network_mcp.products.aos8.client import SHOW_PATH
+
+    await client.request("GET", SHOW_PATH, params={"command": "show version"}, kind="read")
+    entry: dict[str, Any] = {"product": "aos8", "access": "unknown", "reads": "ok"}
+    if _plain(getattr(client, "username", None)):
+        entry["identity"] = client.username
+    return entry
+
+
 async def _product(product: str, client: Any, gate: Gate) -> dict[str, Any]:
     if not client.has_login:
         return {"product": product, "access": "unknown", "login": "missing"}
@@ -286,7 +299,7 @@ async def _product(product: str, client: Any, gate: Gate) -> dict[str, Any]:
     if product in ("uxi", "opsramp"):
         return {"product": product, "access": "unknown"}
     try:
-        check = _mist(client, gate) if product == "mist" else _clearpass(client)
+        check = _mist(client, gate) if product == "mist" else _aos8(client) if product == "aos8" else _clearpass(client)
         return await asyncio.wait_for(check, timeout=_PER_PRODUCT_TIMEOUT_S)
     except ApiError as exc:
         if exc.login_expired:

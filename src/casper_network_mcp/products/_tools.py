@@ -80,6 +80,10 @@ def _default_client(product: str) -> Any:
             from casper_network_mcp.products.opsramp.client import OpsRampClient
 
             _defaults[product] = OpsRampClient.from_env(Gate(read_only=True))
+        elif product == "aos8":
+            from casper_network_mcp.products.aos8.client import Aos8Client
+
+            _defaults[product] = Aos8Client.from_env(Gate(read_only=True))
         else:
             raise KeyError(product)
     return _defaults[product]

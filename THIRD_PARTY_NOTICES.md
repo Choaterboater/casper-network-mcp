@@ -8,7 +8,7 @@ material is shipped.
 
 The router (`router/`), the generated-tool runtime (`openapi_gen/`), the shared helpers in `core/` (annotations,
 redaction, safe paths, response budget and cursors, HTTP client, server transport), the bundled-spec lookup
-(`specs_index.py`, `products/specs_tools.py`) and the Central, Mist and ClearPass hand-written tools are adapted
+(`specs_index.py`, `products/specs_tools.py`) and the Central, Mist, ClearPass and AOS 8 hand-written tools are adapted
 from hpe-networking-mcp, an earlier server by this project's author. That code is the author's own and is covered by
 this project's `LICENSE`.
 

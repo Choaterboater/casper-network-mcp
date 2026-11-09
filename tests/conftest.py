@@ -27,12 +27,15 @@ CLEARPASS_BASE = "https://198.51.100.20"
 TOKEN_URL = "https://sso.common.cloud.hpe.com/as/token.oauth2"
 #: OpsRamp's login is on the tenant's own host, so it is matched by path.
 OPSRAMP_TOKEN_PATH = "/tenancy/auth/oauth/token"
+#: AOS 8 logs in and out on the controller itself; matched by path too.
+AOS8_BASE = "https://198.51.100.40:4343"
+AOS8_LOGIN_PATHS = ("/v1/api/login", "/v1/api/logout")
 
 
 class RecordingTransport(httpx.MockTransport):
     """A fake product API: replies by (method, path), records every product request.
 
-    Login traffic (the GreenLake and OpsRamp token endpoints) is answered but kept out of
+    Login traffic (the GreenLake and OpsRamp token endpoints, AOS 8 login and logout) is answered but kept out of
     ``calls``, so ``calls == []`` means nothing reached the product.
     """
 
@@ -54,6 +57,14 @@ class RecordingTransport(httpx.MockTransport):
         if str(request.url).startswith(TOKEN_URL) or request.url.path == OPSRAMP_TOKEN_PATH:
             self.token_calls.append(request)
             return httpx.Response(200, json={"access_token": f"tok-{len(self.token_calls)}", "expires_in": 7200})
+        if request.url.path in AOS8_LOGIN_PATHS:
+            self.token_calls.append(request)
+            uid = f"uid-{len(self.token_calls)}"
+            return httpx.Response(
+                200,
+                json={"_global_result": {"status": "0", "status_str": "logged in", "UIDARUBA": uid}},
+                headers={"Set-Cookie": f"SESSION={uid}; Path=/; Secure"},
+            )
         self.calls.append(request)
         payload = self.routes.get((request.method, request.url.path), self.default)
         if callable(payload):

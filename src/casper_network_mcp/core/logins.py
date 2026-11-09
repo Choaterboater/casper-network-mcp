@@ -37,6 +37,9 @@ LOGIN_VARS: tuple[str, ...] = (
     "OPSRAMP_TENANT_ID",
     "OPSRAMP_CLIENT_ID",
     "OPSRAMP_CLIENT_SECRET",
+    "AOS8_BASE_URL",
+    "AOS8_USERNAME",
+    "AOS8_PASSWORD",
 )
 
 # Other names for a login, read only when the main name is unset: MIST_APITOKEN is mistapi's.
