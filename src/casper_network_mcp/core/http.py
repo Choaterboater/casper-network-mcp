@@ -23,6 +23,7 @@ import logging
 import math
 import random
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import httpx
@@ -37,6 +38,7 @@ __all__ = [
     "get_with_retry",
     "parse_retry_after",
     "pooled_client",
+    "register_close_hook",
     "request_read_retried",
     "response_payload",
 ]
@@ -74,8 +76,24 @@ def pooled_client(
     return client
 
 
+#: Run before the pooled clients close, so a product can end a session it holds (AOS 8 logs out).
+_CLOSE_HOOKS: list[Callable[[], Awaitable[None]]] = []
+_CLOSE_HOOK_TIMEOUT_S = 5.0
+
+
+def register_close_hook(hook: Callable[[], Awaitable[None]]) -> None:
+    """Run ``hook`` once when :func:`aclose_pooled_clients` runs (registering twice is a no-op)."""
+    if hook not in _CLOSE_HOOKS:
+        _CLOSE_HOOKS.append(hook)
+
+
 async def aclose_pooled_clients() -> None:
-    """Close every pooled client on the running loop and drop the rest."""
+    """Run the close hooks, then close every pooled client on the running loop and drop the rest."""
+    for hook in _CLOSE_HOOKS:
+        try:
+            await asyncio.wait_for(hook(), timeout=_CLOSE_HOOK_TIMEOUT_S)
+        except Exception:
+            logger.debug("a close hook failed", exc_info=True)
     loop = asyncio.get_running_loop()
     for name, (client_loop, client) in list(_POOL.items()):
         del _POOL[name]

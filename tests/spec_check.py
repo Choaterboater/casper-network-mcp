@@ -32,7 +32,15 @@ from urllib.parse import unquote
 
 import httpx
 import yaml  # type: ignore[import-untyped]
-from conftest import CENTRAL_BASE, CLEARPASS_BASE, MIST_BASE, RecordingTransport, _placeholder, placeholder_args
+from conftest import (
+    AOS8_BASE,
+    CENTRAL_BASE,
+    CLEARPASS_BASE,
+    MIST_BASE,
+    RecordingTransport,
+    _placeholder,
+    placeholder_args,
+)
 
 from casper_network_mcp import sdk_compat
 from casper_network_mcp.core.gate import Gate
@@ -185,6 +193,10 @@ def _client(product: str, transport: httpx.MockTransport) -> Any:
         from casper_network_mcp.products.uxi.client import UxiClient
 
         return UxiClient(gate=gate, client_id="test-id", client_secret="test-secret", transport=transport)
+    if product == "aos8":
+        from casper_network_mcp.products.aos8.client import Aos8Client
+
+        return Aos8Client(gate=gate, base_url=AOS8_BASE, username="admin", password="test-secret", transport=transport)
     if product == "opsramp":
         from casper_network_mcp.products.opsramp.client import OpsRampClient
 

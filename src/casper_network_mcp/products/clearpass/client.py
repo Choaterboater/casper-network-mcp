@@ -8,6 +8,11 @@ pasted token wins when both are set. The fetched token lives in memory only.
 
 ClearPass is usually on a private address on site; that is allowed (the
 login is the limit). Its API lives under ``/api``.
+
+Access Tracker is not in the API; it is read from ClearPass's database with a
+second, optional login (``CLEARPASS_DB_PASSWORD`` and friends, see
+``access_tracker.py``). The client only holds it as ``db_login``; nothing here
+connects to the database.
 """
 
 from __future__ import annotations
@@ -23,6 +28,7 @@ from casper_network_mcp.core.gate import Gate, is_write
 from casper_network_mcp.core.http import Http
 from casper_network_mcp.core.logins import read_logins
 from casper_network_mcp.products._base import ApiError, BaseClient, LoginMissing, Refused
+from casper_network_mcp.products.clearpass.access_tracker import DbLogin, db_login_from
 
 __all__ = ["TOKEN_PATH", "ApiError", "ClearPassClient", "LoginMissing", "Refused"]
 
@@ -45,7 +51,23 @@ class ClearPassClient(BaseClient):
         client_secret: str | None = None,
         transport: httpx.MockTransport | httpx.AsyncBaseTransport | None = None,
         timeout: float = 30.0,
+        db_password: str | None = None,
+        db_host: str | None = None,
+        db_user: str | None = None,
+        db_logs_port: str | None = None,
+        db_config_port: str | None = None,
     ) -> None:
+        #: The Access Tracker database login (None until ``CLEARPASS_DB_PASSWORD`` is set), and what it lacks.
+        self.db_login: DbLogin | None
+        self.db_missing: list[str]
+        self.db_login, self.db_missing = db_login_from(
+            password=db_password,
+            host=db_host,
+            base_url=base_url,
+            user=db_user,
+            logs_port=db_logs_port,
+            config_port=db_config_port,
+        )
         self._api_token = token or ""
         # A pasted token wins; the API client is used only without one.
         self._client_id = "" if token else (client_id or "")
@@ -72,6 +94,11 @@ class ClearPassClient(BaseClient):
             token=logins.get("CLEARPASS_API_TOKEN"),
             client_id=logins.get("CLEARPASS_CLIENT_ID"),
             client_secret=logins.get("CLEARPASS_CLIENT_SECRET"),
+            db_password=logins.get("CLEARPASS_DB_PASSWORD"),
+            db_host=logins.get("CLEARPASS_DB_HOST"),
+            db_user=logins.get("CLEARPASS_DB_USER"),
+            db_logs_port=logins.get("CLEARPASS_DB_LOGS_PORT"),
+            db_config_port=logins.get("CLEARPASS_DB_CONFIG_PORT"),
             **kw,
         )
 

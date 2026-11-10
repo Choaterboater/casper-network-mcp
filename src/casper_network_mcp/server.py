@@ -1,4 +1,4 @@
-"""The server: four top-level tools over every Central, Mist, ClearPass, UXI and OpsRamp tool.
+"""The server: four top-level tools over every Central, Mist, ClearPass, UXI, OpsRamp and AOS 8 tool.
 
 * ``find_tool`` finds an inner tool and says what kind of change it makes.
 * ``invoke_read_tool`` runs an inner tool that only reads (or runs a check).
@@ -31,7 +31,8 @@ from casper_network_mcp.router import dispatch, find
 __all__ = ["RouterServer", "build_server", "main"]
 
 INSTRUCTIONS = (
-    "Network tools for HPE Aruba Central, Juniper Mist, HPE Aruba ClearPass, HPE Aruba UXI and HPE OpsRamp. "
+    "Network tools for HPE Aruba Central, Juniper Mist, HPE Aruba ClearPass, HPE Aruba UXI, HPE OpsRamp "
+    "and ArubaOS 8 (AOS 8) Mobility Conductors and controllers. "
     "Call find_tool with what you want to do, then invoke_read_tool for reads and checks, "
     "or invoke_tool for changes. access_check says what each login can do, and lists any extra "
     "named Central logins; pass login=<name> to invoke_read_tool or invoke_tool to use one."
@@ -53,6 +54,7 @@ class RouterServer(MCPServer):
 
 
 def _clients(gate: Gate, logins: Mapping[str, str], transport: httpx.AsyncBaseTransport | None) -> dict[str, Any]:
+    from casper_network_mcp.products.aos8.client import Aos8Client
     from casper_network_mcp.products.central.client import CentralClient
     from casper_network_mcp.products.clearpass.client import ClearPassClient
     from casper_network_mcp.products.mist.client import MistClient
@@ -66,6 +68,7 @@ def _clients(gate: Gate, logins: Mapping[str, str], transport: httpx.AsyncBaseTr
         "clearpass": ClearPassClient.from_env(gate, logins=logins, **kw),
         "uxi": UxiClient.from_env(gate, logins=logins, **kw),
         "opsramp": OpsRampClient.from_env(gate, logins=logins, **kw),
+        "aos8": Aos8Client.from_env(gate, logins=logins, **kw),
     }
 
 
@@ -120,7 +123,7 @@ def build_server(
 
         query: what you want to do, in plain words ("bounce port 7 on the
         closet switch") or an exact API call ("GET /api/v1/sites/{site_id}").
-        product: central, mist, clearpass, uxi, opsramp or specs (the API document lookup).
+        product: central, mist, clearpass, uxi, opsramp, aos8 or specs (the API document lookup).
         Each hit has name, product, summary, kind (read, troubleshoot, config,
         disruptive, firmware, delete or admin) and label (read, diagnostic, write
         or destructive; a show-only check is troubleshoot with label read). Pass include_schema
@@ -178,7 +181,7 @@ def build_server(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="casper-network-mcp",
-        description="MCP server for HPE Aruba Central, Juniper Mist, HPE Aruba ClearPass, UXI and HPE OpsRamp.",
+        description="MCP server for HPE Aruba Central, Juniper Mist, HPE Aruba ClearPass, UXI, HPE OpsRamp and AOS 8.",
     )
     parser.add_argument(
         "--read-only", action="store_true", help="only read and run checks; never send a change (read once at start)"

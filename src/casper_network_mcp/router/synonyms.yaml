@@ -117,8 +117,14 @@ cannot get on: [auth, failure, session]
 can't connect: [auth, failure, session]
 login failure: [auth, failure]
 login failures: [auth, failure]
-rejected: [auth, failure]
-reject: [auth, failure]
+rejected: [auth, failure, tracker]
+reject: [auth, failure, tracker]
+
+# ClearPass Access Tracker: the reason an authentication was turned away
+reject reason: [access, tracker, reason]
+rejection reason: [access, tracker, reason]
+failure reason: [access, tracker, reason]
+denial reason: [access, tracker, reason]
 
 # Who manages a device's configuration (new Central, Classic Central or the device)
 managed by: [config, management]

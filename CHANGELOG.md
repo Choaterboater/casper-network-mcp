@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+New product: AOS 8 (ArubaOS 8 Mobility Conductor and Mobility Controller), read only.
+
+- Tools: `aos8_find_client` (exactly one of MAC, IP or username; `show user-table`, then the Conductor's
+  `show global-user-table list`), `aos8_list_clients`, `aos8_get_client_detail` (role and its derivation, VLAN and
+  its derivation, auth method, protocol and server, ESSID, AP, BSSID, phy, RSSI), `aos8_get_client_history`
+  (`show ap client trail-info`), `aos8_auth_trace` (`show auth-tracebuf mac`, newest last, with a summary of
+  RADIUS accepts, rejects and timeouts and EAP results), `aos8_list_user_roles`, `aos8_get_config_object` (11 role
+  and auth objects), `aos8_list_aaa_profiles`, `aos8_list_aaa_servers` and `aos8_show_command` (allow-listed `show`
+  commands only). All `kind: read`; every one sends only `GET`.
+- Logins: `AOS8_BASE_URL`, `AOS8_USERNAME`, `AOS8_PASSWORD`. One session is reused, renewed once on 401 and ended
+  with `GET /v1/api/logout` when the server stops (pooled clients now run close hooks first). `access_check`
+  reports `aos8` after one `show version`.
+- The secret filter also hides `UIDARUBA` and cookie values, and `UIDARUBA=` / `SESSION=` in error text.
+- `find_tool` knows `aos8` and `arubaos`, and with `product="aos8"` reads "authentication", "reject" and "radius" as
+  the auth trace and AAA tools.
+- The device-troubleshoot skill checks AOS 8 as the network view when its login is set.
+
+Access Tracker reject reasons, read from ClearPass's own database.
+
+- New `clearpass_access_tracker`: for one MAC (any format) or username, the newest Access Tracker records with
+  login status (ACCEPT, REJECT, TIMEOUT), service, user, MAC, NAD, auth type, roles, enforcement profiles, error
+  code and its text, and alerts, with `hours` (1-720, default 24), `limit` (1-100, default 10), and optional
+  `status` and `service` filters. No ClearPass API exposes Access Tracker (`/api/session` holds active accounting
+  sessions only), so it reads ClearPass's database as the built-in read-only `appexternal` user: `tipsLogDb` on
+  port 5433 for records, `tipsdb` on port 5432 for error-code text (best effort). Fixed parameterised `SELECT`s
+  only, a read-only session, a 15 s statement timeout and a 10 s connect timeout; TLS first, plain only when the
+  server refuses TLS. Labelled `read`. `find_tool` finds it for "access tracker", "reject reason", "auth failure
+  reason".
+- New optional logins: `CLEARPASS_DB_PASSWORD` turns it on; `CLEARPASS_DB_HOST`, `CLEARPASS_DB_USER`,
+  `CLEARPASS_DB_LOGS_PORT` and `CLEARPASS_DB_CONFIG_PORT` override the defaults. Without the password the tool
+  answers `login_missing` with what to set and where ClearPass sets the `appexternal` password; `access_check`
+  reports ClearPass's `access_tracker` as `set` or `missing`. The password is never returned.
+- `clearpass_why_denied` adds the latest Access Tracker records under `access_tracker` when that login is set (and
+  still answers from them if the session API fails); without it, its `limitation` names the new tool and variable.
+- New dependency: `pg8000` (pure-Python PostgreSQL driver, BSD-3-Clause), which brings `scramp` (MIT-0),
+  `asn1crypto` (MIT), `python-dateutil` (BSD-3-Clause) and, through it, `tzdata` on every system.
+
 ## 0.1.7
 
 Show-only Central checks that run without a box in Casper, one read that says what manages a device's config,

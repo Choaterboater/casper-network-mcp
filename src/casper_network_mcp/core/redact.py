@@ -37,6 +37,10 @@ _SENSITIVE_KEY_EXACT = {
     "claim_code",
     "claim_codes",
     "registration_code",
+    # AOS 8 session id (sent as a query value) and session cookies.
+    "uidaruba",
+    "cookie",
+    "set_cookie",
 }
 _SENSITIVE_KEY_SUFFIXES = (
     "api_key",
@@ -201,6 +205,9 @@ def redact_sensitive(value: Any) -> Any:
 # such as "Bearer token missing or expired" readable.
 ERROR_CREDENTIAL_RE = re.compile(r"(?i)\bbearer\s+[a-z0-9._~+/=\-]{8,}")
 
+# An AOS 8 session id in a URL query (``UIDARUBA=...``) or a session cookie (``SESSION=...``).
+SESSION_VALUE_RE = re.compile(r"(?i)\b(UIDARUBA|SESSION)=[^&\s;,\"']+")
+
 
 # Text that did not parse as one JSON value (JSON lines, a body cut short) can
 # still hold "key": "value" pairs; a pair whose key is a secret is hidden.
@@ -218,4 +225,5 @@ def redact_tool_error_text(text: str) -> str:
     """Hide credentials in an error string a person or the AI may read."""
     text = redact_sensitive(text)
     text = _TEXT_PAIR_RE.sub(_hide_text_pair, text)
+    text = SESSION_VALUE_RE.sub(lambda m: f"{m.group(1)}={HIDDEN}", text)
     return ERROR_CREDENTIAL_RE.sub(HIDDEN, text)

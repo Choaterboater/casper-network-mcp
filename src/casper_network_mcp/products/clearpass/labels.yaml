@@ -12,7 +12,8 @@ clearpass_find_guest: {kind: read, vendor_category: "Guest Manager > Guest", che
 clearpass_get_insight_endpoint: {kind: read, vendor_category: "Insight > Endpoint", checked: "GET /api/insight/endpoint/mac/{mac}"}
 clearpass_list_onguard_activity: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity"}
 clearpass_get_onguard_activity_by_mac: {kind: read, vendor_category: "OnGuard > OnGuard Activity", checked: "GET /api/onguard-activity/host_mac/{host_mac}"}
-clearpass_why_denied: {kind: read, vendor_category: "Session Control > Active Session, Identities > Endpoint", checked: "GET /api/session and GET /api/endpoint/mac-address/{mac_address}; bundled 6.12.7 active accounting sessions, not full Access Tracker rejects"}
+clearpass_why_denied: {kind: read, vendor_category: "Session Control > Active Session, Identities > Endpoint", checked: "GET /api/session and GET /api/endpoint/mac-address/{mac_address}; bundled 6.12.7 active accounting sessions, not full Access Tracker rejects; with the database login also the clearpass_access_tracker SELECTs"}
+clearpass_access_tracker: {kind: read, vendor_category: "Monitoring > Access Tracker (database, not the API)", checked: "SELECT only, as the read-only appexternal user: tipsLogDb on port 5433 (tips_dashboard_summary, tips_policy_server_session_log, tips_alerts) and tipsdb error codes on port 5432 (tips_error_codes_view); session set read-only, statement timeout"}
 clearpass_list_access_tracker_sessions: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session"}
 clearpass_get_access_tracker_session: {kind: read, vendor_category: "Session Control > Active Session", checked: "GET /api/session/{id}"}
 clearpass_list_endpoints: {kind: read, vendor_category: "Identities > Endpoint", checked: "GET /api/endpoint"}

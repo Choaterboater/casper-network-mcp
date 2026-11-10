@@ -24,7 +24,19 @@ Behind them:
   health, device counts and the top alarms in one read;
 - `clearpass_why_denied` summarizes recent sessions, endpoint status/profile, NAD and applied roles for exactly
   one MAC or username. The bundled 6.12.7 API exposes active accounting sessions, not full Access Tracker
-  rejects; missing auth results, reject reasons and enforcement profiles remain unknown;
+  rejects; without the Access Tracker database login, missing auth results, reject reasons and enforcement
+  profiles remain unknown. With it, the latest Access Tracker records are added;
+- `clearpass_access_tracker` reads Access Tracker itself for one MAC or username: accept or reject, the error code
+  and its text (206 Access denied by policy, 215 TLS session error), alerts, auth type, roles, enforcement
+  profiles and NAD, newest first, over the last `hours` (1-720, default 24) with up to `limit` records (1-100,
+  default 10). No ClearPass API has Access Tracker, so it reads ClearPass's own database as its read-only
+  `appexternal` user (see Logins); it only ever runs fixed `SELECT`s;
+- AOS 8 (ArubaOS 8 Mobility Conductor or Mobility Controller), read only: `aos8_find_client` (MAC, IP or
+  username), `aos8_get_client_detail` (role and how it was derived, VLAN, auth method and RADIUS server),
+  `aos8_get_client_history`, `aos8_auth_trace` (the controller's 802.1X / RADIUS trace for one MAC: rejects,
+  timeouts), `aos8_list_aaa_profiles` and `aos8_list_aaa_servers` (which RADIUS servers, often ClearPass, a profile
+  uses), user roles, a short list of auth config objects, and `aos8_show_command`, which runs only allow-listed
+  `show` commands;
 - ClearPass session and auth-failure reads accept MAC, username, NAD IP, accounting service type and ISO 8601
   start/end times (with timezone). Time windows scan at most ten pages locally; `next_server_offset` continues
   a scan, including an empty page. The service filter is not an Access Tracker policy service name;
@@ -76,13 +88,36 @@ to one of its tools answers `{"error": "login_missing", "product": "..."}`.
 | Juniper Mist | `MIST_API_TOKEN` (or `MIST_APITOKEN`, mistapi's name), and `MIST_HOST` if your cloud is not `api.mist.com` |
 | HPE Aruba Networking Central | `CENTRAL_BASE_URL`, `CENTRAL_CLIENT_ID`, `CENTRAL_CLIENT_SECRET`; more accounts as `CENTRAL_<NAME>_BASE_URL`, `CENTRAL_<NAME>_CLIENT_ID`, `CENTRAL_<NAME>_CLIENT_SECRET` |
 | HPE Aruba Networking ClearPass | `CLEARPASS_BASE_URL`, and `CLEARPASS_CLIENT_ID` with `CLEARPASS_CLIENT_SECRET` or a pasted `CLEARPASS_API_TOKEN` |
+| ClearPass Access Tracker (optional) | `CLEARPASS_DB_PASSWORD`; and only if not the defaults: `CLEARPASS_DB_HOST` (the host in `CLEARPASS_BASE_URL`), `CLEARPASS_DB_USER` (`appexternal`), `CLEARPASS_DB_LOGS_PORT` (5433), `CLEARPASS_DB_CONFIG_PORT` (5432) |
 | HPE Aruba Networking UXI | `UXI_CLIENT_ID`, `UXI_CLIENT_SECRET` (a GreenLake personal API client for the UXI service); `UXI_BASE_URL` only if not `https://api.capenetworks.com` |
+| AOS 8 (Mobility Conductor or Controller) | `AOS8_BASE_URL` (`https://<conductor>:4343`), `AOS8_USERNAME`, `AOS8_PASSWORD` (a read-only management user is enough) |
 | HPE OpsRamp | `OPSRAMP_BASE_URL` (`https://<tenant>.api.opsramp.com`), `OPSRAMP_TENANT_ID`, `OPSRAMP_CLIENT_ID`, `OPSRAMP_CLIENT_SECRET` (a custom integration's OAuth2 key and secret) |
 
 For ClearPass, an API client is best: the server logs in with it and gets a new token before the old one runs out.
 In ClearPass Guest, open Administration > API Services > API Clients, create a client with grant type Client
 Credentials and an operator profile that allows what you want Casper to do, and set its client ID and secret. If
 `CLEARPASS_API_TOKEN` is set it is used as is and the client ID and secret are ignored.
+
+Access Tracker is not in any ClearPass API, so `clearpass_access_tracker` reads it from ClearPass's database as
+`appexternal`, ClearPass's built-in read-only database user. Set its password in ClearPass under Administration >
+Server Manager > Server Configuration > Change Password (user `appexternal`) and put the same value in
+`CLEARPASS_DB_PASSWORD`. Records come from the logs database (`tipsLogDb`, port 5433) and error-code text from the
+config database (`tipsdb`, port 5432); both ports must be reachable from where the server runs. If the error-code
+text can't be read, records keep the numeric code. Each call opens its own connections and closes them, marks the
+session read-only and stops any query after 15 seconds. TLS is tried first; only a server that refuses TLS is read
+over a plain connection, and the reply's `transport` says which. ClearPass's database certificate is its own, so
+it is not checked. Without the password the tool answers `login_missing` with what to set, and `access_check`
+reports ClearPass's `access_tracker` as `missing`.
+
+For AOS 8 the server logs in to the controller's REST API (`POST /v1/api/login`), keeps the session id
+(`UIDARUBA`) and its cookie in memory, reuses that one session (controllers allow only a few), logs in again once
+when the controller answers 401, and logs out (`GET /v1/api/logout`) when it stops. The session id, the cookie and
+the password never appear in a reply or an error. Point `AOS8_BASE_URL` at the Mobility Conductor or straight at a
+managed controller; a Conductor holds no clients itself, so client searches fall back to its global user table.
+The controller's certificate is checked like every other product's: a self-signed or private-CA certificate needs
+that CA trusted, for example with `SSL_CERT_FILE`. `access_check` reports AOS 8 as `unknown` (the API has no call
+that says what a login may change) after one `show version`, with `reads: ok`, or `login: expired` when the login
+is turned away.
 
 A second Central account (a customer's temporary key, a lab) needs no second server. Set
 `CENTRAL_TEMP_BASE_URL`, `CENTRAL_TEMP_CLIENT_ID` and `CENTRAL_TEMP_CLIENT_SECRET` and the login is called `temp`.
@@ -113,7 +148,11 @@ every change, showing the tool and what it changes. On top of that:
   show tools, which refuse anything but one-line `show` commands) are reads: kind `troubleshoot`, label `read`,
   no box in Casper. Ping, traceroute and other checks that send traffic from the device keep the `diagnostic`
   label, so Casper still asks;
-- tokens, passwords and pre-shared keys are hidden in replies and errors.
+- tokens, passwords and pre-shared keys are hidden in replies and errors (AOS 8 session ids and cookies too);
+- AOS 8 is read only: every tool sends `GET`; `aos8_show_command` refuses anything that is not one allow-listed
+  `show` command (no `;`, `|` or new lines, nothing that shows the running config or a secret);
+- the ClearPass Access Tracker database is only read: fixed `SELECT`s with every value passed as a parameter, as
+  the read-only `appexternal` user, in a read-only session.
 
 The server never asks you to type anything and never treats an argument the AI sets as your approval. Approval is
 Casper's box only.
@@ -227,6 +266,13 @@ OpenAPI file. They are stored exactly as the vendors serve them; `scripts/refres
 again and confirms every hash. See `NOTICE.md` and `THIRD_PARTY_NOTICES.md`.
 
 The package has no install step, downloads nothing when it starts and never updates itself.
+
+## Agent skill
+
+`skills/device-troubleshoot/SKILL.md` is an agent skill for asking about one device or user ("why can't this MAC
+connect?"). It checks Mist, Central or AOS 8 first, then ClearPass, using only this server's read tools, and answers with
+a timeline and root cause. Copy the folder into your agent's skills directory (for example `~/.agents/skills/`).
+It is not part of the Python package.
 
 ## Working on it
 
